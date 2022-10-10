@@ -8,6 +8,7 @@ import cartopy.crs as ccrs
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import os
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
+from ENSO_IOD_Funciones import CompositeSimple
 #from ENSO_IOD_Funciones import CompositeSimple
 
 import warnings

@@ -1,6 +1,6 @@
 import xarray as xr
-# from ENSO_IOD_Funciones import WAF
-# from ENSO_IOD_Funciones import PlotWAFCountours
+from ENSO_IOD_Funciones import WAF
+from ENSO_IOD_Funciones import PlotWAFCountours
 ########################################################################################################################
 data_dir2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
