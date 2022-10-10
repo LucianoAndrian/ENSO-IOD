@@ -24,7 +24,7 @@ out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/no_s
 out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/no_sstanoms/'
 
 #Plot
-save = False
+save = True
 dpi = 300
 sig = False
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' # resultados de MC
@@ -275,7 +275,7 @@ for v in variables_t_p:
                  two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
                  mapa='sa', significance=False,
                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-                 name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w',
+                 name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w_NSA',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
 
             s_count += 1
@@ -312,7 +312,7 @@ for v in variables_ERA5:
                  contour1=contours1[v_count-2], two_variables=False,
                  mapa='hs', significance=False,
                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-                 name_fig=v_name_fig[v_count]  + s + '_' + cases[c_count] + '_mer_d_w',
+                 name_fig=v_name_fig[v_count]  + s + '_' + cases[c_count] + '_mer_d_w_NSA',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
 
             s_count += 1
@@ -348,7 +348,7 @@ for c in cases:
         Plot(comp=comp1, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=False,
              two_variables=False, mapa='tropical', significance=False,
              title='SST' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-             name_fig='SST_' + s + '_' + cases[c_count] + '_d',
+             name_fig='SST_' + s + '_' + cases[c_count] + '_d_NSA',
              dpi=dpi, save=save, out_dir=out_dir_no_sig)
 
         s_count += 1
@@ -400,7 +400,7 @@ for c in cases:
              two_variables=True, comp2=comp2, levels2=np.linspace(-4.5e6, 4.5e6, 13), significance=False,
              mapa='HS',
              title='Div200hpa [shade] - VP [cont.]' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-             name_fig='divp_' + s + '_' + cases[c_count] + '_d',
+             name_fig='divp_' + s + '_' + cases[c_count] + '_d_NSA',
              dpi=dpi, save=save, linewidht2=.8, out_dir=out_dir_no_sig)
 
 
