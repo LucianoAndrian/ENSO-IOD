@@ -17,14 +17,14 @@ os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 import warnings
 warnings.filterwarnings("ignore")
 ########################################################################################################################
-nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/' #fechas
+nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/' #fechas
 data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' #T y PP ya procesados
 data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/' # ERA5 ya procesados
-out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/'
-out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/'
+out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/no_sstanoms/'
+out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/no_sstanoms/'
 
 #Plot
-save = True
+save = False
 dpi = 300
 sig = False
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' # resultados de MC
@@ -273,7 +273,7 @@ for v in variables_t_p:
             #MakeMask(pp, dataname='cluster')
             Plot(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
                  two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
-                 mapa='sa',
+                 mapa='sa', significance=False,
                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
                  name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
@@ -310,7 +310,7 @@ for v in variables_ERA5:
 
             Plot(comp=comp1, levels=scales[v_count + 1], cmap = cmap_era5[v_count-2], step1=steps[v_count-2],
                  contour1=contours1[v_count-2], two_variables=False,
-                 mapa='hs',
+                 mapa='hs', significance=False,
                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
                  name_fig=v_name_fig[v_count]  + s + '_' + cases[c_count] + '_mer_d_w',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')

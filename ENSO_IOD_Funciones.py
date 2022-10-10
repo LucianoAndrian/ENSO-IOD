@@ -126,7 +126,7 @@ def WaveFilter(serie, harmonic):
     fil = serie - xs
     return(fil)
 
-def DMIndex(iodw, iode, sst_anom_sd=True, xsd=0.5):
+def DMIndex(iodw, iode, sst_anom_sd=True, xsd=0.5, opposite_signs_criteria=True):
 
     import numpy as np
     from itertools import groupby
@@ -142,16 +142,27 @@ def DMIndex(iodw, iode, sst_anom_sd=True, xsd=0.5):
     eastern_sign = np.sign(iode)
     opposite_signs = western_sign != eastern_sign
 
+
+
     sd = np.std(dmi) * xsd
     print(str(sd))
     sdw = np.std(iodw.values) * xsd
     sde = np.std(iode.values) * xsd
 
+    valid_criteria = dmi.__abs__() > sd
+
     results = []
-    for k, g in groupby(enumerate(opposite_signs.values), key=lambda x: x[1]):
-        if k:
-            g = list(g)
-            results.append([g[0][0], len(g)])
+    if opposite_signs_criteria:
+        for k, g in groupby(enumerate(opposite_signs.values), key=lambda x: x[1]):
+            if k:
+                g = list(g)
+                results.append([g[0][0], len(g)])
+    else:
+        for k, g in groupby(enumerate(valid_criteria.values), key=lambda x: x[1]):
+            if k:
+                g = list(g)
+                results.append([g[0][0], len(g)])
+
 
     iods = pd.DataFrame(columns=['DMI', 'Años', 'Mes'], dtype=float)
     dmi_raw = []
@@ -219,8 +230,8 @@ def DMIndex(iodw, iode, sst_anom_sd=True, xsd=0.5):
 
 def DMI(per = 0, filter_bwa = True, filter_harmonic = True,
         filter_all_harmonic=True, harmonics = [],
-        start_per=1920, end_per=2020):
-
+        start_per=1920, end_per=2020,
+        sst_anom_sd=True, opposite_signs_criteria=True):
 
     western_io = slice(50, 70) # definicion tradicional
 
@@ -396,7 +407,7 @@ def DMI(per = 0, filter_bwa = True, filter_harmonic = True,
 
     ####################################### compute DMI #######################################
 
-    dmi_sy_full, dmi_raw = DMIndex(iodw_f, iode_f)
+    dmi_sy_full, dmi_raw = DMIndex(iodw_f, iode_f, sst_anom_sd=sst_anom_sd)
 
     return dmi_sy_full, dmi_raw, (iodw_f-iode_f)#, iodw_f - iode_f, iodw_f, iode_f
 
