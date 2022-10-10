@@ -6,7 +6,7 @@ data_dir2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/WAF/no_sstanoms/'
 
-save=False
+save=True
 ## Functions ###########################################################################################################
 def CompositeSimple(original_data, index, mmin, mmax):
     def is_months(month, mmin, mmax):
