@@ -1,6 +1,7 @@
 """
 Composites observado con filtro de tendencia corregida en las variables T, PP y las de ERA5
-Por ahora sin SIGNIFICANCIA, HAY QUE VOLVER A HACER EL TEST MC
+T, PP y HGT con sig. MC
+SST, VP y dig sin sig.
 """
 ########################################################################################################################
 import xarray as xr
@@ -19,7 +20,8 @@ warnings.filterwarnings("ignore")
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/' #fechas
 data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' #T y PP ya procesados
 data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/' # ERA5 ya procesados
-out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/'
+out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/'
+out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/'
 
 #Plot
 save = True
@@ -87,7 +89,8 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None):
 def Plot(comp, levels, cmap, step1, contour1=True,
          two_variables=False, comp2=None, levels2=np.linspace(-1,1,13), step2=4,
          mapa='sa', title='title', name_fig='name_fig', dpi=100, save=save,
-         comp_sig=None, color_sig='k', significance=True):
+         comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#4B4B4B',
+         out_dir=out_dir_w_sig):
 
     import matplotlib.pyplot as plt
 
@@ -116,7 +119,6 @@ def Plot(comp, levels, cmap, step1, contour1=True,
     else:
         levels_contour.remove(0)
 
-
     if two_variables:
         levels_contour2 = levels2.copy()
         comp_var2=comp2['var']
@@ -131,13 +133,11 @@ def Plot(comp, levels, cmap, step1, contour1=True,
     ax.set_extent(extent, crs=crs_latlon)
     if two_variables:
         ax.contour(comp2.lon[::step2], comp2.lat[::step2], comp_var2[::step2, ::step2],
-                   linewidths=.5, levels=levels_contour2, transform=crs_latlon, colors='k')
+                   linewidths=linewidht2, levels=levels_contour2, transform=crs_latlon, colors='k')
     else:
         if contour1:
             ax.contour(comp.lon[::step1], comp.lat[::step1], comp_var[::step1, ::step1],
                        linewidths=.8, levels=levels_contour, transform=crs_latlon, colors='black')
-
-
 
     im = ax.contourf(comp.lon[::step1], comp.lat[::step1], comp_var[::step1, ::step1],
                      levels=levels, transform=crs_latlon, cmap=cmap, extend='both')
@@ -149,15 +149,15 @@ def Plot(comp, levels, cmap, step1, contour1=True,
                          transform=crs_latlon, colors='none', hatches=["..", ".."], extend='lower')
         for i, collection in enumerate(cs.collections):
             collection.set_edgecolor(colors_l[i % len(colors_l)])
-        # Doing this also colors in the box around each level
-        # We can remove the colored line around the levels by setting the linewidth to 0
+
         for collection in cs.collections:
             collection.set_linewidth(0.)
 
     cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
     cb.ax.tick_params(labelsize=8)
-    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey')
-    ax.add_feature(cartopy.feature.COASTLINE)
+    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor=color_map)
+    ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    ax.coastlines(color=color_map, linestyle='-', alpha=1)
     ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
     ax.set_xticks(xticks, crs=crs_latlon)
     ax.set_yticks(yticks, crs=crs_latlon)
@@ -174,6 +174,7 @@ def Plot(comp, levels, cmap, step1, contour1=True,
         plt.close()
     else:
         plt.show()
+
 ########################################################################################################################
 # seasons = ('JJA', 'JAS', 'ASO', 'SON')
 # min_max_months = [[6,8],[7,9],[8,10],[9,11]]
@@ -344,12 +345,67 @@ for c in cases:
         comp1, num_case = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
                                           two_variables=False)
 
-        Plot(comp=comp1, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=True,
-             two_variables=False, mapa='tropical',
+        Plot(comp=comp1, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=False,
+             two_variables=False, mapa='tropical', significance=False,
              title='SST' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
              name_fig='SST_' + s + '_' + cases[c_count] + '_d',
-             dpi=dpi, save=save)
+             dpi=dpi, save=save, out_dir=out_dir_no_sig)
 
         s_count += 1
     c_count += 1
+
+# Vp y Div ------------------------------------------------------------------------------------------------------------#
+v_from_w = ['div_from_w', 'vp_from_w'] # creadas a partir de windphsere
+def Detrend(xrda, dim):
+    aux = xrda.polyfit(dim=dim, deg=1)
+    try:
+        trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients)
+    except:
+        trend = xr.polyval(xrda[dim], aux.polyfit_coefficients)
+    dt = xrda - trend
+    return dt
+
+def OrdenarNC_wTime_fromW(data):
+
+    newdata = xr.Dataset(
+        data_vars=dict(
+            var=(['time', 'lat', 'lon'], data['var'][0, :, :, :].values)
+
+        ),
+        coords=dict(
+            lon=(['lon'], data.lon),
+            lat=(['lat'], data.lat),
+            time=(['time'], data.time)
+        )
+    )
+
+    return newdata
+
+data1 = xr.open_dataset(data_dir_era5 + v_from_w[0] + '.nc')
+data1 = Detrend(OrdenarNC_wTime_fromW(data1.rename({'divergence':'var'})), 'time')
+data2 = xr.open_dataset(data_dir_era5 + v_from_w[1] + '.nc')
+data2 = Detrend(OrdenarNC_wTime_fromW(data2.rename({'velocity_potential':'var'})), 'time')
+
+c_count = 0
+for c in cases:
+    s_count = 0
+    for s in seasons:
+        comp1, num_case = CaseComp(data1, s, mmonth=min_max_months[s_count], c=c,
+                                   two_variables=False, data2=None)
+
+        comp2, num_case = CaseComp(data2, s, mmonth=min_max_months[s_count], c=c,
+                                   two_variables=False, data2=None)
+
+        Plot(comp=comp1, levels=np.linspace(-0.5e-5, 0.5e-5, 13), cmap=cbar_sst, step1=1, contour1=True,
+             two_variables=True, comp2=comp2, levels2=np.linspace(-4.5e6, 4.5e6, 13), significance=False,
+             mapa='HS',
+             title='Div200hpa [shade] - VP [cont.]' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+             name_fig='divp_' + s + '_' + cases[c_count] + '_d',
+             dpi=dpi, save=save, linewidht2=.8, out_dir=out_dir_no_sig)
+
+
+
+        s_count += 1
+    c_count += 1
+
 ########################################################################################################################
