@@ -61,6 +61,7 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None):
 
     try:
         case = aux[c]
+        case = case.where(case >= 1950)
         aux.close()
 
         case_num = len(case[c].where(case[c], drop=True).values)
