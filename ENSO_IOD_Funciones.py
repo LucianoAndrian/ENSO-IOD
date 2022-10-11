@@ -407,11 +407,14 @@ def DMI(per = 0, filter_bwa = True, filter_harmonic = True,
 
     ####################################### compute DMI #######################################
 
-    dmi_sy_full, dmi_raw = DMIndex(iodw_f, iode_f, sst_anom_sd=sst_anom_sd)
+    dmi_sy_full, dmi_raw = DMIndex(iodw_f, iode_f,
+                                   sst_anom_sd=sst_anom_sd,
+                                   opposite_signs_criteria=opposite_signs_criteria)
 
     return dmi_sy_full, dmi_raw, (iodw_f-iode_f)#, iodw_f - iode_f, iodw_f, iode_f
 
-def DMI2(end_per=1920, start_per=2020, filter_harmonic=True, filter_bwa=False):
+def DMI2(end_per=1920, start_per=2020, filter_harmonic=True, filter_bwa=False,
+         sst_anom_sd=True, opposite_signs_criteria=True):
 
     # argumentos fijos ------------------------------------------------------------------------------------------------#
     movinganomaly = False
@@ -538,7 +541,9 @@ def DMI2(end_per=1920, start_per=2020, filter_harmonic=True, filter_bwa=False):
     iode_f = xr.DataArray(iode_f, coords=[iodw.time.values], dims=['time'])
 
     # Compute DMI ######################################################################################################
-    dmi_sy_full, dmi_raw = DMIndex(iodw_f, iode_f)
+    dmi_sy_full, dmi_raw = DMIndex(iodw_f, iode_f,
+                                   sst_anom_sd=sst_anom_sd,
+                                   opposite_signs_criteria=opposite_signs_criteria)
     return dmi_sy_full, dmi_raw, (iodw_f - iode_f)
     ####################################################################################################################
 
