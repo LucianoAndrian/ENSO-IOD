@@ -9,7 +9,7 @@ from ENSO_IOD_Funciones import DMI2, Nino34CPC
 ########################################################################################################################
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/scatter/'
 save = True
-dpi = 100
+dpi = 400
 ########################################################################################################################
 i = 1920
 end = 2020
@@ -17,16 +17,22 @@ seasons = ['JJA', 'JAS', 'ASO', 'SON']
 seasons_n = [7,8,9,10]
 ########################################################################################################################
 # indices: ------------------------------------------------------------------------------------------------------------#
-dmi, dmi_2, dmi_3 = DMI2(filter_bwa=False, start_per=str(i), end_per=str(end))
+dmi, dmi_2, dmi_3 = DMI2(filter_bwa=False, start_per=str(i), end_per=str(end),
+                         sst_anom_sd=False, opposite_signs_criteria=False)
 
 aux = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
 n34, n34_2, n34_3 = Nino34CPC(aux, start=i)
 
+dmi_3 = dmi_3.sel(time=slice('1950-01-01', '2020-12-01'))
+dmi = dmi.where(dmi.Años>=1950).dropna()
+
+n34 = n34.sel(time=slice('1950-01-01', '2020-12-01'))
+n34_3 = n34_3.where(n34_3.Años>=1950).dropna()
+
+dmi_3 = dmi_3 / dmi_3.std('time')
+n34 = n34 / n34.std('time')
 
 for s in seasons_n:
-    dmi_3 = dmi_3 / dmi_3.std('time')
-    n34 = n34 / n34.std('time')
-
     dmi_todos = dmi_3.sel(time=dmi_3.time.dt.month.isin([s]))
     dmi_criteria_y = dmi.where((dmi.Mes == s)).Años.dropna().values
 
@@ -92,27 +98,27 @@ for s in seasons_n:
 
     plt.legend(loc=(-0,.63))
 
-    plt.ylim((-5, 5))
-    plt.xlim((-5, 5))
-    plt.axhspan(-.5, .5, alpha=0.2, color='black', zorder=0)
+    plt.ylim((-4, 4));
+    plt.xlim((-4, 4))
+    plt.axhspan(-.4, .4, alpha=0.2, color='black', zorder=0)
     plt.axvspan(-.5, .5, alpha=0.2, color='black', zorder=0)
     # ax.grid(True)
     fig.set_size_inches(6, 6)
     plt.xlabel('IOD', size=15)
     plt.ylabel('Niño 3.4', size=15)
 
-    plt.text(-4.8, 4.6, 'EN/IOD-', dict(size=15))
-    plt.text(-.3, 4.6, 'EN', dict(size=15))
-    plt.text(+3.3, 4.6, 'EN/IOD+', dict(size=15))
-    plt.text(+4, -.1, 'IOD+', dict(size=15))
-    plt.text(+3.6, -4.9, 'LN/IOD+', dict(size=15))
-    plt.text(-.3, -4.9, 'LN', dict(size=15))
-    plt.text(-4.8, -4.9, ' LN/IOD-', dict(size=15))
-    plt.text(-4.8, -.1, 'IOD-', dict(size=15))
+    plt.text(-3.8, 3.6, 'EN/IOD-', dict(size=15))
+    plt.text(-.3, 3.6, 'EN', dict(size=15))
+    plt.text(+2.3, 3.6, 'EN/IOD+', dict(size=15))
+    plt.text(+3, -.1, 'IOD+', dict(size=15))
+    plt.text(+2.6, -3.9, 'LN/IOD+', dict(size=15))
+    plt.text(-.3, -3.9, 'LN', dict(size=15))
+    plt.text(-3.8, -3.9, ' LN/IOD-', dict(size=15))
+    plt.text(-3.8, -.1, 'IOD-', dict(size=15))
     plt.title(seasons[s-7] + ' - ' + 'OBS')
     plt.tight_layout()
     if save:
-        plt.savefig(out_dir + 'ENSO_IOD_Scatter_' + seasons[s-7] + '_OBS.jpg')
+        plt.savefig(out_dir + 'ENSO_IOD_Scatter_NO SSTanoms' + seasons[s-7] + '_OBS.jpg')
     else:
         plt.show()
 ########################################################################################################################
