@@ -12,6 +12,8 @@ import xarray as xr
 import numpy as np
 from multiprocessing.pool import ThreadPool
 from ENSO_IOD_Funciones import SelectVariables
+import os
+os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
 cases_date_dir = '/pikachu/datos/luciano.andrian/cases_dates/'
 data_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
@@ -22,11 +24,10 @@ seasons = ['JJA', 'JAS', 'SON', 'ASO']
 cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg', 'sim_pos', 'sim_neg',
          'neutros', 'dmi_neg_n34_pos', 'dmi_pos_n34_neg']
 
-cases = ['dmi_neg_n34_pos', 'dmi_pos_n34_neg']
+#cases = ['dmi_neg_n34_pos', 'dmi_pos_n34_neg']
 
 
-#for v in variables:
-
+# SST ##################################################################################################################
 def SelectEvents(s):
     for c in cases:
         aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
@@ -74,9 +75,9 @@ def SelectEventsPP(s):
             aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
                 .rename({'sst': 'index'})
 
-        data_hgt_s = xr.open_dataset(data_dir + 'prec_' + s.lower() + '.nc' )
+        data_pp_s = xr.open_dataset(data_dir + 'prec_' + s.lower() + '.nc' )
 
-        case_events = SelectVariables(aux_cases, data_hgt_s)
+        case_events = SelectVariables(aux_cases, data_pp_s)
 
         case_events.to_netcdf(out_dir + 'prec_' + c + '_' + s + '.nc')
 
@@ -117,13 +118,57 @@ def SelectEventsPP(s):
         aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
             .rename({'__xarray_dataarray_variable__': 'index'})
 
-        data_hgt_s = xr.open_dataset(data_dir + 'prec_' + s.lower() + '_nodetrend.nc' )
+        data_prec_s = xr.open_dataset(data_dir + 'prec_' + s.lower() + '_nodetrend.nc' )
 
-        case_events = SelectVariables(aux_cases, data_hgt_s)
+        case_events = SelectVariables(aux_cases, data_prec_s)
 
         case_events.to_netcdf(out_dir + 'prec_' + c + '_' + s + '_nodetrend.nc')
 
 # Multiprocess #########################################################################################################
 pool = ThreadPool(4) # uno por season
 pool.map(SelectEventsPP, [s for s in seasons])
+########################################################################################################################
+
+# DMI ##################################################################################################################
+cases_data_dir_dmi = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/'
+def SelectEventsDMI(s):
+    for c in cases:
+        try:
+            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                .rename({'__xarray_dataarray_variable__': 'index'})
+        except:
+            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                .rename({'sst': 'index'})
+
+        data_dmi_s = xr.open_dataset(cases_data_dir_dmi + 'DMI_' + s + '_Leads_r_CFSv2.nc')
+
+        case_events = SelectVariables(aux_cases, data_dmi_s)
+
+        case_events.to_netcdf(out_dir + 'dmi_values_' + c + '_' + s + '.nc')
+
+# Multiprocess #########################################################################################################
+pool = ThreadPool(4) # uno por season
+pool.map(SelectEventsDMI, [s for s in seasons])
+########################################################################################################################
+
+# N34 ##################################################################################################################
+cases_data_dir_dmi = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/'
+def SelectEventsN34(s):
+    for c in cases:
+        try:
+            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                .rename({'__xarray_dataarray_variable__': 'index'})
+        except:
+            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                .rename({'sst': 'index'})
+
+        data_n34_s = xr.open_dataset(cases_data_dir_dmi + 'N34_' + s + '_Leads_r_CFSv2.nc')
+
+        case_events = SelectVariables(aux_cases, data_n34_s)
+
+        case_events.to_netcdf(out_dir + 'N34_values_' + c + '_' + s + '.nc')
+
+# Multiprocess #########################################################################################################
+pool = ThreadPool(4) # uno por season
+pool.map(SelectEventsN34, [s for s in seasons])
 ########################################################################################################################
