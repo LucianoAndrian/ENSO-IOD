@@ -28,10 +28,10 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import cartopy.crs as ccrs
 from sklearn.cluster import KMeans
 from threadpoolctl import threadpool_limits
-#from ENSO_IOD_Funciones import SelectNMMEFiles, MakeMask
+from ENSO_IOD_Funciones import SelectNMMEFiles, MakeMask
 ########################################################################################################################
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Regiones/'
-save=True
+save=False
 dpi=150
 ########################################################################################################################
 # Funciones ############################################################################################################
@@ -134,7 +134,7 @@ def KM(data, n_clusters, centroids=False, reshape_dim=[56,76]):
     else:
         return y_pred.reshape(reshape_dim[0], reshape_dim[1]).T
 
-def PlotCentroids(serie, dpi, title, label, name_fig, save, ymax=400):
+def PlotCentroids(serie, dpi, title, label, name_fig, save, ymax=400, ymin=0):
     fig = plt.figure(figsize=(6, 3), dpi=dpi)
     ax = fig.add_subplot(111)
     ax.plot(serie, linewidth=2, color='dodgerblue', label='Cluster ' + label)
@@ -142,7 +142,7 @@ def PlotCentroids(serie, dpi, title, label, name_fig, save, ymax=400):
     ax.tick_params(labelsize=7)
     ax.set_xlabel('Months')
     ax.set_xticks(range(0,12), ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'], size=10)
-    plt.ylim(0,ymax)
+    plt.ylim(ymin,ymax)
     plt.title(title, fontsize=10)
     plt.legend()
     plt.grid()
@@ -250,26 +250,29 @@ for b in ['pp_gpcc_or', 'cmap']:
 dir_hc = '/pikachu/datos/osman/nmme/monthly/hindcast/'
 dir_rt = '/pikachu/datos/osman/nmme/monthly/real_time/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Regiones/'
-v = 'prec'
+out_data_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
+v = 'tref'
 
-files = SelectNMMEFiles(model_name='NCEP-CFSv2', variable=v,
+try:
+    data_cfsv2 = xr.open_dataset(out_data_dir + v + '_data_cfsv2_noRoll.nc')
+except:
+    files = SelectNMMEFiles(model_name='NCEP-CFSv2', variable=v,
                         dir=dir_hc, All=True)
-files = sorted(files, key=lambda x: x.split()[0])
+    files = sorted(files, key=lambda x: x.split()[0])
 
-#abriendo todos los archivos
-data = xr.open_mfdataset(files, decode_times=False).sel(L=[0.5, 1.5, 2.5, 3.5]) #xr no entiende la codificacion de Leads, r y las fechas
-data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
-data['L'] = [0,1,2,3]
-data = xr.decode_cf(fix_calendar(data)) # corrigiendo fechas
-data = data.sel(lon=slice(275, 330), lat=slice(-60, 15))
-data = data.sel(r=slice(1,24))
-aux_data = data.mean('r').polyfit(dim='time', deg=1)
-# aux_trend = xr.polyval(data['time'], aux_data.prec_polyfit_coefficients)
-# data_d = data - aux_trend
+    #abriendo todos los archivos
+    data_cfsv2 = xr.open_mfdataset(files, decode_times=False).sel(L=[0.5, 1.5, 2.5, 3.5]) #xr no entiende la codificacion de Leads, r y las fechas
+    data_cfsv2 = data_cfsv2.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
+    data_cfsv2['L'] = [0,1,2,3]
+    data_cfsv2 = xr.decode_cf(fix_calendar(data_cfsv2)) # corrigiendo fechas
+    data_cfsv2 = data_cfsv2.sel(lon=slice(275, 330), lat=slice(-60, 15))
+    data_cfsv2 = data_cfsv2.sel(r=slice(1,24))
+    data_cfsv2.to_netcdf(out_data_dir + v + '_data_cfsv2_noRoll.nc')
+    data_cfsv2 = data_cfsv2.compute()
 
 # Por leadtimes -------------------------------------------------------------------------------------------------------#
 for l in [0,1,2,3]:
-    data2 = data.sel(L=l)
+    data2 = data_cfsv2.sel(L=l)
     #data2 = data2.sel(lon=slice(290, 330), lat=slice(-60, 0))
     data_clim = data2.groupby('time.month').mean()
     data_clim = data_clim.mean(['r'])
@@ -279,7 +282,7 @@ for l in [0,1,2,3]:
     #data_clim *= mask
 
     #### k-means #####
-    X = data_clim.stack(new=['lon', 'lat'])['prec'].T
+    X = data_clim.stack(new=['lon', 'lat'])[v].T
     SilhScore(X, title=b, name_fig=str(l) + 'SilhScore', save=True)
     for n_c in [7, 8, 9, 10]:
         clusters, centroids = KM(data=X, n_clusters=n_c, centroids=True)
@@ -362,52 +365,54 @@ for b in ['pp_gpcc_or', 'cmap']:
                                        '_n_c' + str(n_c) + '_preBox-' + str(pb),
                               dpi=100, save=save, ymax=500)
 
-for l in [0,1,2,3]:
-    data2 = data.sel(L=l)
+pb = 0
+for l in [0]:
+    data2 = data_cfsv2.sel(L=l)
     #data2 = data2.sel(lon=slice(290, 330), lat=slice(-60, 0))
     data_clim = data2.groupby('time.month').mean()
     data_clim = data_clim.mean(['r'])
     data_clim = data_clim.rename({'month': 'time'})
     data_clim.load()
-    data_clim *= 30
+    if v == 'prec':
+        data_clim *= 30
     #data_clim *= mask
 
-    for pb in pre_box:
-        pp2 = data_clim.sel(lon=slice(pre_box_lon[pb][0], pre_box_lon[pb][1]),
-                     lat=slice(pre_box_lat[pb][0], pre_box_lat[pb][1]))
-        #### k-means #####
-        X = pp2.stack(new=['lon', 'lat'])['prec'].T
-        X[np.where(np.isnan(X))] = -99
 
-        SilhScore(X, title='CFSv2' + ' - pre Box: ' + str(pb), name_fig='CFSv2_L' + str(l) + '_SilhScore_Box' + str(pb), save=True)
+    pp2 = data_clim.sel(lon=slice(pre_box_lon[pb][0], pre_box_lon[pb][1]),
+                            lat=slice(pre_box_lat[pb][0], pre_box_lat[pb][1]))
+    #### k-means #####
+    X = pp2.stack(new=['lon', 'lat'])[v].T
+    X[np.where(np.isnan(X))] = -99
 
-        for n_c in [4, 5, 6, 7, 8]:
-            reshape_lat_dim = len(range(pre_box_lat[pb][0], pre_box_lat[pb][1])) + 1
-            reshape_lon_dim = len(range(pre_box_lon[pb][0], pre_box_lon[pb][1])) + 1
+#        SilhScore(X, title='CFSv2' + ' - pre Box: ' + str(pb), name_fig='CFSv2_L' + str(l) + '_SilhScore_Box' + str(pb), save=True)
 
-            clusters, centroids = KM(data=X, n_clusters=n_c, centroids=True,
-                                     reshape_dim=[reshape_lon_dim, reshape_lat_dim])
+    for n_c in [4,6,7,8]:
+        reshape_lat_dim = len(range(pre_box_lat[pb][0], pre_box_lat[pb][1])) + 1
+        reshape_lon_dim = len(range(pre_box_lon[pb][0], pre_box_lon[pb][1])) + 1
 
-            xr_cluster_label = MakeMask(pp2, dataname='cluster')
-            xr_cluster_label['cluster'].values = clusters
+        clusters, centroids = KM(data=X, n_clusters=n_c, centroids=True,
+                                 reshape_dim=[reshape_lon_dim, reshape_lat_dim])
 
-            # xr_cluster_label *= MakeMask(data_clim, dataname='cluster')
-            xr_cluster_label = xr_cluster_label.interp(
-                lat=np.linspace(pre_box_lat[pb][0], pre_box_lat[pb][1], reshape_lat_dim * 8),
-                lon=np.linspace(pre_box_lon[pb][0], pre_box_lon[pb][1], reshape_lon_dim * 8),
-                method='nearest')
+        xr_cluster_label = MakeMask(pp2, dataname='cluster')
+        xr_cluster_label['cluster'].values = clusters
 
-            Plot(comp=xr_cluster_label, levels=np.arange(0, n_c, 1), cmap='tab20',
-                 title='CFSv2 Leadtime: ' + str(l) + ' - n_clusters: ' + str(n_c),
-                 name_fig='CFSv2_L' + str(l) + '_n_c' + str(n_c) + '_preBox-' + str(pb),
-                 dpi=dpi, save=save, OceanMask=True)
+        # xr_cluster_label *= MakeMask(data_clim, dataname='cluster')
+        xr_cluster_label = xr_cluster_label.interp(
+            lat=np.linspace(pre_box_lat[pb][0], pre_box_lat[pb][1], reshape_lat_dim * 8),
+            lon=np.linspace(pre_box_lon[pb][0], pre_box_lon[pb][1], reshape_lon_dim * 8),
+            method='nearest')
 
-            for n_c2 in np.arange(0, n_c, 1):
-                PlotCentroids(serie=centroids[n_c2, :], label=str(n_c2),
-                              title='CFSv2 Leadtime ' + str(l) + 'Centroids cluster ' + str(n_c2) + '\n' +
-                                    '- total Clusters' + str(n_c) + ' - pre Box ' + str(pb),
-                              name_fig='CFSv2_L' + str(l) + '_centroid_n_c2' + str(n_c2) + '_n_c'
-                                       + str(n_c) + '_preBox-' + str(pb),
-                              dpi=100, save=save, ymax=500)
+        Plot(comp=xr_cluster_label, levels=np.arange(0, n_c, 1), cmap='tab20',
+             title='CFSv2 Leadtime: ' + str(l) + ' - n_clusters: ' + str(n_c),
+             name_fig='CFSv2_L' + str(l) + '_n_c' + str(n_c) + '_preBox-' + str(pb),
+             dpi=dpi, save=save, OceanMask=True)
+
+        for n_c2 in np.arange(0, n_c, 1):
+            PlotCentroids(serie=centroids[n_c2, :], label=str(n_c2),
+                          title='CFSv2 Leadtime ' + str(l) + 'Centroids cluster ' + str(n_c2) + '\n' +
+                                '- total Clusters' + str(n_c) + ' - pre Box ' + str(pb),
+                          name_fig='CFSv2_L' + str(l) + '_centroid_n_c2' + str(n_c2) + '_n_c'
+                                   + str(n_c) + '_preBox-' + str(pb),
+                          dpi=100, save=save, ymax=300, ymin=280)
 
 ########################################################################################################################
