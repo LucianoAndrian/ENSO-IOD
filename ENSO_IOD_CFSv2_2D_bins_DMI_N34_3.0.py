@@ -473,7 +473,7 @@ for s in ['JJA', 'JAS', 'ASO', 'SON']:
     Plot2D_1_1(aux, aux_num, dpi=dpi,
            cmap=cbar_Prueba, vmin=-44, vmax=44, levels=np.arange(-44, 44, 8),
            title='S-SESA - ' + s + ' PP',
-           name_fig='kmean_PRUEBA__S_SESA_cuad_1-1' + s,
+           name_fig='kmean_SESA_cuad_1-1' + s,
            save=save)
     mm += 1
 
@@ -505,7 +505,7 @@ for s in ['JJA', 'JAS', 'ASO', 'SON']:
     Plot2D_1_1(aux, aux_num, dpi=dpi,
            cmap=cbar_Prueba, vmin=-44, vmax=44, levels=np.arange(-44, 44, 8),
            title='S-SESA - ' + s + ' PP',
-           name_fig='kmean_PRUEBA__S_SESA_cuad_1-1' + s,
+           name_fig='kmean_out_SESA_cuad_1-1' + s,
            save=save)
     mm += 1
 ########################################################################################################################
