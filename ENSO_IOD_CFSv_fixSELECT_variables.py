@@ -24,7 +24,7 @@ seasons = ['JJA', 'JAS', 'SON', 'ASO']
 cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg', 'sim_pos', 'sim_neg',
          'neutros', 'dmi_neg_n34_pos', 'dmi_pos_n34_neg']
 
-#cases = ['dmi_neg_n34_pos', 'dmi_pos_n34_neg']
+cases = ['dmi_neg_n34_pos', 'dmi_pos_n34_neg']
 
 
 # SST ##################################################################################################################
@@ -171,4 +171,24 @@ def SelectEventsN34(s):
 # Multiprocess #########################################################################################################
 pool = ThreadPool(4) # uno por season
 pool.map(SelectEventsN34, [s for s in seasons])
+########################################################################################################################
+
+# T - NO DETREND #######################################################################################################
+def SelectEventsT(s):
+    for c in cases:
+        try:
+            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                .rename({'__xarray_dataarray_variable__': 'index'})
+        except:
+            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                .rename({'sst': 'index'})
+        data_prec_s = xr.open_dataset(data_dir + 'tref_' + s.lower() + '_nodetrend.nc' )
+
+        case_events = SelectVariables(aux_cases, data_prec_s)
+
+        case_events.to_netcdf(out_dir + 'tref_' + c + '_' + s + '_nodetrend.nc')
+
+# Multiprocess #########################################################################################################
+pool = ThreadPool(4) # uno por season
+pool.map(SelectEventsT, [s for s in seasons])
 ########################################################################################################################

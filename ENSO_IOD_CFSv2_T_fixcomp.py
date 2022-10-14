@@ -15,7 +15,7 @@ warnings.filterwarnings('ignore')
 ########################################################################################################################
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/T/'
-save = True
+save = False
 dpi = 200
 # Funciones ############################################################################################################
 def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
@@ -113,16 +113,16 @@ mask = xr.where(np.isnan(mask), mask, 1)
 scale_signal =  np.linspace(-1.2,1.2,13)
 scale_snr = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
 scale_prob = [.2,.3,.4,.45,.5,.55,.6,.7,.8]
-
+from ENSO_IOD_Funciones import MakeMask
 
 for s in seasons:
-    neutro = xr.open_dataset(cases_dir + 'tref_neutros_' + s + '.nc').rename({'tref':'var'})
+    neutro = xr.open_dataset(cases_dir + 'tref_neutros_' + s + '_nodetrend.nc').rename({'tref':'var'})
     c_count = 0
     for c in cases:
-        case = xr.open_dataset(cases_dir + 'tref_' +  c + '_' + s + '.nc').rename({'tref':'var'})
+        case = xr.open_dataset(cases_dir + 'tref_' +  c + '_' + s + '_nodetrend.nc').rename({'tref':'var'})
         try:
             num_case = len(case.time)
-
+            mask=MakeMask(comp, 'var')
             # signal (comp)
             comp = case.mean('time') - neutro.mean('time')
             comp *= mask

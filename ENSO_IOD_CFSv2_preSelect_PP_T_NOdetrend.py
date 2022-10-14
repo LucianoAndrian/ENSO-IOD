@@ -7,13 +7,13 @@ Anomalías respecto a la climatologia del hindcast y detrend de las anomalias
 import xarray as xr
 import numpy as np
 import pymannkendall as mk
-#from ENSO_IOD_Funciones import SelectNMMEFiles
+from ENSO_IOD_Funciones import SelectNMMEFiles
 #######################################################################################################################
 dir_hc = '/pikachu/datos/osman/nmme/monthly/hindcast/'
 dir_rt = '/pikachu/datos/osman/nmme/monthly/real_time/'
 out_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
-v = 'prec'
-save_nc = False
+v = 'tref'
+save_nc = True
 testtrend = True
 # Funciones ############################################################################################################
 def fix_calendar(ds, timevar='time'):
@@ -245,15 +245,43 @@ files = SelectNMMEFiles(model_name='NCEP-CFSv2', variable=v,
                         dir=dir_rt, All=True)
 files = sorted(files, key=lambda x: x.split()[0])
 
-#abriendo todos los archivos
-data = xr.open_mfdataset(files, decode_times=False) #xr no entiende la codificacion de Leads, r y las fechas
-data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
-data = data.sel(L=[0.5, 1.5, 2.5, 3.5]) # Solo leads 0 1 2 3
-data['L'] = [0,1,2,3]
-data = xr.decode_cf(fix_calendar(data)) # corrigiendo fechas
-data = data.sel(time = data.time.dt.year.isin(np.linspace(2011,2020,10)))
-data = data.sel(lon=slice(275, 330), lat=slice(-60, 15))
-data = data.sel(r=slice(1,24))
+if v=='prec':
+    # abriendo todos los archivos
+    data = xr.open_mfdataset(files, decode_times=False)  # xr no entiende la codificacion de Leads, r y las fechas
+    data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
+    data = data.sel(L=[0.5, 1.5, 2.5, 3.5])  # Solo leads 0 1 2 3
+    data['L'] = [0, 1, 2, 3]
+    data = xr.decode_cf(fix_calendar(data))  # corrigiendo fechas
+    data = data.sel(time=data.time.dt.year.isin(np.linspace(2011, 2020, 10)))
+    data = data.sel(lon=slice(275, 330), lat=slice(-60, 15))
+    data = data.sel(r=slice(1, 24))
+else:
+    print(v)
+    print('(es una mierda...)')
+    files = [x for x in files if "_2022" not in x and '_2021' not in x]
+
+    # para evitar: ValueError: Resulting object does not have monotonic global indexes along dimension
+    # en xr.open_mfdataset
+    files0 = files[0:252]
+    files1 = files[253:len(files)]
+
+    data0 = xr.open_mfdataset(files0, decode_times=False).sel(
+        L=[0.5, 1.5, 2.5, 3.5], M=slice(1, 24), X=slice(275, 330), Y=slice(-60, 15))
+
+    data1 = xr.open_mfdataset(files1, decode_times=False).sel(
+        L=[0.5, 1.5, 2.5, 3.5], M=slice(1, 24), X=slice(275, 330), Y=slice(-60, 15))
+
+    data0 = data0.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
+    data0['L'] = [0, 1, 2, 3]
+    data0 = xr.decode_cf(fix_calendar(data0))  # corrigiendo fechas
+    data0 = data0.sel(time=data0.time.dt.year.isin(2011))
+
+    data1 = data1.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
+    data1['L'] = [0, 1, 2, 3]
+    data1 = xr.decode_cf(fix_calendar(data1))  # corrigiendo fechas
+    data1 = data1.sel(time=data1.time.dt.year.isin(np.linspace(2012, 2020, 9)))
+
+    data = xr.concat([data0, data1], dim='time')
 
 #- Anomalias detrend por seasons --------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------------#
@@ -275,10 +303,10 @@ son_f = xr.concat([son_hindcast, son_realtime], dim='time')
 
 # save ----------------------------------------------------------------------------------------------------------------#
 if save_nc:
-    jja_f.to_netcdf(out_dir + 'prec_jja_nodetrend.nc')
-    jas_f.to_netcdf(out_dir + 'prec_jas_nodetrend.nc')
-    aso_f.to_netcdf(out_dir + 'prec_aso_nodetrend.nc')
-    son_f.to_netcdf(out_dir + 'prec_son_nodetrend.nc')
+    jja_f.to_netcdf(out_dir + v + '_jja_nodetrend.nc')
+    jas_f.to_netcdf(out_dir + v + '_jas_nodetrend.nc')
+    aso_f.to_netcdf(out_dir + v + '_aso_nodetrend.nc')
+    son_f.to_netcdf(out_dir + v + '_son_nodetrend.nc')
 
 ########################################################################################################################
 
@@ -290,22 +318,22 @@ if testtrend:
     aso_trend_test = TestTrendMK(data_dask=aso_f, main_month_season=9)
     son_trend_test = TestTrendMK(data_dask=son_f, main_month_season=10)
 
-    jja_trend_test = jja_trend_test.rename({'prec': 'var'})
-    jas_trend_test = jas_trend_test.rename({'prec': 'var'})
-    aso_trend_test = aso_trend_test.rename({'prec': 'var'})
-    son_trend_test = son_trend_test.rename({'prec': 'var'})
+    jja_trend_test = jja_trend_test.rename({v: 'var'})
+    jas_trend_test = jas_trend_test.rename({v: 'var'})
+    aso_trend_test = aso_trend_test.rename({v: 'var'})
+    son_trend_test = son_trend_test.rename({v: 'var'})
 
 
     for l in [0, 1, 2, 3]:
         Plot(comp=jja_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
-             title='JJA - Significant Trend - Leadtime ' + str(l), name_fig='jja_trend_l_' + str(l))
+             title=v + ' JJA - Significant Trend - Leadtime ' + str(l), name_fig=v + 'jja_trend_l_' + str(l))
 
         Plot(comp=jas_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
-             title='JAS - Significant Trend - Leadtime ' + str(l), name_fig='jas_trend_l_' + str(l))
+             title=v + ' JAS - Significant Trend - Leadtime ' + str(l), name_fig=v + 'jas_trend_l_' + str(l))
 
         Plot(comp=aso_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
-             title='ASO - Significant Trend - Leadtime ' + str(l), name_fig='aso_trend_l_' + str(l))
+             title=v + ' ASO - Significant Trend - Leadtime ' + str(l), name_fig=v + 'aso_trend_l_' + str(l))
 
         Plot(comp=son_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
-             title='SON - Significant Trend - Leadtime ' + str(l), name_fig='son_trend_l_' + str(l))
+             title=v + ' SON - Significant Trend - Leadtime ' + str(l), name_fig=v + 'son_trend_l_' + str(l))
 
