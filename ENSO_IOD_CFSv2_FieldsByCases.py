@@ -8,6 +8,7 @@ import xarray as xr
 import numpy as np
 import os
 from matplotlib import colors
+import matplotlib.path as mpath
 import cartopy.feature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import cartopy.crs as ccrs
@@ -190,7 +191,8 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                          levels_main, cbar_main, levels_clim, cbar_clim,
                          title_var, name_fig, dpi,
                          x_lon=np.arange(280, 330, 10), x_lat=np.arange(-60, 20, 20),
-                         figsize=[16,17], usemask=True, hcolorbar=False):
+                         figsize=[16,17], usemask=True, hcolorbar=False, save=True,
+                         proj='eq'):
     # no, una genialidad...
     #sec_plot = [7, 2, 22, 17, 13, 14, 10, 11, 8, 9, 3, 4, 20, 21, 15, 16, 23, 24, 18, 19, 5, 6, 0, 1]  # , 12]
     sec_plot = [13, 14, 10, 11,
@@ -214,9 +216,15 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
         cr = 0
 
         crs_latlon = ccrs.PlateCarree()
-        fig, axs = plt.subplots(nrows=5, ncols=5,
-                                subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
-                                figsize=(figsize[0], figsize[1]))
+        if proj=='eq':
+            fig, axs = plt.subplots(nrows=5, ncols=5,
+                                    subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
+                                    figsize=(figsize[0], figsize[1]))
+        else:
+            fig, axs = plt.subplots(nrows=5, ncols=5,
+                                    subplot_kw={'projection': ccrs.SouthPolarStereo(central_longitude=200)},
+                                    figsize=(figsize[0], figsize[1]))
+
         axs = axs.flatten()
         for c_count in [0, 1, 2, 3, 4, 5, 6, 7]:  # , 8]: # Loop en los cases -{neutro}
             cases_bin, num_bin, aux = BinsByCases(v=v, v_name=v_name, fix_factor=fix_factor,
@@ -232,6 +240,10 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
             for b_dmi in range(0, len(bins_aux_dmi)):
                 for b_n34 in range(0, len(bins_aux_n34)):
                     n = sec_plot[sec_count]
+                    if proj != 'eq':
+                        axs[n].set_extent([30, 340, -90, 0],
+                                          ccrs.PlateCarree(central_longitude=200))
+
                     comp_case = cases_bin[b_dmi][b_n34]
                     if usemask:
                         comp_case *= mask
@@ -247,13 +259,32 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
 
                     axs[n].add_feature(cartopy.feature.LAND, facecolor='lightgrey')
                     axs[n].add_feature(cartopy.feature.COASTLINE)
-                    axs[n].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
-                    axs[n].set_xticks(x_lon, crs=crs_latlon)
-                    axs[n].set_yticks(x_lat, crs=crs_latlon)
-                    lon_formatter = LongitudeFormatter(zero_direction_label=True)
-                    lat_formatter = LatitudeFormatter()
-                    axs[n].xaxis.set_major_formatter(lon_formatter)
-                    axs[n].yaxis.set_major_formatter(lat_formatter)
+                    if proj=='eq':
+                        axs[n].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
+                        axs[n].set_xticks(x_lon, crs=crs_latlon)
+                        axs[n].set_yticks(x_lat, crs=crs_latlon)
+                        lon_formatter = LongitudeFormatter(zero_direction_label=True)
+                        lat_formatter = LatitudeFormatter()
+                        axs[n].xaxis.set_major_formatter(lon_formatter)
+                        axs[n].yaxis.set_major_formatter(lat_formatter)
+                    else:
+                        gls = axs[n].gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
+                                               y_inline=True, xlocs=range(-180, 180, 30), ylocs=np.arange(-80, 0, 20))
+
+                        r_extent = 1.2e7
+                        axs[n].set_xlim(-r_extent, r_extent)
+                        axs[n].set_ylim(-r_extent, r_extent)
+                        circle_path = mpath.Path.unit_circle()
+                        circle_path = mpath.Path(circle_path.vertices.copy() * r_extent,
+                                                 circle_path.codes.copy())
+                        axs[n].set_boundary(circle_path)
+                        axs[n].set_frame_on(False)
+                        plt.draw()
+                        for ea in gls._labels:
+                            pos = ea[2].get_position()
+                            if (pos[0] == 150):
+                                ea[2].set_position([0, pos[1]])
+
                     axs[n].tick_params(labelsize=5)
                     if n == 0 or n == 1 or n == 2 or n == 3 or n == 4:
                         axs[n].set_title(col_titles[n], fontsize=15)
@@ -280,20 +311,49 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
 
         im2 = axs[12].contourf(aux.lon, aux.lat, comp_case_clim,
                                levels=levels_clim, transform=crs_latlon, cmap=cbar_clim, extend='max')
+
+        axs[12].add_feature(cartopy.feature.LAND, facecolor='lightgrey')
+        axs[12].add_feature(cartopy.feature.COASTLINE)
         if v_name != 'hgt':
             cb = plt.colorbar(im2, fraction=0.042, pad=0.032, shrink=1, ax=axs[12], aspect=20)
             cb.ax.tick_params(labelsize=10)
 
-        axs[12].add_feature(cartopy.feature.LAND, facecolor='lightgrey')
-        axs[12].add_feature(cartopy.feature.COASTLINE)
-        axs[12].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
-        axs[12].set_xticks(x_lon, crs=crs_latlon)
-        axs[12].set_yticks(x_lat, crs=crs_latlon)
-        lon_formatter = LongitudeFormatter(zero_direction_label=True)
-        lat_formatter = LatitudeFormatter()
-        axs[12].xaxis.set_major_formatter(lon_formatter)
-        axs[12].yaxis.set_major_formatter(lat_formatter)
-        axs[12].tick_params(labelsize=5)
+        if proj == 'eq':
+            axs[12].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
+            axs[12].set_xticks(x_lon, crs=crs_latlon)
+            axs[12].set_yticks(x_lat, crs=crs_latlon)
+            lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            lat_formatter = LatitudeFormatter()
+            axs[12].xaxis.set_major_formatter(lon_formatter)
+            axs[12].yaxis.set_major_formatter(lat_formatter)
+        else:
+            gls = axs[12].gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
+                                   y_inline=True, xlocs=range(-180, 180, 30), ylocs=np.arange(-80, 0, 20))
+
+            r_extent = 1.2e7
+            axs[12].set_xlim(-r_extent, r_extent)
+            axs[12].set_ylim(-r_extent, r_extent)
+            circle_path = mpath.Path.unit_circle()
+            circle_path = mpath.Path(circle_path.vertices.copy() * r_extent,
+                                     circle_path.codes.copy())
+            axs[12].set_boundary(circle_path)
+            axs[12].set_frame_on(False)
+            plt.draw()
+            for ea in gls._labels:
+                pos = ea[2].get_position()
+                if (pos[0] == 150):
+                    ea[2].set_position([0, pos[1]])
+
+        # axs[12].add_feature(cartopy.feature.LAND, facecolor='lightgrey')
+        # axs[12].add_feature(cartopy.feature.COASTLINE)
+        # axs[12].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
+        # axs[12].set_xticks(x_lon, crs=crs_latlon)
+        # axs[12].set_yticks(x_lat, crs=crs_latlon)
+        # lon_formatter = LongitudeFormatter(zero_direction_label=True)
+        # lat_formatter = LatitudeFormatter()
+        # axs[12].xaxis.set_major_formatter(lon_formatter)
+        # axs[12].yaxis.set_major_formatter(lat_formatter)
+        # axs[12].tick_params(labelsize=5)
 
         # Colorbar, por ahora vertical. tratando de optimizar el espacio en la verticar de la figura...
         if hcolorbar:
@@ -313,12 +373,15 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
             fig.subplots_adjust(top=0.93, bottom=0.07)
         else:
             fig.subplots_adjust(top=0.93)
-        if snr:
-            plt.savefig(out_dir + 'SNR_' + name_fig + '_' + s + '.jpg', bbox_inches='tight', dpi=dpi)
-        else:
-            plt.savefig(out_dir + name_fig + '_' + s + '.jpg', bbox_inches='tight', dpi=dpi)
+        if save:
+            if snr:
+                plt.savefig(out_dir + 'SNR_' + name_fig + '_' + s + '.jpg', bbox_inches='tight', dpi=dpi)
+            else:
+                plt.savefig(out_dir + name_fig + '_' + s + '.jpg', bbox_inches='tight', dpi=dpi)
 
-        plt.close('all')
+            plt.close('all')
+        else:
+            plt.show()
         mm += 1
 
 
@@ -485,14 +548,15 @@ except:
     data = data.sel(L=[0.5, 1.5, 2.5, 3.5])  # Solo leads 0 1 2 3
     data['L'] = [0, 1, 2, 3]
     data = xr.decode_cf(fix_calendar(data))  # corrigiendo fechas
-    data = data.sel(lon=slice(30, 340), lat=slice(-80, 20), P=200)
+    #data = data.sel(lon=slice(30, 340), lat=slice(-80, 20), P=200)
+    data = data.sel(lat=slice(-90, 20), P=200)
     data = data.drop('P')
     data = data.sel(r=slice(1, 24))
 
     # media movil de 3 meses para separar en estaciones
     data = data.rolling(time=3, center=True).mean()
-    #data = data.to_netcdf(out_data_dir + 'hgt_data_full.nc')
-    data = data.compute()
+    data = data.to_netcdf(out_data_dir + 'hgt_data_full_0_360.nc')
+    #data = data.compute()
 
 #----------------------------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------------#
@@ -506,7 +570,7 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=False,
                      levels_clim=levels_clim, cbar_clim='Spectral',
                      title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=500,
                      x_lon=np.arange(30, 340, 25), x_lat=np.arange(-80, 20, 10),
-                     figsize=[20,12], usemask=False, hcolorbar=True)
+                     figsize=[20,12], usemask=False, hcolorbar=True, save=False)
 
 # Signal-to-Noise ratio
 levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
@@ -519,3 +583,4 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=True,
                      x_lon=np.arange(30, 340, 25), x_lat=np.arange(-80, 20, 10),
                      figsize=[20, 13], usemask=False, hcolorbar=True)
 ########################################################################################################################
+

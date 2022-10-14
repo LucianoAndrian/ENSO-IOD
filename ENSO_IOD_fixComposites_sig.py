@@ -7,6 +7,7 @@ SST, VP y dig sin sig.
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.path as mpath
 from matplotlib import colors
 import cartopy.feature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
@@ -91,7 +92,7 @@ def Plot(comp, levels, cmap, step1, contour1=True,
          two_variables=False, comp2=None, levels2=np.linspace(-1,1,13), step2=4,
          mapa='sa', title='title', name_fig='name_fig', dpi=100, save=save,
          comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#4B4B4B',
-         out_dir=out_dir_w_sig):
+         out_dir=out_dir_w_sig, proj='eq'):
 
     import matplotlib.pyplot as plt
 
@@ -112,6 +113,8 @@ def Plot(comp, levels, cmap, step1, contour1=True,
         extent = [30, 330, -80, 20]
         xticks = np.arange(30, 330, 30)
         yticks = np.arange(-80, 20, 10)
+        if proj != 'eq':
+            fig_size = (5, 5)
 
     levels_contour = levels.copy()
     comp_var = comp['var']
@@ -128,10 +131,18 @@ def Plot(comp, levels, cmap, step1, contour1=True,
         else:
             levels_contour2.remove(0)
 
-    fig = plt.figure(figsize=fig_size, dpi=dpi)
-    ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     crs_latlon = ccrs.PlateCarree()
-    ax.set_extent(extent, crs=crs_latlon)
+    fig = plt.figure(figsize=fig_size, dpi=dpi)
+    if proj=='eq':
+        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+        ax.set_extent(extent, crs=crs_latlon)
+    else:
+        ax = plt.axes(projection=ccrs.SouthPolarStereo(central_longitude=200))
+        ax.set_extent([30, 340, -90, 0],
+                          ccrs.PlateCarree(central_longitude=200))
+
+    
+    
     if two_variables:
         ax.contour(comp2.lon[::step2], comp2.lat[::step2], comp_var2[::step2, ::step2],
                    linewidths=linewidht2, levels=levels_contour2, transform=crs_latlon, colors='k')
@@ -159,13 +170,33 @@ def Plot(comp, levels, cmap, step1, contour1=True,
     ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor=color_map)
     ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
     ax.coastlines(color=color_map, linestyle='-', alpha=1)
-    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
-    ax.set_xticks(xticks, crs=crs_latlon)
-    ax.set_yticks(yticks, crs=crs_latlon)
-    lon_formatter = LongitudeFormatter(zero_direction_label=True)
-    lat_formatter = LatitudeFormatter()
-    ax.xaxis.set_major_formatter(lon_formatter)
-    ax.yaxis.set_major_formatter(lat_formatter)
+    
+    if proj=='eq':
+        ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+        ax.set_xticks(xticks, crs=crs_latlon)
+        ax.set_yticks(yticks, crs=crs_latlon)
+        lon_formatter = LongitudeFormatter(zero_direction_label=True)
+        lat_formatter = LatitudeFormatter()
+        ax.xaxis.set_major_formatter(lon_formatter)
+        ax.yaxis.set_major_formatter(lat_formatter)
+    else:
+        gls = ax.gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
+                               y_inline=True, xlocs=range(-180, 180, 30), ylocs=np.arange(-80, 0, 20))
+
+        r_extent = 1.2e7
+        ax.set_xlim(-r_extent, r_extent)
+        ax.set_ylim(-r_extent, r_extent)
+        circle_path = mpath.Path.unit_circle()
+        circle_path = mpath.Path(circle_path.vertices.copy() * r_extent,
+                                 circle_path.codes.copy())
+        ax.set_boundary(circle_path)
+        ax.set_frame_on(False)
+        plt.draw()
+        for ea in gls._labels:
+            pos = ea[2].get_position()
+            if (pos[0] == 150):
+                ea[2].set_position([0, pos[1]])
+    
     ax.tick_params(labelsize=7)
     plt.title(title, fontsize=10)
     plt.tight_layout()
