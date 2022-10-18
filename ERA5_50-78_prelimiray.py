@@ -164,9 +164,15 @@ c.retrieve(
         'format': 'netcdf',
         'product_type': 'reanalysis-monthly-means-of-daily-means',
         'variable': [
-            'u_component_of_wind', 'v_component_of_wind',
+            'u_component_of_wind'
         ],
-        'pressure_level': '200',
+        'pressure_level': [
+            '10', '30', '50'
+            '100', '200', '300',
+            '400', '500', '600',
+            '700','850', '900',
+            '1000',
+        ],
         'year': [
             '1950', '1951', '1952',
             '1953', '1954', '1955',
@@ -186,5 +192,6 @@ c.retrieve(
             '10', '11', '12',
         ],
         'time': '00:00',
+        'grid': '0.5/0.5',
     },
-    'ERA5.mon.U-V_200_50-78.nc')
+    '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/ERA5.mon.U_lvs_50-78.nc')
