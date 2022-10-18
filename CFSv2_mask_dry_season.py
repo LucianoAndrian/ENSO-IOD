@@ -28,17 +28,22 @@ data = xr.decode_cf(fix_calendar(data)) # corrigiendo fechas
 data = data.sel(lon=slice(275, 330), lat=slice(-60, 15))
 data = data.sel(r=slice(1,24))
 
-seasons_data = data.rolling(time=3, center=True).mean()
-#
-# son = seasons_data.sel(time=seasons_data.time.dt.month.isin(10))*30
-# son = son.mean(['time', 'r', 'L'])
-# son = son.compute()
+data = data.compute()
+
+data2 = data*30
+
+# month_data = data2.sel(time=data2.time.dt.month.isin(6), L=0).mean(['time', 'r'])
+# month_data = data2.sel(time=data2.time.dt.month.isin(7), L=0).mean(['time', 'r'])
+month_data = data2.sel(time=data2.time.dt.month.isin(8), L=0).mean(['time', 'r'])
+# seasons_data = data.rolling(time=3, center=True).mean()
+
+month_data.to_netcdf(out_dir + v + 'aug_mask_to_dry_season.nc')
 
 # jja
-jja = seasons_data.sel(time=seasons_data.time.dt.month.isin(7))*30
-jja = jja.mean(['time', 'r', 'L'])
-jja=jja.compute()
-jja.to_netcdf(out_dir + v + '_mask_to_dry_season.nc')
+# jja = seasons_data.sel(time=seasons_data.time.dt.month.isin(7))*30
+# jja = jja.mean(['time', 'r', 'L'])
+# jja=jja.compute()
+# jja.to_netcdf(out_dir + v + '_mask_to_dry_season.nc')
 
 # K-MEANS ##############################################################################################################
 
