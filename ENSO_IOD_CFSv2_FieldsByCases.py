@@ -68,11 +68,16 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     data_dates_n34_or /= data_dates_n34_or.mean('r').std()
 
     # 1.1 Climatología y case
-    if neutro_clim:
-        clim = xr.open_dataset(cases_dir + v + '_neutros' + '_' + s.upper() + '.nc').rename({v_name: 'var'}) * fix_factor
+    if v == 'tref':
+        end_nc_file = '_nodetrend.nc'
     else:
-        clim = xr.open_dataset(cases_dir + v + '_' + s.lower() + '.nc').rename({v_name: 'var'}) * fix_factor
-    case = xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + '.nc').rename({v_name: 'var'}) * fix_factor
+        end_nc_file = '.nc'
+
+    if neutro_clim:
+        clim = xr.open_dataset(cases_dir + v + '_neutros' + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor
+    else:
+        clim = xr.open_dataset(cases_dir + v + '_' + s.lower() + end_nc_file).rename({v_name: 'var'}) * fix_factor
+    case = xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor
     # Anomalía
     for l in [0, 1, 2, 3]:
         if l == 0:
@@ -538,7 +543,7 @@ levels_clim = np.linspace(0,150,11)
 ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=False,
                      data=data,
                      levels_main=levels, cbar_main=cbar_pp,
-                     levels_clim=levels_clim, cbar_clim='YlGnBu',
+                     levels_clim=levels_clim, cbar_clim='terrain_r',
                      title_var='Prec', name_fig='prec', dpi=500)
 
 # Signal-to-Noise ratio
@@ -583,7 +588,7 @@ levels_clim = np.linspace(0,25,11)
 ComputeFieldsByCases(v='tref', v_name='tref', fix_factor=1, snr=False,
                      data=data-273,
                      levels_main=levels, cbar_main=cbar_t,
-                     levels_clim=levels_clim, cbar_clim='YlOrRd',
+                     levels_clim=levels_clim, cbar_clim='Spectral_r',
                      title_var='Temp', name_fig='temp', dpi=500)
 
 # Signal-to-Noise ratio
@@ -592,7 +597,7 @@ levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
 ComputeFieldsByCases(v='tref', v_name='tref', fix_factor=1, snr=True,
                      data=data-273,
                      levels_main=levels, cbar_main=cbar_snr_t,
-                     levels_clim=levels_clim, cbar_clim='YlOrRd',
+                     levels_clim=levels_clim, cbar_clim='Spectral_r',
                      title_var='Tref', name_fig='tref', dpi=500)
 
 ########################################################################################################################
