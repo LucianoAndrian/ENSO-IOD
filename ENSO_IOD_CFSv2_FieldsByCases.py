@@ -216,6 +216,8 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
         sec_count = 0
         ct = 0
         cr = 0
+        comp_case_clim = DetrendClim(data, mm, v_name=v_name)
+        comp_case_clim *= fix_factor
 
         crs_latlon = ccrs.PlateCarree()
         if proj=='eq':
@@ -250,18 +252,23 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                     comp_case = cases_bin[b_dmi][b_n34]
 
                     if v == 'prec' and s == 'JJA':
-                        dry_season_mask = xr.open_dataset(cases_dir + 'prec_mask_to_dry_season.nc')
-                        dry_season_mask = dry_season_mask.where(dry_season_mask.prec>35) # pp mayor a 35mm
+                        # dry_season_mask = xr.open_dataset(cases_dir + 'precaug_mask_to_dry_season.nc')
+                        # dry_season_mask = dry_season_mask.where(dry_season_mask.prec>10) # pp mayor a 35mm
 
-                        mask2 = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(dry_season_mask)
+                        mask2 = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(comp_case_clim)
                         mask2 = xr.where(np.isnan(mask2), mask2, 1)
                         mask2 = mask2.to_dataset(name='prec')
 
-                        dry_season_mask = dry_season_mask.where(dry_season_mask.lat>-19)
-                        dry_season_mask = dry_season_mask.where(dry_season_mask.lon>293)
+                        # dry_season_mask = dry_season_mask.where(dry_season_mask.lat>-19)
+                        # dry_season_mask = dry_season_mask.where(dry_season_mask.lon>293)
+                        # dry_season_mask = xr.where(np.isnan(dry_season_mask), dry_season_mask, 1)
+                        # dry_season_mask = xr.where(dry_season_mask.lat <= -19, 1, dry_season_mask)
+                        # dry_season_mask = xr.where(dry_season_mask.lon <= 293, 1, dry_season_mask)
+
+
+
+                        dry_season_mask = comp_case_clim.where(comp_case_clim.prec>30)
                         dry_season_mask = xr.where(np.isnan(dry_season_mask), dry_season_mask, 1)
-                        dry_season_mask = xr.where(dry_season_mask.lat <= -19, 1, dry_season_mask)
-                        dry_season_mask = xr.where(dry_season_mask.lon <= 293, 1, dry_season_mask)
 
                         dry_season_mask *= mask2
 
@@ -287,12 +294,14 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                         axs[n].add_feature(cartopy.feature.COASTLINE)
                         if proj == 'eq':
                             axs[n].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
-                            axs[n].set_xticks(x_lon, crs=crs_latlon)
-                            axs[n].set_yticks(x_lat, crs=crs_latlon)
-                            lon_formatter = LongitudeFormatter(zero_direction_label=True)
-                            lat_formatter = LatitudeFormatter()
-                            axs[n].xaxis.set_major_formatter(lon_formatter)
-                            axs[n].yaxis.set_major_formatter(lat_formatter)
+                            axs[n].set_xticks([])
+                            axs[n].set_yticks([])
+                            # axs[n].set_xticks(x_lon, crs=crs_latlon)
+                            # axs[n].set_yticks(x_lat, crs=crs_latlon)
+                            # lon_formatter = LongitudeFormatter(zero_direction_label=True)
+                            # lat_formatter = LatitudeFormatter()
+                            # axs[n].xaxis.set_major_formatter(lon_formatter)
+                            # axs[n].yaxis.set_major_formatter(lat_formatter)
                         else:
                             gls = axs[n].gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
                                                    y_inline=True, xlocs=range(-180, 180, 30),
@@ -312,7 +321,7 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                                 if (pos[0] == 150):
                                     ea[2].set_position([0, pos[1]])
 
-                        axs[n].tick_params(labelsize=5)
+                        axs[n].tick_params(labelsize=0)
 
                         if n == 0 or n == 1 or n == 2 or n == 3 or n == 4:
                             axs[n].set_title(col_titles[n], fontsize=15)
@@ -372,12 +381,14 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
 
         if proj == 'eq':
             axs[12].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
-            axs[12].set_xticks(x_lon, crs=crs_latlon)
-            axs[12].set_yticks(x_lat, crs=crs_latlon)
-            lon_formatter = LongitudeFormatter(zero_direction_label=True)
-            lat_formatter = LatitudeFormatter()
-            axs[12].xaxis.set_major_formatter(lon_formatter)
-            axs[12].yaxis.set_major_formatter(lat_formatter)
+            axs[12].set_xticks([])
+            axs[12].set_yticks([])
+            # axs[12].set_xticks(x_lon, crs=crs_latlon)
+            # axs[12].set_yticks(x_lat, crs=crs_latlon)
+            # lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            # lat_formatter = LatitudeFormatter()
+            # axs[12].xaxis.set_major_formatter(lon_formatter)
+            # axs[12].yaxis.set_major_formatter(lat_formatter)
         else:
             gls = axs[12].gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
                                    y_inline=True, xlocs=range(-180, 180, 30), ylocs=np.arange(-80, 0, 20))
@@ -390,7 +401,7 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                                      circle_path.codes.copy())
             axs[12].set_boundary(circle_path)
             axs[12].set_frame_on(False)
-            axs[12].tick_params(labelsize=5)
+            axs[12].tick_params(labelsize=0)
             plt.draw()
             for ea in gls._labels:
                 pos = ea[2].get_position()
@@ -521,7 +532,7 @@ except:
 #----------------------------------------------------------------------------------------------------------------------#
 # Composite
 levels = np.linspace(-30, 30, 13)
-levels_clim = np.linspace(0,250,11)
+levels_clim = np.linspace(0,150,11)
 
 
 ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=False,
@@ -536,7 +547,7 @@ levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
 ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=True,
                      data=data,
                      levels_main=levels, cbar_main=cbar_snr,
-                     levels_clim=levels_clim, cbar_clim='YlGnBu',
+                     levels_clim=levels_clim, cbar_clim='terrain_r',
                      title_var='Prec', name_fig='prec', dpi=500)
 
 ########################################################################################################################
@@ -623,7 +634,7 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=False,
                      levels_clim=levels_clim, cbar_clim='Spectral',
                      title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=500,
                      x_lon=np.arange(30, 340, 25), x_lat=np.arange(-80, 20, 10),
-                     figsize=[20,12], usemask=False, hcolorbar=True, save=False)
+                     figsize=[20,12], usemask=False, hcolorbar=True)
 
 # Signal-to-Noise ratio
 levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
