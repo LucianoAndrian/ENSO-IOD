@@ -17,7 +17,7 @@ dates_dir = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/' # índi
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/' # campos de las variables PP  ( y T cuando ande)
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/RegionsAnoms/'
 save = True
-dpi = 400
+dpi = 500
 # Funciones ############################################################################################################
 def fix_calendar(ds, timevar='time'):
     """
@@ -75,8 +75,14 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count, box_lat, box_lon,
     data_dates_n34_or /= data_dates_n34_or.mean('r').std()
 
     # 1.1 Climatología y case
-    clim = xr.open_dataset(cases_dir + v + '_' + s.lower() + '.nc').rename({v_name: 'var'}) * fix_factor
-    case = xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + '.nc').rename({v_name: 'var'}) * fix_factor
+    if v == 'tref':
+        end_nc_file = '_nodetrend.nc'
+    else:
+        end_nc_file = '.nc'
+
+    clim = xr.open_dataset(cases_dir + v + '_' + s.lower() + end_nc_file).rename({v_name: 'var'}) * fix_factor
+    case = xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor
+
     # Anomalía
     for l in [0, 1, 2, 3]:
         if l == 0:
@@ -134,6 +140,7 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count, box_lat, box_lon,
 
     bins_aux_dmi = bins_by_cases_dmi[c_count]
     bins_aux_n34 = bins_by_cases_n34[c_count]
+
     # 3. Seleccion en cada bin
     anom_bin_main = list()
     num_bin_main = list()
@@ -373,139 +380,162 @@ cbar_Prueba.set_under('#3F2404')
 cbar_Prueba.set_over('#002A3D')
 cbar_Prueba.set_bad(color='white')
 
-
-color = ['#E4FDA9', '#F9FD7C', plt.cm.tab20c(7), plt.cm.tab20c(6), plt.cm.tab20c(5), plt.cm.tab20c(4),
-             plt.cm.tab20b(15), plt.cm.tab20b(14), plt.cm.tab20b(13), plt.cm.tab20b(12)]
-cmap_pos = colors.ListedColormap(color)
-########################################################################################################################
-v = 'prec'
-data_cfsv2 = CFSv2Data(v)
-xr_cluster_label = KmMaks(data_cfsv2, v=v, l=0, pb=0)
-
-mask_cluster = xr.where(xr_cluster_label == 3, 1, np.nan).sel(lat=slice(-40,-20), lon=slice(290,320))
-plt.imshow(mask_cluster.cluster);plt.show()
-
-mm = 7
-for s in ['JJA', 'JAS', 'ASO', 'SON']:
-    aux = np.zeros((16,16))
-    aux_num = np.zeros((16, 16))
-    for c_count in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
-        cases_bin, num_bin = BinsByCases(v='prec', v_name='prec', fix_factor=30,
-                                         s=s, mm=mm, c=cases[c_count], c_count=c_count,
-                                         box_lat=[-40, -20], box_lon=[290, 320], # cuadrado al rededor de la mascara
-                                         bin_limits=bin_limits, bins_by_cases_dmi=bins_by_cases_dmi,
-                                         bins_by_cases_n34=bins_by_cases_n34,
-                                         mask=True, data_mask=mask_cluster.rename({'cluster':'var'}))
-
-        bins_aux_dmi = bins_by_cases_dmi[c_count]
-        bins_aux_n34 = bins_by_cases_n34[c_count]
-        anom_bin_main = list()
-        for ba_dmi in range(0, len(bins_aux_dmi)):  # loops en las bins para el dmi segun case
-            for ba_n34 in range(0, len(bins_aux_n34)):  # loop en las correspondientes al n34 segun case
-                aux[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = cases_bin[ba_dmi][ba_n34]
-                aux_num[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = num_bin[ba_dmi][ba_n34]
-
-    aux_num[np.where(aux_num == 0)] = np.nan
-    Plot2D(aux, aux_num, dpi=dpi,
-           cmap=cbar_Prueba, vmin=-44, vmax=44, levels=np.arange(-44, 44, 8),
-           title='S-SESA - ' + s + ' PP',
-           name_fig='kmean_SESA_cuad_' + s,
-           save=save)
-    mm += 1
-
+cbar_t = colors.ListedColormap(['#B9391B', '#CD4838', '#E25E55', '#F28C89', '#FFCECC',
+                              'white',
+                              '#B3DBFF', '#83B9EB', '#5E9AD7', '#3C7DC3', '#2064AF'][::-1])
+cbar_t.set_over('#9B1C00')
+cbar_t.set_under('#014A9B')
+cbar_t.set_bad(color='white')
 ########################################################################################################################
 
+fix_factor = [30, 1]
+variables = ['prec', 'tref']
+color_thr = [20, 0.8]
+vmin = [-44, -1]
+vmax = [44, 1]
+colorbars = [cbar_Prueba, cbar_t]
+levels = [np.arange(-44, 44, 8), np.linspace(-1,1,12)]
 
-mask_cluster = xr.where((xr_cluster_label == 2) | (xr_cluster_label == 0) , 1, np.nan).sel(lat=slice(-40,-10), lon=slice(290,320))
-plt.imshow(mask_cluster.cluster);plt.show()
+v_count = 0
+for v in variables:
 
-mm = 7
-for s in ['JJA', 'JAS', 'ASO', 'SON']:
-    aux = np.zeros((16,16))
-    aux_num = np.zeros((16, 16))
-    for c_count in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
-        cases_bin, num_bin = BinsByCases(v='prec', v_name='prec', fix_factor=30,
-                                         s=s, mm=mm, c=cases[c_count], c_count=c_count,
-                                         box_lat=[-40, -10], box_lon=[290, 320], # cuadrado al rededor de la mascara
-                                         bin_limits=bin_limits, bins_by_cases_dmi=bins_by_cases_dmi,
-                                         bins_by_cases_n34=bins_by_cases_n34,
-                                         mask=True, data_mask=mask_cluster.rename({'cluster':'var'}))
+    # SESA*
+    data_cfsv2 = CFSv2Data(v)
+    xr_cluster_label = KmMaks(data_cfsv2, v=v, l=0, pb=0)
+    mask_cluster = xr.where(xr_cluster_label == 3, 1, np.nan).sel(lat=slice(-40, -20), lon=slice(290, 320))
+    # plt.imshow(mask_cluster.cluster);
+    # plt.show()
 
-        bins_aux_dmi = bins_by_cases_dmi[c_count]
-        bins_aux_n34 = bins_by_cases_n34[c_count]
-        anom_bin_main = list()
-        for ba_dmi in range(0, len(bins_aux_dmi)):  # loops en las bins para el dmi segun case
-            for ba_n34 in range(0, len(bins_aux_n34)):  # loop en las correspondientes al n34 segun case
-                aux[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = cases_bin[ba_dmi][ba_n34]
-                aux_num[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = num_bin[ba_dmi][ba_n34]
+    mm = 7
+    for s in ['JJA', 'JAS', 'ASO', 'SON']:
+        aux = np.zeros((16, 16))
+        aux_num = np.zeros((16, 16))
+        for c_count in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
+            cases_bin, num_bin = BinsByCases(v=v, v_name=v, fix_factor=fix_factor[v_count],
+                                             s=s, mm=mm, c=cases[c_count], c_count=c_count,
+                                             box_lat=[-40, -20], box_lon=[290, 320],
+                                             # cuadrado al rededor de la mascara
+                                             bin_limits=bin_limits, bins_by_cases_dmi=bins_by_cases_dmi,
+                                             bins_by_cases_n34=bins_by_cases_n34,
+                                             mask=True, data_mask=mask_cluster.rename({'cluster': 'var'}))
 
-    aux_num[np.where(aux_num == 0)] = np.nan
-    Plot2D(aux, aux_num, dpi=dpi,
-           cmap=cbar_Prueba, vmin=-44, vmax=44, levels=np.arange(-44, 44, 8),
-           title='S-SESA - ' + s + ' PP',
-           name_fig='kmean_out_SESA_cuad_' + s,
-           save=save)
-    mm += 1
+            bins_aux_dmi = bins_by_cases_dmi[c_count]
+            bins_aux_n34 = bins_by_cases_n34[c_count]
+            anom_bin_main = list()
+            for ba_dmi in range(0, len(bins_aux_dmi)):  # loops en las bins para el dmi segun case
+                for ba_n34 in range(0, len(bins_aux_n34)):  # loop en las correspondientes al n34 segun case
+                    aux[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = cases_bin[ba_dmi][ba_n34]
+                    aux_num[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = num_bin[ba_dmi][ba_n34]
 
-# 1 _ 1 ################################################################################################################
-mask_cluster = xr.where(xr_cluster_label == 3, 1, np.nan).sel(lat=slice(-40,-20), lon=slice(290,320))
-plt.imshow(mask_cluster.cluster);plt.show()
-mm = 7
-for s in ['JJA', 'JAS', 'ASO', 'SON']:
-    aux = np.zeros((9,9))
-    aux_num = np.zeros((9, 9))
-    for c_count in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
-        cases_bin, num_bin = BinsByCases(v='prec', v_name='prec', fix_factor=30,
-                                         s=s, mm=mm, c=cases[c_count], c_count=c_count,
-                                         box_lat=[-40, -20], box_lon=[290, 320], # cuadrado al rededor de la mascara
-                                         bin_limits=bin_limits_1, bins_by_cases_dmi=bins_by_cases_dmi_1,
-                                         bins_by_cases_n34=bins_by_cases_n34_1,
-                                         mask=True, data_mask=mask_cluster.rename({'cluster':'var'}))
-        bins_aux_dmi = bins_by_cases_dmi_1[c_count]
-        bins_aux_n34 = bins_by_cases_n34_1[c_count]
-        anom_bin_main = list()
-        for ba_dmi in range(0, len(bins_aux_dmi)):  # loops en las bins para el dmi segun case
-            for ba_n34 in range(0, len(bins_aux_n34)):  # loop en las correspondientes al n34 segun case
-                aux[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = cases_bin[ba_dmi][ba_n34]
-                aux_num[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = num_bin[ba_dmi][ba_n34]
+        aux_num[np.where(aux_num == 0)] = np.nan
+        Plot2D(aux, aux_num, dpi=dpi, color_thr=color_thr[v_count],
+               cmap=colorbars[v_count], vmin=vmin[v_count], vmax=vmax[v_count], levels=levels[v_count],
+               title='SESA* - ' + s + ' ' + v,
+               name_fig=v + '_kmean_SESA_cuad_' + s,
+               save=save)
+        mm += 1
 
-    aux_num[np.where(aux_num == 0)] = np.nan
-    Plot2D_1_1(aux, aux_num, dpi=dpi,
-           cmap=cbar_Prueba, vmin=-44, vmax=44, levels=np.arange(-44, 44, 8),
-           title='S-SESA - ' + s + ' PP',
-           name_fig='kmean_SESA_cuad_1-1' + s,
-           save=save)
-    mm += 1
+    # Out SESA?
+    mask_cluster = xr.where((xr_cluster_label == 2) | (xr_cluster_label == 0), 1, np.nan) \
+        .sel(lat=slice(-40, -10), lon=slice(290, 320))
+    # plt.imshow(mask_cluster.cluster);
+    # plt.show()
 
+    mm = 7
+    for s in ['JJA', 'JAS', 'ASO', 'SON']:
+        aux = np.zeros((16, 16))
+        aux_num = np.zeros((16, 16))
+        for c_count in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
+            cases_bin, num_bin = BinsByCases(v=v, v_name=v, fix_factor=fix_factor[v_count],
+                                             s=s, mm=mm, c=cases[c_count], c_count=c_count,
+                                             box_lat=[-40, -10], box_lon=[290, 320],
+                                             # cuadrado al rededor de la mascara
+                                             bin_limits=bin_limits, bins_by_cases_dmi=bins_by_cases_dmi,
+                                             bins_by_cases_n34=bins_by_cases_n34,
+                                             mask=True, data_mask=mask_cluster.rename({'cluster': 'var'}))
 
+            bins_aux_dmi = bins_by_cases_dmi[c_count]
+            bins_aux_n34 = bins_by_cases_n34[c_count]
+            anom_bin_main = list()
+            for ba_dmi in range(0, len(bins_aux_dmi)):  # loops en las bins para el dmi segun case
+                for ba_n34 in range(0, len(bins_aux_n34)):  # loop en las correspondientes al n34 segun case
+                    aux[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = cases_bin[ba_dmi][ba_n34]
+                    aux_num[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = num_bin[ba_dmi][ba_n34]
 
-mask_cluster = xr.where((xr_cluster_label == 2) | (xr_cluster_label == 0) , 1, np.nan).sel(lat=slice(-40,-10), lon=slice(290,320))
-plt.imshow(mask_cluster.cluster);plt.show()
+        aux_num[np.where(aux_num == 0)] = np.nan
+        Plot2D(aux, aux_num, dpi=dpi, color_thr=color_thr[v_count],
+               cmap=colorbars[v_count], vmin=vmin[v_count], vmax=vmax[v_count], levels=levels[v_count],
+               title='Out SESA? - ' + s + ' PP',
+               name_fig=v + '_kmean_out_SESA_cuad_' + s,
+               save=save)
+        mm += 1
 
-mm = 7
-for s in ['JJA', 'JAS', 'ASO', 'SON']:
-    aux = np.zeros((9,9))
-    aux_num = np.zeros((9, 9))
-    for c_count in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
-        cases_bin, num_bin = BinsByCases(v='prec', v_name='prec', fix_factor=30,
-                                         s=s, mm=mm, c=cases[c_count], c_count=c_count,
-                                         box_lat=[-40, -10], box_lon=[290, 320], # cuadrado al rededor de la mascara
-                                         bin_limits=bin_limits_1, bins_by_cases_dmi=bins_by_cases_dmi_1,
-                                         bins_by_cases_n34=bins_by_cases_n34_1,
-                                         mask=True, data_mask=mask_cluster.rename({'cluster':'var'}))
-        bins_aux_dmi = bins_by_cases_dmi_1[c_count]
-        bins_aux_n34 = bins_by_cases_n34_1[c_count]
-        anom_bin_main = list()
-        for ba_dmi in range(0, len(bins_aux_dmi)):  # loops en las bins para el dmi segun case
-            for ba_n34 in range(0, len(bins_aux_n34)):  # loop en las correspondientes al n34 segun case
-                aux[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = cases_bin[ba_dmi][ba_n34]
-                aux_num[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = num_bin[ba_dmi][ba_n34]
+    # 1 _ 1 ############################################################################################################
 
-    aux_num[np.where(aux_num == 0)] = np.nan
-    Plot2D_1_1(aux, aux_num, dpi=dpi,
-           cmap=cbar_Prueba, vmin=-44, vmax=44, levels=np.arange(-44, 44, 8),
-           title='S-SESA - ' + s + ' PP',
-           name_fig='kmean_out_SESA_cuad_1-1' + s,
-           save=save)
-    mm += 1
+    # SESA*
+    mask_cluster = xr.where(xr_cluster_label == 3, 1, np.nan).sel(lat=slice(-40, -20), lon=slice(290, 320))
+    # plt.imshow(mask_cluster.cluster);
+    # plt.show()
+    mm = 7
+    for s in ['JJA', 'JAS', 'ASO', 'SON']:
+        aux = np.zeros((9, 9))
+        aux_num = np.zeros((9, 9))
+        for c_count in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
+            cases_bin, num_bin = BinsByCases(v=v, v_name=v, fix_factor=fix_factor[v_count],
+                                             s=s, mm=mm, c=cases[c_count], c_count=c_count,
+                                             box_lat=[-40, -20], box_lon=[290, 320],
+                                             # cuadrado al rededor de la mascara
+                                             bin_limits=bin_limits_1, bins_by_cases_dmi=bins_by_cases_dmi_1,
+                                             bins_by_cases_n34=bins_by_cases_n34_1,
+                                             mask=True, data_mask=mask_cluster.rename({'cluster': 'var'}))
+            bins_aux_dmi = bins_by_cases_dmi_1[c_count]
+            bins_aux_n34 = bins_by_cases_n34_1[c_count]
+            anom_bin_main = list()
+            for ba_dmi in range(0, len(bins_aux_dmi)):  # loops en las bins para el dmi segun case
+                for ba_n34 in range(0, len(bins_aux_n34)):  # loop en las correspondientes al n34 segun case
+                    aux[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = cases_bin[ba_dmi][ba_n34]
+                    aux_num[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = num_bin[ba_dmi][ba_n34]
+
+        aux_num[np.where(aux_num == 0)] = np.nan
+        Plot2D_1_1(aux, aux_num, dpi=dpi,
+                   cmap=colorbars[v_count], vmin=vmin[v_count], vmax=vmax[v_count], levels=levels[v_count],
+                   title='SESA* - ' + s + ' ' + v,
+                   name_fig=v + '_kmean_SESA_cuad_1-1' + s,
+                   save=save)
+        mm += 1
+
+    # Out SESA?
+    mask_cluster = xr.where((xr_cluster_label == 2) | (xr_cluster_label == 0), 1, np.nan) \
+        .sel(lat=slice(-40, -10), lon=slice(290, 320))
+    # plt.imshow(mask_cluster.cluster);
+    # plt.show()
+
+    mm = 7
+    for s in ['JJA', 'JAS', 'ASO', 'SON']:
+        aux = np.zeros((9, 9))
+        aux_num = np.zeros((9, 9))
+        for c_count in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
+            cases_bin, num_bin = BinsByCases(v=v, v_name=v, fix_factor=fix_factor[v_count],
+                                             s=s, mm=mm, c=cases[c_count], c_count=c_count,
+                                             box_lat=[-40, -10], box_lon=[290, 320],
+                                             # cuadrado al rededor de la mascara
+                                             bin_limits=bin_limits_1, bins_by_cases_dmi=bins_by_cases_dmi_1,
+                                             bins_by_cases_n34=bins_by_cases_n34_1,
+                                             mask=True, data_mask=mask_cluster.rename({'cluster': 'var'}))
+            bins_aux_dmi = bins_by_cases_dmi_1[c_count]
+            bins_aux_n34 = bins_by_cases_n34_1[c_count]
+            anom_bin_main = list()
+            for ba_dmi in range(0, len(bins_aux_dmi)):  # loops en las bins para el dmi segun case
+                for ba_n34 in range(0, len(bins_aux_n34)):  # loop en las correspondientes al n34 segun case
+                    aux[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = cases_bin[ba_dmi][ba_n34]
+                    aux_num[bins_aux_n34[ba_n34], bins_aux_dmi[ba_dmi]] = num_bin[ba_dmi][ba_n34]
+
+        aux_num[np.where(aux_num == 0)] = np.nan
+        Plot2D_1_1(aux, aux_num, dpi=dpi,
+                   cmap=colorbars[v_count], vmin=vmin[v_count], vmax=vmax[v_count], levels=levels[v_count],
+                   title='Out SESA? - ' + s + ' ' + v,
+                   name_fig=v + '_kmean_out_SESA_cuad_1-1' + s,
+                   save=save)
+        mm += 1
+    v_count += 1
 ########################################################################################################################
