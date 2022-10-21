@@ -12,10 +12,12 @@ import os
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 import warnings
 warnings.filterwarnings('ignore')
+
+from ENSO_IOD_Funciones import MakeMask
 ########################################################################################################################
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/T/'
-save = False
+save = True
 dpi = 200
 # Funciones ############################################################################################################
 def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
@@ -55,20 +57,6 @@ def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
     else:
         plt.show()
 
-def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
-
-
-    if name == 'pp_gpcc':
-        # GPCC2018
-        aux = xr.open_dataset('/datos/luciano.andrian/ncfiles/' + 'pp_gpcc.nc')
-        pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
-        if interp:
-            pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
-        pp_gpcc = pp_gpcc.rename({'precip': 'var'})
-        pp_gpcc = pp_gpcc.sel(time=slice('1982-01-01','2020-12-01'))
-
-        return pp_gpcc
-
 def SpatialProbability(data, mask):
     prob = xr.where(np.isnan(mask), mask, 1)
     for ln in range(0, 56):
@@ -101,19 +89,13 @@ cbar_snr = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#52C39D','#6F
 cbar_snr.set_over('#251255')
 cbar_snr.set_under('#070B4F')
 cbar_snr.set_bad(color='white')
-#----------------------------------------------------------------------------------------------------------------------#
-# mascara para el oceano ----------------------------------------------------------------------------------------------#
-mask = OpenDataSet('pp_gpcc', interp=True,
-                   lat_interp=np.linspace(-60,15,76),
-                   lon_interp=np.linspace(275,330,56))
-mask = mask.mean('time')
-mask = xr.where(np.isnan(mask), mask, 1)
+
 #----------------------------------------------------------------------------------------------------------------------#
 
 scale_signal =  np.linspace(-1.2,1.2,13)
 scale_snr = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
 scale_prob = [.2,.3,.4,.45,.5,.55,.6,.7,.8]
-from ENSO_IOD_Funciones import MakeMask
+
 
 for s in seasons:
     neutro = xr.open_dataset(cases_dir + 'tref_neutros_' + s + '_nodetrend.nc').rename({'tref':'var'})
@@ -122,9 +104,9 @@ for s in seasons:
         case = xr.open_dataset(cases_dir + 'tref_' +  c + '_' + s + '_nodetrend.nc').rename({'tref':'var'})
         try:
             num_case = len(case.time)
-            mask=MakeMask(comp, 'var')
             # signal (comp)
             comp = case.mean('time') - neutro.mean('time')
+            mask = MakeMask(comp, 'var')
             comp *= mask
 
             Plot(comp, levels=scale_signal, cmap=cbar_t, dpi=dpi, step=1,

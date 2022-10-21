@@ -12,12 +12,14 @@ import os
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 import warnings
 warnings.filterwarnings('ignore')
+
+from ENSO_IOD_Funciones import MakeMask
 ########################################################################################################################
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/PP/'
 save = False
-dpi = 200
-detrend = False
+dpi = 100
+detrend = True
 # Funciones ############################################################################################################
 def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
          dpi=100, save=True, step=1,
@@ -56,19 +58,6 @@ def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
     else:
         plt.show()
 
-def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
-
-
-    if name == 'pp_gpcc':
-        # GPCC2018
-        aux = xr.open_dataset('/datos/luciano.andrian/ncfiles/' + 'pp_gpcc.nc')
-        pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
-        if interp:
-            pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
-        pp_gpcc = pp_gpcc.rename({'precip': 'var'})
-        pp_gpcc = pp_gpcc.sel(time=slice('1982-01-01','2020-12-01'))
-
-        return pp_gpcc
 
 def SpatialProbability(data, mask):
     prob = xr.where(np.isnan(mask), mask, 1)
@@ -109,13 +98,7 @@ cbar_Prueba = colors.ListedColormap(['#002A3D','#074D4F', '#1E6D5A' ,'#52C39D','
 cbar_Prueba.set_under('#3F2404')
 cbar_Prueba.set_over('#002A3D')
 cbar_Prueba.set_bad(color='white')
-#----------------------------------------------------------------------------------------------------------------------#
-# mascara para el oceano ----------------------------------------------------------------------------------------------#
-mask = OpenDataSet('pp_gpcc', interp=True,
-                   lat_interp=np.linspace(-60,15,76),
-                   lon_interp=np.linspace(275,330,56))
-mask = mask.mean('time')
-mask = xr.where(np.isnan(mask), mask, 1)
+
 #----------------------------------------------------------------------------------------------------------------------#
 
 scale_signal = np.linspace(-30, 30, 13)
@@ -143,6 +126,7 @@ for s in seasons:
 
             # signal (comp)
             comp = case.mean('time') - neutro.mean('time')
+            mask = MakeMask(comp, 'var')
             comp *= mask
 
             # Plot(comp, levels=scale_signal, cmap=cbar_pp, dpi=dpi, step=1,
