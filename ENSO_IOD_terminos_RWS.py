@@ -194,7 +194,7 @@ for c in cases:
             Plot(comp=comp_term1, levels=np.linspace(-1.2e-10,1.2e-10, 15), cmap=cbar,
                  dpi=dpi, save=save, step=1,
                  name_fig='term1_' + c + '_' + s,
-                 title=r'$-\eta \nabla$' + ' -  ' + s + '\n' + title_case[c_count],
+                 title=r'$-\eta $' + 'D' + ' -  ' + s + '\n' + title_case[c_count],
                  contour0=False)
 
         if len(comp_term2) != 0:

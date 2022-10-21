@@ -79,7 +79,7 @@ cbar_sst.set_over('#9B1C00')
 cbar_sst.set_under('#014A9B')
 cbar_sst.set_bad(color='white')
 
-scale = [-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5]
+scale = [-1.5, -1, -0.5, -0.2, 0, 0.2, 0.5, 1, 1.5]
 
 for s in seasons:
     neutro = xr.open_dataset(cases_dir + 'neutros_' + s + '.nc').rename({'sst':'var'})
