@@ -21,7 +21,7 @@ dir_dates = [nc_date_dir1, nc_date_dir2]
 set = False
 save = True
 dpi = 150
-lon_cut=60
+#lon_cut=60
 ########################################################################################################################
 def Detrend(xrda, dim):
     aux = xrda.polyfit(dim=dim, deg=1)
@@ -237,7 +237,9 @@ for nc_date_dir in dir_dates:
     for c in cases:
         s_count = 0
         for s in seasons:
-            comp1, num_case = CaseComp(data.sel(lon=lon_cut, lat=slice(20, -80)), s, mmonth=min_max_months[s_count], c=c,
+            aux_comp = data.sel(lon=slice(40, 290), lat=slice(20, -80))
+            aux_comp = aux_comp.mean('lon')
+            comp1, num_case = CaseComp(aux_comp, s, mmonth=min_max_months[s_count], c=c,
                                        two_variables=False, data2=None, nc_date_dir=nc_date_dir)
 
             if date_dir_count == 1:
@@ -247,8 +249,8 @@ for nc_date_dir in dir_dates:
 
             PlotU(comp=comp1, cmap=cbar_t, contour=True,
                   levels=[-12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4, 6, 8, 10, 12],
-                  title="U' - " + str(lon_cut) + add_to_name_fig + ' ' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-                  name_fig="U_" + s + '_' + cases[c_count] + '_' + str(lon_cut) + '_mer_d_w' + add_to_name_fig,
+                  title="U' - 40E-70W" + add_to_name_fig + ' ' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+                  name_fig="U_" + s + '_' + cases[c_count] + '_40E_70W' + '_mer_d_w' + add_to_name_fig,
                   dpi=dpi, save=save, out_dir=out_dir[date_dir_count])
 
             s_count += 1
