@@ -32,6 +32,15 @@ def Detrend(xrda, dim):
     dt = xrda - trend
     return dt
 
+def DetrendClim(xrda, dim):
+    aux = xrda.polyfit(dim=dim, deg=1)
+    try:
+        trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients[0])
+    except:
+        trend = xr.polyval(xrda[dim], aux.polyfit_coefficients[0])
+    dt = xrda - trend
+    return dt
+
 def Weights(data):
     weights = np.transpose(np.tile(np.cos(data.lat * np.pi / 180), (len(data.lon), 1)))
     data_w = data * weights
@@ -54,8 +63,7 @@ def CompositeSimple(original_data, index, mmin, mmax):
     else:
         print(' len index = 0')
 
-
-def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, nc_date_dir=None):
+def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, nc_date_dir=None, clim=False):
     """
     Las fechas se toman del periodo 1920-2020 basados en el DMI y N34 con ERSSTv5
     Cuando se toman los periodos 1920-1949 y 1950_2020 las fechas que no pertencen
@@ -92,12 +100,17 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, nc_date_dir=No
     if two_variables:
         return comp, case_num, comp2
     else:
-        return comp, case_num
-
+        if clim:
+            return data_comp, case_num
+        else:
+            return comp, case_num
 
 def PlotU(comp, levels = np.linspace(-30,30,11), cmap='RdBu_r',
-         dpi=100, save=True, step=1, contour=False,
-         name_fig='fig', title='title', out_dir='~/'):
+          dpi=100, save=True, step=1, contour=False,
+          name_fig='fig', title='title',
+          comp2=None, comp_var2=None,
+          levels2=[30,40], colors2='k', lwd=1,
+          out_dir='~/'):
 
     levels_contour = levels.copy()
     if isinstance(levels, np.ndarray):
@@ -108,6 +121,9 @@ def PlotU(comp, levels = np.linspace(-30,30,11), cmap='RdBu_r',
     comp_var = comp['var']
     fig = plt.figure(figsize=(6, 6), dpi=dpi)
     ax = plt.axes()
+
+    ax.contour(comp2.lat[::step], comp2.level[::step], comp_var2[::step, ::step], linewidths=lwd,
+               levels=levels2, colors=colors2)
     im = ax.contourf(comp.lat[::step], comp.level[::step], comp_var[::step, ::step],
                      levels=levels, cmap=cmap, extend='both')
 
@@ -117,7 +133,7 @@ def PlotU(comp, levels = np.linspace(-30,30,11), cmap='RdBu_r',
         ax.contour(comp.lat[::step], comp.level[::step], comp_var[::step, ::step],
                    levels=levels_contour, colors='k', linewidths=.8)
 
-    ax.set_xticks(np.arange(-80, 20, 10))
+    ax.set_xticks(np.arange(-80, 0, 10))
     lat_formatter = LatitudeFormatter()
     ax.xaxis.set_major_formatter(lat_formatter)
 
@@ -230,6 +246,10 @@ cbar_sst.set_bad(color='white')
 data = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/ERA5_U_mer_d_w.nc')
 data = data.sortby('level', ascending=False)
 
+aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/ERA5_U_lvs_xrmer.nc')
+aux = aux.rename({'longitude': 'lon', 'latitude': 'lat', 'u': 'var'})
+aux = aux.sel(lat=slice(0, -90), lon=slice(30,300))
+u_clim = DetrendClim(aux, 'time')
 
 date_dir_count = 0
 for nc_date_dir in dir_dates:
@@ -237,8 +257,15 @@ for nc_date_dir in dir_dates:
     for c in cases:
         s_count = 0
         for s in seasons:
-            aux_comp = data.sel(lon=slice(40, 290), lat=slice(20, -80))
+            aux_comp = data.sel(lon=slice(130, 290), lat=slice(0, -80))
             aux_comp = aux_comp.mean('lon')
+
+            aux_comp2 = u_clim.sel(lon=slice(130, 290), lat=slice(0, -80))
+            aux_comp2 = aux_comp2.mean('lon')
+
+            comp2, num_case = CaseComp(aux_comp2, s, mmonth=min_max_months[s_count], c=c,
+                                       two_variables=False, data2=None, nc_date_dir=nc_date_dir, clim=True)
+
             comp1, num_case = CaseComp(aux_comp, s, mmonth=min_max_months[s_count], c=c,
                                        two_variables=False, data2=None, nc_date_dir=nc_date_dir)
 
@@ -247,11 +274,12 @@ for nc_date_dir in dir_dates:
             else:
                 add_to_name_fig = ''
 
-            PlotU(comp=comp1, cmap=cbar_t, contour=True,
+            PlotU(comp=comp1, cmap=cbar_t, contour=False,
                   levels=[-12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4, 6, 8, 10, 12],
-                  title="U' - 40E-70W" + add_to_name_fig + ' ' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-                  name_fig="U_" + s + '_' + cases[c_count] + '_40E_70W' + '_mer_d_w' + add_to_name_fig,
-                  dpi=dpi, save=save, out_dir=out_dir[date_dir_count])
+                  title="U' - 130E-70W" + add_to_name_fig + ' ' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+                  name_fig="U_" + s + '_' + cases[c_count] + '_130E_70W_' + '_mer_d_w' + add_to_name_fig,
+                  dpi=dpi, save=save, out_dir=out_dir[date_dir_count],
+                  comp2=comp2, comp_var2=comp2['var'], levels2=np.arange(-10, 35, 5), colors2='k', lwd=1)
 
             s_count += 1
         c_count += 1
