@@ -27,7 +27,7 @@ out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/regression/fix/'
 hgt_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
 ########################################################################################################################
-save = False
+save = True
 dpi = 200
 full_season = False
 text = False
@@ -314,17 +314,17 @@ scales = [np.linspace(-15, 15, 13),   #pp
 
 cbar = colors.ListedColormap(['#9B1C00','#B9391B', '#CD4838', '#E25E55', '#F28C89', '#FFCECC',
                               'white',
-                              '#B3DBFF', '#83B9EB', '#5E9AD7', '#3C7DC3', '#2064AF', '#014A9B'][::-1])
-cbar.set_over('#641B00')
-cbar.set_under('#012A52')
+                              '#B3DBFF', '#83B9EB', '#5E9AD7', '#3C7DC3', '#2064AF', '#014A9B'])
+cbar.set_under('#641B00')
+cbar.set_over('#012A52')
 cbar.set_bad(color='white')
 
 
 cbar_pp = colors.ListedColormap(['#003C30', '#004C42', '#0C7169', '#79C8BC', '#B4E2DB',
                                 'white',
-                                '#F1DFB3', '#DCBC75', '#995D13', '#6A3D07', '#543005', ][::-1])
-cbar_pp.set_under('#3F2404')
-cbar_pp.set_over('#00221A')
+                                '#F1DFB3', '#DCBC75', '#995D13', '#6A3D07', '#543005', ])
+cbar_pp.set_over('#3F2404')
+cbar_pp.set_under('#00221A')
 cbar_pp.set_bad(color='white')
 
 cmap = [cbar_pp, cbar, cbar]
@@ -379,7 +379,7 @@ for v in variables:
                         title=title_var[v_count] + '_' + s +
                               '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4',
                         name_fig=v + '_' + s + '_' + str(p[0]) +
-                                 '_' + str(p[1]) + '_N34',
+                                 '_' + str(p[1]) + '_N34_revertScale',
                         save=save, sig=True,
                         two_variables=False,
                         SA=SA[v_count], step=1,
@@ -390,7 +390,7 @@ for v in variables:
                         title=title_var[v_count] + '_' + s +
                               '_' + str(p[0]) + '_' + str(p[1]) + '_DMI',
                         name_fig=v + '_' + s + '_' + str(p[0]) +
-                                 '_' + str(p[1]) + '_DMI',
+                                 '_' + str(p[1]) + '_DMI_revertScale',
                         save=save, sig=True,
                         two_variables=False,
                         SA=SA[v_count], step=1, color_map='k')
@@ -411,7 +411,7 @@ for v in variables:
                         levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                         title=title_var[v_count] + '_' + s +
                               '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
-                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
+                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi_revertScale',
                         save=save, sig=True,
                         two_variables=False,
                         SA=SA[v_count], step=1, color_map='k')
@@ -420,7 +420,7 @@ for v in variables:
                         levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                         title=title_var[v_count] + '_' + s +
                               '_' + str(p[0]) + '_' + str(p[1]) + '_DMI -{N34}',
-                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34',
+                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34_revertScale',
                         save=save, sig=True,
                         two_variables=False,
                         SA=SA[v_count], step=1,  color_map='k')
@@ -462,7 +462,7 @@ for v in variables:
             PlotReg(data=aux_n34, data_cor=aux_corr_n34,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
-                          '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4',
+                          '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4_revertScale',
                     name_fig=v + '_' + s + '_' + str(p[0]) +
                              '_' + str(p[1]) + '_N34',
                     save=save, sig=True,
@@ -474,7 +474,7 @@ for v in variables:
             PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
-                          '_' + str(p[0]) + '_' + str(p[1]) + '_DMI',
+                          '_' + str(p[0]) + '_' + str(p[1]) + '_DMI_revertScale',
                     name_fig=v + '_' + s + '_' + str(p[0]) +
                              '_' + str(p[1]) + '_DMI',
                     save=save, sig=True,
@@ -499,7 +499,7 @@ for v in variables:
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
-                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
+                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi_revertScale',
                     save=save, sig=True,
                     two_variables=False,
                     SA=SA[v_count], step=1,
@@ -510,7 +510,7 @@ for v in variables:
                     levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0]) + '_' + str(p[1]) + '_DMI -{N34}',
-                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34',
+                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34_revertScale',
                     save=save, sig=True,
                     two_variables=False,
                     SA=SA[v_count], step=1,
