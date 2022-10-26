@@ -63,7 +63,7 @@ def CompositeSimple(original_data, index, mmin, mmax):
     else:
         print(' len index = 0')
 
-def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, nc_date_dir=None, clim=False):
+def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, nc_date_dir=None, clim=False, zonalA=False):
     """
     Las fechas se toman del periodo 1920-2020 basados en el DMI y N34 con ERSSTv5
     Cuando se toman los periodos 1920-1949 y 1950_2020 las fechas que no pertencen
@@ -72,6 +72,10 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, nc_date_dir=No
     mmin = mmonth[0]
     mmax = mmonth[-1]
 
+    if zonalA:
+        two_variables=True
+        if data2 is None:
+            return print('Error en data2')
     aux = xr.open_dataset(nc_date_dir + '1920_2020' + '_' + s + '.nc')
     neutro = aux.Neutral
 
@@ -90,15 +94,21 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, nc_date_dir=No
         if two_variables:
             neutro_comp2 = CompositeSimple(original_data=data2, index=neutro, mmin=mmin, mmax=mmax)
             data_comp2 = CompositeSimple(original_data=data2, index=case, mmin=mmin, mmax=mmax)
-
-            comp2 = data_comp2 - neutro_comp2
+            if zonalA:
+                comp2 = data_comp2 - neutro_comp2
         else:
             comp2 = None
+
+        if zonalA:
+            comp = data_comp - neutro_comp2.mean('lon')
     except:
         print('Error en ' + s + c)
 
     if two_variables:
-        return comp, case_num, comp2
+        if zonalA:
+            return comp, case_num
+        else:
+            return comp, case_num, comp2
     else:
         if clim:
             return data_comp, case_num
@@ -248,26 +258,29 @@ data = data.sortby('level', ascending=False)
 
 aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/ERA5_U_lvs_xrmer.nc')
 aux = aux.rename({'longitude': 'lon', 'latitude': 'lat', 'u': 'var'})
-aux = aux.sel(lat=slice(0, -90), lon=slice(30,300))
+aux = aux.sel(lat=slice(0, -90))
 u_clim = DetrendClim(aux, 'time')
+u_clim = u_clim.rolling(time=3, center=True).mean()
 
+mm = [7,10]
 date_dir_count = 0
 for nc_date_dir in dir_dates:
     c_count = 0
     for c in cases:
         s_count = 0
         for s in seasons:
-            aux_comp = data.sel(lon=slice(130, 290), lat=slice(0, -80))
-            aux_comp = aux_comp.mean('lon')
+            aux_comp0 = data.sel(lat=slice(0, -80))
+            aux_comp = aux_comp0.sel(lon=slice(130, 290)).mean('lon')
 
-            aux_comp2 = u_clim.sel(lon=slice(130, 290), lat=slice(0, -80))
-            aux_comp2 = aux_comp2.mean('lon')
+            comp2 = u_clim.sel(lat=slice(0, -80), time=u_clim.time.dt.month.isin(mm[s_count]))
+            comp2 = comp2.mean(['lon', 'time'])
 
-            comp2, num_case = CaseComp(aux_comp2, s, mmonth=min_max_months[s_count], c=c,
-                                       two_variables=False, data2=None, nc_date_dir=nc_date_dir, clim=True)
+            # comp2, num_case = CaseComp(aux_comp2, s, mmonth=min_max_months[s_count], c=c,
+            #                            two_variables=False, data2=None, nc_date_dir=nc_date_dir, clim=True)
 
             comp1, num_case = CaseComp(aux_comp, s, mmonth=min_max_months[s_count], c=c,
-                                       two_variables=False, data2=None, nc_date_dir=nc_date_dir)
+                                       two_variables=False, nc_date_dir=nc_date_dir,
+                                       zonalA=True, data2=aux_comp0)
 
             if date_dir_count == 1:
                 add_to_name_fig = 'no_SSTanom'
@@ -276,8 +289,8 @@ for nc_date_dir in dir_dates:
 
             PlotU(comp=comp1, cmap=cbar_t, contour=False,
                   levels=[-12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4, 6, 8, 10, 12],
-                  title="U' - 130E-70W" + add_to_name_fig + ' ' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-                  name_fig="U_" + s + '_' + cases[c_count] + '_130E_70W_' + '_mer_d_w' + add_to_name_fig,
+                  title="U* - 130E - 70W" + add_to_name_fig + ' ' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+                  name_fig="U_" + s + '_' + cases[c_count] + '_130W_70E_' + '_mer_d_w' + add_to_name_fig,
                   dpi=dpi, save=save, out_dir=out_dir[date_dir_count],
                   comp2=comp2, comp_var2=comp2['var'], levels2=np.arange(-10, 35, 5), colors2='k', lwd=1)
 
