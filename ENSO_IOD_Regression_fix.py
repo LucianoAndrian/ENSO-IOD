@@ -32,7 +32,6 @@ dpi = 200
 full_season = False
 text = False
 # Functions ############################################################################################################
-
 def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
 
     if name == 'pp_gpcc':
@@ -53,12 +52,13 @@ def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
         return pp_gpcc
     elif name == 'cmap':
-        aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_no_detrend/' +
-                              'precip.mon.mean.nc')
-        pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
-        if interp:
-            pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
-        return pp_gpcc
+        print('Nop')
+        # aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_no_detrend/' +
+        #                       'precip.mon.mean.nc')
+        # pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
+        # if interp:
+        #     pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
+        #return pp_gpcc
     elif name == 't_cru':
         aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
                               't_cru_d_w_c_1920-2020_0.25.nc')
@@ -66,7 +66,13 @@ def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
         if interp:
             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
         return pp_gpcc
-
+    elif name == 'pp_cmap':
+        aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_no_detrend/' +
+                              'pp_prec_d_w_c_1950 - 2020_2.5.nc')
+        aux = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
+        if interp:
+            aux = aux.interp(lon=lon_interp, lat=lat_interp)
+        return aux
 
 def LinearReg(xrda, dim, deg=1):
     # liner reg along a single dimension

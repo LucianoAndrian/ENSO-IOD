@@ -1,5 +1,7 @@
 import xarray as xr
 import numpy as np
+import os
+os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
 dir_files = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_no_detrend/'
 out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/'
@@ -96,3 +98,17 @@ data_50_20_int = data_50_20.interp(lon=pp_20cr.lon.values, lat=pp_20cr.lat.value
 
 data_20_20_int.to_netcdf(out_dir + 'pp_gpcc_d_w_c_1920-2020_1.nc')
 data_50_20_int.to_netcdf(out_dir + 'pp_gpcc_d_w_c_1950-2020_1.nc')
+
+
+#PP PREC:
+data = xr.open_dataset(dir_files + 'precip.mon.anom.nc')
+data = data.rename({'precip':'var'})
+data_50_20 = data.sel(time=slice('1950-01-01', '2020-12-01'))
+data_50_20 *= 30
+del data
+
+data_50_20 = Weights(data_50_20)
+data_50_20 = data_50_20.sel(lon=slice(270, 330), lat=slice(15, -60))
+data_50_20 = Detrend(data_50_20, 'time')
+data_50_20.to_netcdf(out_dir + 'pp_prec_d_w_c_1950-2020_2.5.nc')
+
