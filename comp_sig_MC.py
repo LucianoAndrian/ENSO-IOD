@@ -63,8 +63,12 @@ def NumberPerts(data_to_concat, neutro, num = 0):
     return M
 ########################################################################################################################
 
-nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
+#nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
+#data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
+
+nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
+
 
 
 #start = ('1920', '1950')
@@ -214,7 +218,7 @@ for c in cases:  # simultaneos, aislados, todos, positivos, negativos
             aux = aux.chunk({'time': -1})
             qt = aux.quantile([.05, .95], dim='time', interpolation='linear')
             qt.to_netcdf('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' +
-                         v + '_' + c + '1950_2020_' + s + '.nc', compute=True)
+                         v + '_' + c + '1950_2020_' + s + '_DMIbase.nc', compute=True)
 
             # if name == 'ERA20':
             #     qt.to_netcdf('/datos/luciano.andrian/ncfiles/nc_quantiles/' + v + '_' + c + '_19' + i[0] +
