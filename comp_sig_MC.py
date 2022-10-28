@@ -63,10 +63,10 @@ def NumberPerts(data_to_concat, neutro, num = 0):
     return M
 ########################################################################################################################
 
-#nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
+nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
 #data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
-nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
+#nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
 
@@ -89,7 +89,7 @@ cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_neg', 'DMI_pos', 'DMI_un_pos', 'DMI_
 
 #for v in variables:
 
-v = 't_cru'
+v = 'pp_prec'
 print('Variable: ' + v)
 
 # for i in periodos:
@@ -109,7 +109,11 @@ if v == 'hgt200':
                        lat=np.arange(-80, 20)[::-1])
 else:
     ruta = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/'
-    data = xr.open_dataset(ruta + v + '_d_w_c_1950-2020_1.nc')
+    if v=='pp_prec':
+        data = xr.open_dataset(ruta + v + '_d_w_c_1950-2020_2.5.nc')
+    else:
+        data = xr.open_dataset(ruta + v + '_d_w_c_1950-2020_1.nc')
+
 
 if v == 'psl':
     print('to hPa')
@@ -218,7 +222,7 @@ for c in cases:  # simultaneos, aislados, todos, positivos, negativos
             aux = aux.chunk({'time': -1})
             qt = aux.quantile([.05, .95], dim='time', interpolation='linear')
             qt.to_netcdf('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' +
-                         v + '_' + c + '1950_2020_' + s + '_DMIbase.nc', compute=True)
+                         v + '_' + c + '1950_2020_' + s + '.nc', compute=True)
 
             # if name == 'ERA20':
             #     qt.to_netcdf('/datos/luciano.andrian/ncfiles/nc_quantiles/' + v + '_' + c + '_19' + i[0] +
