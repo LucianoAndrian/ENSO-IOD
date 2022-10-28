@@ -460,7 +460,7 @@ for v in variables:
             SESA=SESA[v_count])
 
     PlotReg(data=aux_dmi_won34*mask, data_cor=aux_corr_dmi*mask,
-            levels=scales[v_count], cmap=cmap[v_count], dpi=200,
+            levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
             title=title_var[v_count] + '_' + s +
                   '_' + str(p[0]) + '_' + str(p[1]) + '_DMI -{N34}',
             name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34',
