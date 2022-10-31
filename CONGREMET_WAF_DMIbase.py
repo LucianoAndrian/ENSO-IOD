@@ -4,7 +4,7 @@ from ENSO_IOD_Funciones import PlotWAFCountours
 ########################################################################################################################
 data_dir2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
-out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/WAF/no_sstanoms/'
+out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/CONGREMET/DMIbase/'
 
 save=True
 ## Functions ###########################################################################################################
@@ -83,8 +83,8 @@ cbar_rws.set_bad(color='white')
 # seasons = ("Full_Season", 'JJA', 'ASO', 'SON')
 # min_max_months = [[7,11], [6,8],[8,10],[9,11]]
 
-seasons = ('JJA', 'SON')
-min_max_months = [[6,8], [9,11]]
+seasons = (['SON'])
+min_max_months = [[9,11]]
 
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_neg', 'DMI_pos', 'DMI_un_pos', 'DMI_un_neg',
          'N34_pos', 'N34_neg', 'N34_un_pos', 'N34_un_neg']
@@ -183,7 +183,7 @@ for c in cases:
             title = 'RWS [somb], WAF [->] y HGT200 [cont] ' + '\n' + \
                     title_case[c_cases] + ' ' + s + '\n' + ' WAF of Composite'
 
-            name_fig = out_dir + 'WAF_' + c + '_' + s + '_NSA'
+            name_fig = out_dir + 'WAF_' + c + '_' + s + '_DMIbase'
 
         case = len(case[c].where(case[c] > 1949, drop=True).values)
         weights = np.transpose(np.tile(-2 * np.cos(np.arange(-90, 89) * 1 * np.pi / 180) + 2.1, (359, 1)))
@@ -191,7 +191,7 @@ for c in cases:
         weights_arr[0, :, :] = weights
 
         PlotWAFCountours(comp, comp['var'], title=title, name_fig=name_fig,
-                         save=save, dpi=200, levels=np.linspace(-1.2e-10, 1.2e-10, 4),
+                         save=save, dpi=300, levels=np.linspace(-1.2e-10, 1.2e-10, 4),
                          contour=False, cmap=cbar_rws, number_events=case,
                          waf=True, px=px*weights_arr , py=py*weights_arr , text=False, waf_scale=waf_scale,
                          two_variables=True, comp2=comp2, step=1, step_waf=5,

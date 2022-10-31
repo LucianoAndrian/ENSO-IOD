@@ -192,8 +192,8 @@ def Plot(comp, levels, cmap, step1, contour1=True,
 # seasons = ('JJA', 'JAS', 'ASO', 'SON')
 # min_max_months = [[6,8],[7,9],[8,10],[9,11]]
 
-seasons = ('JJA', 'SON')
-min_max_months = [[6,8], [9,11]]
+seasons = (['SON'])
+min_max_months = [[9,11]]
 
 variables_t_p = ['t_cru_d_w_c_1950-2020_0.25.nc', 'pp_gpcc_d_w_c_1950-2020_0.25.nc', 'pp_prec_d_w_c_1950-2020_2.5.nc']
 variables_ERA5 = ['hgt200_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']

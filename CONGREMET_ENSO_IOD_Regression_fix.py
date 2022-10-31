@@ -23,7 +23,7 @@ from ENSO_IOD_Funciones import MakeMask
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
 ########################################################################################################################
-out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/CONGREMET/'
+out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/CONGREMET/Regression/'
 hgt_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
 ########################################################################################################################

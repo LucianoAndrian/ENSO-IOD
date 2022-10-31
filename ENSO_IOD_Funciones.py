@@ -1054,11 +1054,12 @@ def PlotComp(comp, comp_var, title='Fig', fase=None, name_fig='Fig',
 
 
 def PlotWAFCountours(comp, comp_var, title='Fig', name_fig='Fig',
-             save=False, dpi=200, levels=np.linspace(-1.5, 1.5, 13),
-             contour=False, cmap='RdBu_r', number_events='',
-             waf=False, px=None, py=None, text=True, waf_scale=None, waf_units=None,
-             two_variables = False, comp2=None, step=1,step_waf=12,
-             levels2=np.linspace(-1.5, 1.5, 13), contour0=False, color_map='#4B4B4B'):
+                     save=False, dpi=200, levels=np.linspace(-1.5, 1.5, 13),
+                     contour=False, cmap='RdBu_r', number_events='',
+                     waf=False, px=None, py=None, text=True, waf_scale=None, waf_units=None,
+                     two_variables = False, comp2=None, step=1,step_waf=12,
+                     levels2=np.linspace(-1.5, 1.5, 13), contour0=False, color_map='#4B4B4B',
+                     color_arrow='#400004'):
 
     from numpy import ma
     import matplotlib.pyplot as plt
@@ -1120,7 +1121,7 @@ def PlotWAFCountours(comp, comp_var, title='Fig', name_fig='Fig',
                   lats[::step_waf, ::step_waf],
                   px_mask[0, ::step_waf, ::step_waf],
                   py_mask[0, ::step_waf, ::step_waf], transform=crs_latlon,pivot='tail',
-                  width=0.0015,headwidth=4.1, alpha=1, color='#400004', scale=waf_scale, scale_units=waf_units)
+                  width=0.0020,headwidth=4.1, alpha=1, color=color_arrow, scale=waf_scale, scale_units=waf_units)
                   #, scale=1/10)#, width=1.5e-3, headwidth=3.1,  # headwidht (default3)
                   #headlength=2.2)  # (default5))
 
