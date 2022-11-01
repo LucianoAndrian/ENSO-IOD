@@ -92,60 +92,60 @@ cbar_snr.set_over('#251255')
 cbar_snr.set_under('#070B4F')
 cbar_snr.set_bad(color='white')
 #----------------------------------------------------------------------------------------------------------------------#
-
-scale_signal =  np.linspace(-1.2,1.2,13)
-scale_snr = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
-scale_prob = [.2,.3,.4,.45,.5,.55,.6,.7,.8]
-
-
-for s in seasons:
-    neutro = xr.open_dataset(cases_dir + 'tref_neutros_' + s + '_nodetrend.nc').rename({'tref':'var'})
-    c_count = 0
-    for c in cases:
-        case = xr.open_dataset(cases_dir + 'tref_' +  c + '_' + s + '_nodetrend.nc').rename({'tref':'var'})
-        try:
-            num_case = len(case.time)
-            # signal (comp)
-            comp = case.mean('time') - neutro.mean('time')
-            mask = MakeMask(comp, 'var')
-            comp *= mask
-
-            Plot(comp, levels=scale_signal, cmap=cbar_t, dpi=dpi, step=1,
-                 name_fig='tref_comp_' + c + '_' + s,
-                 title='Mean Composite - CFSv2 - ' + s + '\n'
-                       + title_case[c_count] + '\n' + ' ' + 'TREF'
-                       + ' - ' + 'Cases: ' + str(num_case),
-                 save=save)
-
-            # spread
-            spread = case - comp
-            spread = spread.std('time')
-            spread *= mask
-
-            # # snr
-            snr = comp/spread
-            Plot(snr, levels=scale_snr, cmap=cbar_snr, dpi=dpi, step=1,
-                 name_fig='tref_SNR_' + c + '_' + s,
-                 title='Singal-to-noise ratio - CFSv2 - ' + s + '\n'
-                       + title_case[c_count] + '\n' + ' ' + 'TREF'
-                       + ' - ' + 'Cases: ' + str(num_case),
-                 save=save)
-
-            #prob
-            comp_prob = case - neutro.mean('time')
-            aux = xr.where(comp_prob > 0, comp_prob, np.nan)
-            prob = SpatialProbability(aux, mask)
-            Plot(prob, levels=scale_prob,cmap=cbar_t, dpi=dpi, step=1,
-                 name_fig='tref_prob_' + c + '_' + s,
-                 title='Probability of T>0' + '- CFSv2 - ' + s + '\n'
-                       + title_case[c_count] + '\n' + ' ' + 'TREF'
-                       + ' - ' + 'Cases: ' + str(num_case),
-                 save=save)
-
-        except:
-            print('Error in ' + c + ' - ' + s)
-
-        c_count += 1
+#
+# scale_signal =  np.linspace(-1.2,1.2,13)
+# scale_snr = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
+# scale_prob = [.2,.3,.4,.45,.5,.55,.6,.7,.8]
+#
+#
+# for s in seasons:
+#     neutro = xr.open_dataset(cases_dir + 'tref_neutros_' + s + '_nodetrend.nc').rename({'tref':'var'})
+#     c_count = 0
+#     for c in cases:
+#         case = xr.open_dataset(cases_dir + 'tref_' +  c + '_' + s + '_nodetrend.nc').rename({'tref':'var'})
+#         try:
+#             num_case = len(case.time)
+#             # signal (comp)
+#             comp = case.mean('time') - neutro.mean('time')
+#             mask = MakeMask(comp, 'var')
+#             comp *= mask
+#
+#             Plot(comp, levels=scale_signal, cmap=cbar_t, dpi=dpi, step=1,
+#                  name_fig='tref_comp_' + c + '_' + s,
+#                  title='Mean Composite - CFSv2 - ' + s + '\n'
+#                        + title_case[c_count] + '\n' + ' ' + 'TREF'
+#                        + ' - ' + 'Cases: ' + str(num_case),
+#                  save=save)
+#
+#             # spread
+#             spread = case - comp
+#             spread = spread.std('time')
+#             spread *= mask
+#
+#             # # snr
+#             snr = comp/spread
+#             Plot(snr, levels=scale_snr, cmap=cbar_snr, dpi=dpi, step=1,
+#                  name_fig='tref_SNR_' + c + '_' + s,
+#                  title='Singal-to-noise ratio - CFSv2 - ' + s + '\n'
+#                        + title_case[c_count] + '\n' + ' ' + 'TREF'
+#                        + ' - ' + 'Cases: ' + str(num_case),
+#                  save=save)
+#
+#             #prob
+#             comp_prob = case - neutro.mean('time')
+#             aux = xr.where(comp_prob > 0, comp_prob, np.nan)
+#             prob = SpatialProbability(aux, mask)
+#             Plot(prob, levels=scale_prob,cmap=cbar_t, dpi=dpi, step=1,
+#                  name_fig='tref_prob_' + c + '_' + s,
+#                  title='Probability of T>0' + '- CFSv2 - ' + s + '\n'
+#                        + title_case[c_count] + '\n' + ' ' + 'TREF'
+#                        + ' - ' + 'Cases: ' + str(num_case),
+#                  save=save)
+#
+#         except:
+#             print('Error in ' + c + ' - ' + s)
+#
+#         c_count += 1
 ########################################################################################################################
 # PP
 ########################################################################################################################
@@ -201,12 +201,12 @@ for s in seasons:
             mask = MakeMask(comp, 'var')
             comp *= mask
 
-            # Plot(comp, levels=scale_signal, cmap=cbar_pp, dpi=dpi, step=1,
-            #      name_fig='prec_comp_' + c + '_' + s + name_fig_end,
-            #      title='Mean Composite - CFSv2 - ' + s + '\n'
-            #            + title_case[c_count] + '\n' + ' ' + 'PREC'
-            #            + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
-            #      save=save)
+            Plot(comp, levels=scale_signal, cmap=cbar_pp, dpi=dpi, step=1,
+                 name_fig='prec_comp_' + c + '_' + s + name_fig_end,
+                 title='Mean Composite - CFSv2 - ' + s + '\n'
+                       + title_case[c_count] + '\n' + ' ' + 'PREC'
+                       + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
+                 save=save)
 
             # # spread
             spread = case - comp
