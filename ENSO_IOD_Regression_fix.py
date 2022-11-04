@@ -44,6 +44,16 @@ def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
         #pp_gpcc = pp_gpcc.rename({'precip': 'var'})
 
         return pp_gpcc
+    elif name == 'pp_gpcc_0.25':
+        # GPCC2018
+        aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
+                              'pp_gpcc_d_w_c_1950-2020_0.25.nc')
+        pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
+        if interp:
+            pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
+        #pp_gpcc = pp_gpcc.rename({'precip': 'var'})
+
+        return pp_gpcc
     elif name == 'pp_gpcc_or':
         aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_no_detrend/' +
                               'pp_gpcc_v2020_0.25.nc')
@@ -51,14 +61,13 @@ def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
         if interp:
             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
         return pp_gpcc
-    elif name == 'cmap':
-        print('Nop')
-        # aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_no_detrend/' +
-        #                       'precip.mon.mean.nc')
-        # pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
-        # if interp:
-        #     pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
-        #return pp_gpcc
+    elif name == 'pp_cmap':
+        aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
+                              'pp_cmap_d_w_c_1979-2020_2.5.nc')
+        pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
+        if interp:
+            pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
+        return pp_gpcc
     elif name == 't_cru':
         aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
                               't_cru_d_w_c_1920-2020_0.25.nc')
@@ -66,9 +75,9 @@ def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
         if interp:
             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
         return pp_gpcc
-    elif name == 'pp_cmap':
-        aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_no_detrend/' +
-                              'pp_prec_d_w_c_1950 - 2020_2.5.nc')
+    elif name == 'pp_prec':
+        aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
+                              'pp_prec_d_w_c_1950-2020_2.5.nc')
         aux = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
         if interp:
             aux = aux.interp(lon=lon_interp, lat=lat_interp)
@@ -303,39 +312,42 @@ def ComputeWithoutEffect(data, n34, dmi, m):
     return aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi
 
 ########################################################################################################################
-variables = ['pp_gpcc_or', 't_cru', 'hgt200_mer_d_w']
+variables = ['pp_gpcc_or', 't_cru', 'hgt200_mer_d_w', 'pp_gpcc_0.25', 'pp_cmap', 'pp_prec']
 name_var = ['precip']
-title_var = ['PP GPCC', 'T Cru', 'HGT200 ERA5']
+title_var = ['PP GPCC', 'T Cru', 'HGT200 ERA5', 'PP GPCC 0.25 pr', 'PP CMAP', 'PP PREC']
 seasons = [7, 10] # main month
 seasons_name = ['JJA', 'SON']
 interp = False
 two_variables=False
-SA = [True, True, False]
+SA = [True, True, False, True, True, True]
 sig = True
 
 scales = [np.linspace(-15, 15, 13),   #pp
           [-.6,-.4,-.2,-.1,-.05,0,0.05,0.1,0.2,0.4,0.6], #t
-          [-150,-100,-75,-50,-25,-15,0,15,25,50,75,100,150]] #hgt200
+          [-150,-100,-75,-50,-25,-15,0,15,25,50,75,100,150], #hgt200
+          np.linspace(-15, 15, 13), #pp
+          np.linspace(-15, 15, 13),#pp
+          np.linspace(-15, 15, 13)]#pp
 
 
 cbar = colors.ListedColormap(['#9B1C00','#B9391B', '#CD4838', '#E25E55', '#F28C89', '#FFCECC',
                               'white',
-                              '#B3DBFF', '#83B9EB', '#5E9AD7', '#3C7DC3', '#2064AF', '#014A9B'])
-cbar.set_under('#641B00')
-cbar.set_over('#012A52')
+                              '#B3DBFF', '#83B9EB', '#5E9AD7', '#3C7DC3', '#2064AF', '#014A9B'][::-1])
+cbar.set_over('#641B00')
+cbar.set_under('#012A52')
 cbar.set_bad(color='white')
 
 
 cbar_pp = colors.ListedColormap(['#003C30', '#004C42', '#0C7169', '#79C8BC', '#B4E2DB',
                                 'white',
-                                '#F1DFB3', '#DCBC75', '#995D13', '#6A3D07', '#543005', ])
-cbar_pp.set_over('#3F2404')
-cbar_pp.set_under('#00221A')
+                                '#F1DFB3', '#DCBC75', '#995D13', '#6A3D07', '#543005'][::-1])
+cbar_pp.set_under('#3F2404')
+cbar_pp.set_over('#00221A')
 cbar_pp.set_bad(color='white')
 
-cmap = [cbar_pp, cbar, cbar]
+cmap = [cbar_pp, cbar, cbar, cbar_pp, cbar_pp, cbar_pp]
 
-periodos = [[1920,2020], [1950,2020]]
+periodos = [[1950,2020]]
 t_critic = 1.66 # es MUY similar (2 digitos) para ambos períodos
 
 dmi_or = DMI(filter_bwa=False, start_per='1920', end_per='2020')[2]
@@ -359,10 +371,20 @@ for v in variables:
 
             if v == 'pp_gpcc_or':
                 data = data.rename({name_var[v_count]: 'var'})
-                dmi = dmi.sel(time=slice(str(p[0]) + '-01-01', str(time_original[-1].dt.year.values) + '-12-01'))
-                n34 = n34.sel(time=slice(str(p[0]) + '-01-01', str(time_original[-1].dt.year.values) + '-12-01'))
-
-
+                dmi = dmi.sel(time=slice(str(p[0]) + '-' + '0'+str(data.time[0].dt.month.values) +'-01',
+                                         str(time_original[-1].dt.year.values) + '-12-01'))
+                n34 = n34.sel(time=slice(str(p[0]) + '-' + '0'+str(data.time[0].dt.month.values) +'-01',
+                                         str(time_original[-1].dt.year.values) + '-12-01'))
+            elif v == 'pp_gpcc_0.25':
+                dmi = dmi.sel(time=slice(str(p[0]) + '-' + '0'+str(data.time[0].dt.month.values) +'-01',
+                                         str(time_original[-1].dt.year.values) + '-12-01'))
+                n34 = n34.sel(time=slice(str(p[0]) + '-' + '0'+str(data.time[0].dt.month.values) +'-01',
+                                         str(time_original[-1].dt.year.values) + '-12-01'))
+            elif v == 'pp_cmap':
+                dmi = dmi.sel(time=slice('1979-' + '0'+str(data.time[0].dt.month.values) +'-01',
+                                         str(time_original[-1].dt.year.values) + '-12-01'))
+                n34 = n34.sel(time=slice('1979-'+ '0'+str(data.time[0].dt.month.values) +'-01',
+                                         str(time_original[-1].dt.year.values) + '-12-01'))
 
             # Anomaly -------------------------------------------------------------------------------------------------#
             data = data.groupby('time.month') - data.groupby('time.month').mean('time', skipna=True)
@@ -401,6 +423,7 @@ for v in variables:
                         two_variables=False,
                         SA=SA[v_count], step=1, color_map='k')
 
+
                 del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, aux_corr_n34, \
                     aux_corr_dmi_2, aux_corr_n34_2
 
@@ -438,7 +461,7 @@ for v in variables:
 
     else:
         plt.rcParams['hatch.linewidth'] = 0.5
-        p = periodos[1]
+        p = periodos[0]
         r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0]) - 2) / t_critic) ** 2) + 1))
 
         # indices: ------------------------------------------------------------------------------------------------#

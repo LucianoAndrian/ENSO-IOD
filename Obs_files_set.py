@@ -112,3 +112,17 @@ data_50_20 = data_50_20.sel(lon=slice(270, 330), lat=slice(15, -60))
 data_50_20 = Detrend(data_50_20, 'time')
 data_50_20.to_netcdf(out_dir + 'pp_prec_d_w_c_1950-2020_2.5.nc')
 
+
+
+#PP CMAP:
+data = xr.open_dataset(dir_files + 'pp_cmap.nc')
+data = data.rename({'precip':'var'})
+data_50_20 = data.sel(time=slice('1950-01-01', '2020-12-01'))
+data_50_20 *= 30
+del data
+
+data_50_20 = Weights(data_50_20)
+data_50_20 = data_50_20.sel(lon=slice(270, 330), lat=slice(15, -60))
+data_50_20 = Detrend(data_50_20, 'time')
+data_50_20.to_netcdf(out_dir + 'pp_cmap_d_w_c_1979-2020_2.5.nc')
+
