@@ -407,21 +407,21 @@ for v in variables:
                         title=title_var[v_count] + '_' + s +
                               '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4',
                         name_fig=v + '_' + s + '_' + str(p[0]) +
-                                 '_' + str(p[1]) + '_N34_revertScale',
-                        save=save, sig=True,
+                                 '_' + str(p[1]) + '_N34',
+                        save=save, sig=True,sig_point=True,
                         two_variables=False,
                         SA=SA[v_count], step=1,
-                        color_map='k')
+                        color_map='k', color_sig='k')
 
                 PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
                         levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                         title=title_var[v_count] + '_' + s +
                               '_' + str(p[0]) + '_' + str(p[1]) + '_DMI',
                         name_fig=v + '_' + s + '_' + str(p[0]) +
-                                 '_' + str(p[1]) + '_DMI_revertScale',
-                        save=save, sig=True,
+                                 '_' + str(p[1]) + '_DMI',
+                        save=save, sig=True,sig_point=True,
                         two_variables=False,
-                        SA=SA[v_count], step=1, color_map='k')
+                        SA=SA[v_count], step=1, color_map='k', color_sig='k')
 
 
                 del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, aux_corr_n34, \
@@ -440,19 +440,19 @@ for v in variables:
                         levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                         title=title_var[v_count] + '_' + s +
                               '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
-                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi_revertScale',
-                        save=save, sig=True,
+                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
+                        save=save, sig=True,sig_point=True,
                         two_variables=False,
-                        SA=SA[v_count], step=1, color_map='k')
+                        SA=SA[v_count], step=1, color_map='k', color_sig='k')
 
                 PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
                         levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                         title=title_var[v_count] + '_' + s +
                               '_' + str(p[0]) + '_' + str(p[1]) + '_DMI -{N34}',
-                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34_revertScale',
-                        save=save, sig=True,
+                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34',
+                        save=save, sig=True,sig_point=True,
                         two_variables=False,
-                        SA=SA[v_count], step=1,  color_map='k')
+                        SA=SA[v_count], step=1,  color_map='k', color_sig='k')
 
                 del aux_n34_wodmi, aux_dmi_won34, aux_corr_dmi, aux_corr_n34, \
                     aux_n34_wodmi_2, aux_dmi_won34_2, aux_corr_dmi_2, aux_corr_n34_2
@@ -491,7 +491,7 @@ for v in variables:
             PlotReg(data=aux_n34, data_cor=aux_corr_n34,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
-                          '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4_revertScale',
+                          '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4',
                     name_fig=v + '_' + s + '_' + str(p[0]) +
                              '_' + str(p[1]) + '_N34',
                     save=save, sig=True,
@@ -503,7 +503,7 @@ for v in variables:
             PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
-                          '_' + str(p[0]) + '_' + str(p[1]) + '_DMI_revertScale',
+                          '_' + str(p[0]) + '_' + str(p[1]) + '_DMI',
                     name_fig=v + '_' + s + '_' + str(p[0]) +
                              '_' + str(p[1]) + '_DMI',
                     save=save, sig=True,
@@ -528,7 +528,7 @@ for v in variables:
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
-                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi_revertScale',
+                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
                     save=save, sig=True,
                     two_variables=False,
                     SA=SA[v_count], step=1,
@@ -539,7 +539,7 @@ for v in variables:
                     levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0]) + '_' + str(p[1]) + '_DMI -{N34}',
-                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34_revertScale',
+                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34',
                     save=save, sig=True,
                     two_variables=False,
                     SA=SA[v_count], step=1,

@@ -28,7 +28,7 @@ for i in np.arange(1,13):
     cantidad.append(len(dmi.iloc[np.where(dmi.Mes==i)]))
 
 plt.style.use('dark_background')
-fig = plt.figure(1, figsize=(5, 3), dpi=100)
+fig = plt.figure(1, figsize=(5, 3), dpi=200)
 ax = fig.add_subplot(111)
 ax2 = ax.twinx()
 for i in np.arange(1950,2020):
