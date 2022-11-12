@@ -21,7 +21,7 @@ nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_da
 data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' #T y PP ya procesados
 data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/' # ERA5 ya procesados
 out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/DMIbase/'
-out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/no_sstanoms/'
+out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/DMIbase/'
 
 #Plot
 save = True
@@ -180,8 +180,11 @@ def Plot(comp, levels, cmap, step1, contour1=True,
 # seasons = ('JJA', 'JAS', 'ASO', 'SON')
 # min_max_months = [[6,8],[7,9],[8,10],[9,11]]
 
-seasons = (['SON'])
-min_max_months = [[9,11]]
+# seasons = ('SON')
+# min_max_months = [[9,11]]
+
+seasons = ('JJA', 'SON')
+min_max_months = [[6,8],[9,11]]
 
 variables_t_p = ['t_cru_d_w_c_1950-2020_0.25.nc', 'pp_gpcc_d_w_c_1950-2020_0.25.nc', 'pp_prec_d_w_c_1950-2020_2.5.nc']
 variables_ERA5 = ['hgt200_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
@@ -304,8 +307,8 @@ for v in variables_ERA5:
             comp1, num_case = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
                                               two_variables=False, data2=None)
 
-            data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' +
-                                        c + '1950_2020_' + s + 'DMIbase.nc')
+            data_sig = xr.open_dataset(sig_dir +  v.split('_')[0] +
+                                       '_' + c + '1950_2020_' + s + '_DMIbase.nc')
 
             comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
             sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))

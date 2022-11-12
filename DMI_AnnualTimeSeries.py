@@ -28,7 +28,7 @@ for i in np.arange(1,13):
     cantidad.append(len(dmi.iloc[np.where(dmi.Mes==i)]))
 
 plt.style.use('dark_background')
-fig = plt.figure(1, figsize=(5, 3), dpi=200)
+fig = plt.figure(1, figsize=(5, 4), dpi=300)
 ax = fig.add_subplot(111)
 ax2 = ax.twinx()
 for i in np.arange(1950,2020):
@@ -40,6 +40,7 @@ ax.fill_between(np.arange(0,12),sd/2, -sd/2, alpha=0.9, zorder=15, color='red')
 #                  [a for a in sd_eventos],
 #                  [-a for a in sd_eventos],
 #                  color='green', alpha=0.9, zorder=10)
+
 ax.set_ylabel('DMI')
 ax.set_xlabel('Meses')
 ax.set_xticks(np.arange(0,12), np.arange(1,13))
@@ -47,8 +48,9 @@ ax.set_ylim(-1.5, 1.5)
 
 ax2.bar(np.arange(0,12),cantidad, alpha=0.35, color='white')
 ax2.set_ylim(0,40)
-
+ax2.set_ylabel("cantida de casos")
 ax.grid()
+plt.title('Marchas anual DMI 1950-2020, +-0.5SD[contorno],' + '\n' + 'media [linea negra]' +'\n' +' y cantidad de casos total IOD [barras]')
 plt.tight_layout()
 #plt.savefig()
 

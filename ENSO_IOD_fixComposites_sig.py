@@ -214,7 +214,7 @@ def Plot(comp, levels, cmap, step1, contour1=True,
 seasons = ('JJA', 'SON')
 min_max_months = [[6,8], [9,11]]
 
-variables_t_p = ['t_cru_d_w_c', 'pp_gpcc_d_w_c']
+variables_t_p = ['t_cru_d_w_c_1950-2020_0.25.nc', 'pp_gpcc_d_w_c_1950-2020_0.25.nc', 'pp_prec_d_w_c_1950-2020_2.5.nc']
 variables_ERA5 = ['hgt200_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
 
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_neg', 'DMI_pos', 'DMI_un_pos',
@@ -224,6 +224,8 @@ scales = [np.linspace(-1, 1 ,17),  #t
           [-300, -250, -200, -150, -100, -50, -25, 0, 25, 50, 100, 150, 200, 250, 300],  # hgt
           np.linspace(-45, 45, 13),  #pp
           [-300,-250,-200,-150,-100,-50,-25,0,25,50,100,150,200,250,300],  #hgt
+          np.linspace(-45, 45, 13),  # pp
+          [-300, -250, -200, -150, -100, -50, -25, 0, 25, 50, 100, 150, 200, 250, 300],  # hgt
           np.linspace(-0.5e-5, 0.5e-5, 17)]  #div200
 
 title_case = ['DMI-ENSO simultaneous positive phase ',
@@ -237,9 +239,9 @@ title_case = ['DMI-ENSO simultaneous positive phase ',
               'ENSO pure positive phase ',
               'ENSO pure negative phase ']
 
-v_name = [ 'Temperature - Cru', 'Precipitation - GPCC',
+v_name = [ 'Temperature - Cru', 'Precipitation - GPCC', 'Precipitation - PREC',
            'HGT200hPa','Div200hPa', 'Potential Velocity']
-v_name_fig=['temp', 'prec', 'hgt200', 'div', 'pv']
+v_name_fig=['temp', 'pp_gpcc', 'pp_prec','hgt200', 'div', 'pv']
 
 # colorbars
 cbar_pp = colors.ListedColormap(['#003C30', '#004C42', '#0C7169', '#79C8BC', '#B4E2DB',
@@ -271,14 +273,14 @@ cbar_sst.set_over('#9B1C00')
 cbar_sst.set_under('#014A9B')
 cbar_sst.set_bad(color='white')
 
-cmap_t_pp = [cbar_t, cbar_pp]
+cmap_t_pp = [cbar_t, cbar_pp, cbar_pp]
 cmap_era5 = [cbar_t, cbar_t_r]
 ########################################################################################################################
 #T y PP con contornos de HGT200
 v_count = 0
 plt.rcParams['hatch.linewidth'] = 2
 for v in variables_t_p:
-    data = xr.open_dataset(data_dir_t_pp + v + '_1950-2020_0.25.nc')
+    data = xr.open_dataset(data_dir_t_pp + v)
     data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
     data2 = data2.sel(lon=slice(270, 330), lat=slice(15, -60))
     data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)

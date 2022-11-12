@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from ENSO_IOD_Funciones import Nino34CPC
 from ENSO_IOD_Funciones import DMI
+import cartopy.feature as cfeature
 from ENSO_IOD_Funciones import MakeMask
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
@@ -28,7 +29,7 @@ hgt_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
 ########################################################################################################################
 save = True
-dpi = 200
+dpi = 300
 full_season = False
 text = False
 # Functions ############################################################################################################
@@ -185,15 +186,15 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
         levels_contour = levels_contour[levels_contour != 0]
     else:
         levels_contour.remove(0)
-    if SA:
-        fig = plt.figure(figsize=(5, 6), dpi=dpi)
-    else:
-        fig = plt.figure(figsize=(7, 3.5), dpi=dpi)
-    ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+
     crs_latlon = ccrs.PlateCarree()
     if SA:
+        fig = plt.figure(figsize=(5, 6), dpi=dpi)
+        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
         ax.set_extent([270,330, -60,20], crs=crs_latlon)
     else:
+        fig = plt.figure(figsize=(7, 3.5), dpi=dpi)
+        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
         ax.set_extent([30, 340, -80, 20], crs=crs_latlon)
 
     ax.contour(data.lon[::step], data.lat[::step], data[::step, ::step], linewidths=.5, alpha=0.5,
@@ -233,22 +234,33 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
     cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
     cb.ax.tick_params(labelsize=8)
     ax.add_feature(cartopy.feature.LAND, facecolor='white', edgecolor=color_map)
-    ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
     # ax.add_feature(cartopy.feature.BORDERS, linestyle='-', alpha=.5)
-    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
     if SA:
+        ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5, zorder=17)
+        #ax.add_feature(cartopy.feature.COASTLINE)
+        ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean',
+                                                    scale='50m', facecolor='white', alpha=1)
+        ax.add_feature(ocean, linewidth=0.2, zorder=15)
         ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
         ax.set_yticks(np.arange(-60, 20, 20), crs=crs_latlon)
-        ax.add_feature(cartopy.feature.COASTLINE)
+
+        ax2 = ax.twinx()
+        ax2.set_yticks([])
+        #ax2.set_xticks([])
+
     else:
         ax.set_xticks(np.arange(30, 340, 30), crs=crs_latlon)
         ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
         ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
         ax.coastlines(color=color_map, linestyle='-', alpha=1)
+    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', zorder=20)
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
     ax.xaxis.set_major_formatter(lon_formatter)
     ax.yaxis.set_major_formatter(lat_formatter)
+    #ax2.spines['left'].set_color('k')
+
     ax.tick_params(labelsize=7)
     plt.title(title, fontsize=10)
     plt.tight_layout()
@@ -356,6 +368,10 @@ n34_or = Nino34CPC(xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
 
 v_count = 0
 for v in variables:
+    if v == 'pp_cmap':
+        y1 = 29
+    else:
+        y1 = 0
     if v != 'hgt200_mer_d_w':
         plt.rcParams['hatch.linewidth'] = 2
         for p in periodos:
@@ -405,8 +421,8 @@ for v in variables:
                 PlotReg(data=aux_n34, data_cor=aux_corr_n34,
                         levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                         title=title_var[v_count] + '_' + s +
-                              '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4',
-                        name_fig=v + '_' + s + '_' + str(p[0]) +
+                              '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4',
+                        name_fig=v + '_' + s + '_' + str(p[0] + y1) +
                                  '_' + str(p[1]) + '_N34',
                         save=save, sig=True,sig_point=True,
                         two_variables=False,
@@ -416,8 +432,8 @@ for v in variables:
                 PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
                         levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                         title=title_var[v_count] + '_' + s +
-                              '_' + str(p[0]) + '_' + str(p[1]) + '_DMI',
-                        name_fig=v + '_' + s + '_' + str(p[0]) +
+                              '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI',
+                        name_fig=v + '_' + s + '_' + str(p[0] + y1) +
                                  '_' + str(p[1]) + '_DMI',
                         save=save, sig=True,sig_point=True,
                         two_variables=False,
@@ -439,8 +455,8 @@ for v in variables:
                 PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34,
                         levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                         title=title_var[v_count] + '_' + s +
-                              '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
-                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
+                              '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
+                        name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(p[1]) + '_N34_wodmi',
                         save=save, sig=True,sig_point=True,
                         two_variables=False,
                         SA=SA[v_count], step=1, color_map='k', color_sig='k')
@@ -448,8 +464,8 @@ for v in variables:
                 PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
                         levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                         title=title_var[v_count] + '_' + s +
-                              '_' + str(p[0]) + '_' + str(p[1]) + '_DMI -{N34}',
-                        name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34',
+                              '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI -{N34}',
+                        name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(p[1]) + '_DMI_woN34',
                         save=save, sig=True,sig_point=True,
                         two_variables=False,
                         SA=SA[v_count], step=1,  color_map='k', color_sig='k')
@@ -462,14 +478,14 @@ for v in variables:
     else:
         plt.rcParams['hatch.linewidth'] = 0.5
         p = periodos[0]
-        r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0]) - 2) / t_critic) ** 2) + 1))
+        r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0] + y1) - 2) / t_critic) ** 2) + 1))
 
         # indices: ------------------------------------------------------------------------------------------------#
-        dmi = dmi_or.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
-        n34 = n34_or.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
+        dmi = dmi_or.sel(time=slice(str(p[0] + y1) + '-01-01', str(p[1]) + '-12-01'))
+        n34 = n34_or.sel(time=slice(str(p[0] + y1) + '-01-01', str(p[1]) + '-12-01'))
 
         data = xr.open_dataset(hgt_dir + v + '.nc')
-        data = data.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
+        data = data.sel(time=slice(str(p[0] + y1) + '-01-01', str(p[1]) + '-12-01'))
         time_original = data.time
 
         # Anomaly -------------------------------------------------------------------------------------------------#
@@ -491,8 +507,8 @@ for v in variables:
             PlotReg(data=aux_n34, data_cor=aux_corr_n34,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
-                          '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4',
-                    name_fig=v + '_' + s + '_' + str(p[0]) +
+                          '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4',
+                    name_fig=v + '_' + s + '_' + str(p[0] + y1) +
                              '_' + str(p[1]) + '_N34',
                     save=save, sig=True,
                     two_variables=False,
@@ -503,8 +519,8 @@ for v in variables:
             PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
-                          '_' + str(p[0]) + '_' + str(p[1]) + '_DMI',
-                    name_fig=v + '_' + s + '_' + str(p[0]) +
+                          '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI',
+                    name_fig=v + '_' + s + '_' + str(p[0] + y1) +
                              '_' + str(p[1]) + '_DMI',
                     save=save, sig=True,
                     two_variables=False,
@@ -527,8 +543,8 @@ for v in variables:
             PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
-                          '_' + str(p[0]) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
-                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
+                          '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
+                    name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(p[1]) + '_N34_wodmi',
                     save=save, sig=True,
                     two_variables=False,
                     SA=SA[v_count], step=1,
@@ -538,8 +554,8 @@ for v in variables:
             PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                     title=title_var[v_count] + '_' + s +
-                          '_' + str(p[0]) + '_' + str(p[1]) + '_DMI -{N34}',
-                    name_fig=v + '_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_woN34',
+                          '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI -{N34}',
+                    name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(p[1]) + '_DMI_woN34',
                     save=save, sig=True,
                     two_variables=False,
                     SA=SA[v_count], step=1,
