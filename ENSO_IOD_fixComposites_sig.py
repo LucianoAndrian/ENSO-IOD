@@ -141,8 +141,8 @@ def Plot(comp, levels, cmap, step1, contour1=True,
         ax.set_extent([30, 340, -90, 0],
                           ccrs.PlateCarree(central_longitude=200))
 
-    
-    
+
+
     if two_variables:
         ax.contour(comp2.lon[::step2], comp2.lat[::step2], comp_var2[::step2, ::step2],
                    linewidths=linewidht2, levels=levels_contour2, transform=crs_latlon, colors='k')
@@ -170,7 +170,7 @@ def Plot(comp, levels, cmap, step1, contour1=True,
     ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor=color_map)
     ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
     ax.coastlines(color=color_map, linestyle='-', alpha=1)
-    
+
     if proj=='eq':
         ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
         ax.set_xticks(xticks, crs=crs_latlon)
@@ -196,7 +196,7 @@ def Plot(comp, levels, cmap, step1, contour1=True,
             pos = ea[2].get_position()
             if (pos[0] == 150):
                 ea[2].set_position([0, pos[1]])
-    
+
     ax.tick_params(labelsize=7)
     plt.title(title, fontsize=10)
     plt.tight_layout()
@@ -283,7 +283,7 @@ for v in variables_t_p:
     data = xr.open_dataset(data_dir_t_pp + v)
     data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
     data2 = data2.sel(lon=slice(270, 330), lat=slice(15, -60))
-    data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
+    #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
 
     c_count = 0
     for c in cases:
@@ -345,8 +345,8 @@ for v in variables_ERA5:
             Plot(comp=comp1, levels=scales[v_count + 1], cmap = cmap_era5[v_count-2], step1=steps[v_count-2],
                  contour1=contours1[v_count-2], two_variables=False,
                  mapa='hs',
-                 title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-                 name_fig=v_name_fig[v_count]  + s + '_' + cases[c_count] + '_mer_d_w',
+                 title=v_name[v_count+1] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+                 name_fig=v_name_fig[v_count+1]  + s + '_' + cases[c_count] + '_mer_d_w',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
 
             s_count += 1

@@ -317,8 +317,8 @@ for v in variables_ERA5:
             Plot(comp=comp1, levels=scales[v_count + 1], cmap = cmap_era5[v_count-2], step1=steps[v_count-2],
                  contour1=contours1[v_count-2], two_variables=False,
                  mapa='hs', significance=True,
-                 title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-                 name_fig=v_name_fig[v_count]  + s + '_' + cases[c_count] + '_mer_d_w_NSA',
+                 title=v_name[v_count+1] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+                 name_fig=v_name_fig[v_count+1]  + s + '_' + cases[c_count] + '_mer_d_w_NSA',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
 
             s_count += 1
