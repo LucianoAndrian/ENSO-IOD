@@ -10,8 +10,8 @@ import warnings
 warnings.filterwarnings("ignore")
 ########################################################################################################################
 dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/'
-out_dir = ['/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/U/',
-           '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/U/no_sstanoms/']
+out_dir = ['/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/',
+           '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/DMIbase/']
 
 nc_date_dir1 = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/' #fechas
 nc_date_dir2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/' #fechas
@@ -33,11 +33,11 @@ def Detrend(xrda, dim):
     return dt
 
 def DetrendClim(xrda, dim):
-    aux = xrda.polyfit(dim=dim, deg=1)
+    aux2 = xrda.polyfit(dim=dim, deg=1)
     try:
-        trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients[0])
+        trend = xr.polyval(xrda[dim], aux2.var_polyfit_coefficients[0])
     except:
-        trend = xr.polyval(xrda[dim], aux.polyfit_coefficients[0])
+        trend = xr.polyval(xrda[dim], aux2.polyfit_coefficients[0])
     dt = xrda - trend
     return dt
 
@@ -94,13 +94,12 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, nc_date_dir=No
         if two_variables:
             neutro_comp2 = CompositeSimple(original_data=data2, index=neutro, mmin=mmin, mmax=mmax)
             data_comp2 = CompositeSimple(original_data=data2, index=case, mmin=mmin, mmax=mmax)
-            if zonalA:
-                comp2 = data_comp2 - neutro_comp2
+            comp2 = data_comp2 - neutro_comp2
         else:
             comp2 = None
 
         if zonalA:
-            comp = data_comp - neutro_comp2.mean('lon')
+            comp = data_comp.mean('lon') - neutro_comp2.mean('lon')
     except:
         print('Error en ' + s + c)
 
@@ -195,8 +194,8 @@ min_max_months = [[6,8], [9,11]]
 variables_t_p = ['t_cru_d_w_c', 'pp_gpcc_d_w_c']
 variables_ERA5 = ['hgt200_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
 
-cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_neg', 'DMI_pos', 'DMI_un_pos',
-         'DMI_un_neg','N34_pos', 'N34_neg', 'N34_un_pos', 'N34_un_neg']
+cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos',
+         'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
 
 scales = [np.linspace(-1, 1 ,17),  #t
           [-300, -250, -200, -150, -100, -50, -25, 0, 25, 50, 100, 150, 200, 250, 300],  # hgt
@@ -206,12 +205,8 @@ scales = [np.linspace(-1, 1 ,17),  #t
 
 title_case = ['DMI-ENSO simultaneous positive phase ',
               'DMI-ENSO simultaneous negative phase ',
-              'DMI negative phase ',
-              'DMI positive phase ',
               'DMI pure positive phase ',
               'DMI pure negative phase ',
-              'ENSO positive phase ',
-              'ENSO negative phase ',
               'ENSO pure positive phase ',
               'ENSO pure negative phase ']
 
@@ -259,8 +254,8 @@ data = data.sortby('level', ascending=False)
 aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/ERA5_U_lvs_xrmer.nc')
 aux = aux.rename({'longitude': 'lon', 'latitude': 'lat', 'u': 'var'})
 aux = aux.sel(lat=slice(0, -90))
-u_clim = DetrendClim(aux, 'time')
-u_clim = u_clim.rolling(time=3, center=True).mean()
+#u_clim = DetrendClim(aux, 'time')
+u_clim = aux.rolling(time=3, center=True).mean()
 
 mm = [7,10]
 date_dir_count = 0
@@ -270,7 +265,7 @@ for nc_date_dir in dir_dates:
         s_count = 0
         for s in seasons:
             aux_comp0 = data.sel(lat=slice(0, -80))
-            aux_comp = aux_comp0.sel(lon=slice(130, 290)).mean('lon')
+            aux_comp = aux_comp0.sel(lon=slice(130, 290))
 
             comp2 = u_clim.sel(lat=slice(0, -80), time=u_clim.time.dt.month.isin(mm[s_count]))
             comp2 = comp2.mean(['lon', 'time'])
@@ -283,14 +278,14 @@ for nc_date_dir in dir_dates:
                                        zonalA=True, data2=aux_comp0)
 
             if date_dir_count == 1:
-                add_to_name_fig = 'no_SSTanom'
+                add_to_name_fig = ''
             else:
                 add_to_name_fig = ''
 
             PlotU(comp=comp1, cmap=cbar_t, contour=False,
-                  levels=[-12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4, 6, 8, 10, 12],
+                  levels=[-8, -6, -4, -2, -1, -.5, 0, .5, 1, 2, 4, 6, 8],
                   title="U* - 130E - 70W" + add_to_name_fig + ' ' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-                  name_fig="U_" + s + '_' + cases[c_count] + '_130W_70E_' + '_mer_d_w' + add_to_name_fig,
+                  name_fig="U_" + s + '_' + cases[c_count] + '_130E_70W_' + '_mer_d_w' + add_to_name_fig,
                   dpi=dpi, save=save, out_dir=out_dir[date_dir_count],
                   comp2=comp2, comp_var2=comp2['var'], levels2=np.arange(-10, 35, 5), colors2='k', lwd=1)
 

@@ -12,8 +12,8 @@ import warnings
 warnings.filterwarnings("ignore")
 ########################################################################################################################
 dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/'
-out_dir = ['/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/U/',
-           '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/U/no_sstanoms/']
+out_dir = ['/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/',
+           '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/DMIbase/']
 
 nc_date_dir1 = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/' #fechas
 nc_date_dir2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/' #fechas
