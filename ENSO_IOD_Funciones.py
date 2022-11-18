@@ -1574,3 +1574,267 @@ def MakeMask(DataArray, dataname='mask'):
     mask = xr.where(np.isnan(mask), mask, 1)
     mask = mask.to_dataset(name=dataname)
     return mask
+
+
+# Regression ###########################################################################################################
+
+def LinearReg(xrda, dim, deg=1):
+    # liner reg along a single dimension
+    aux = xrda.polyfit(dim=dim, deg=deg, skipna=True)
+    return aux
+
+def LinearReg1_D(dmi, n34):
+    import statsmodels.formula.api as smf
+
+    df = pd.DataFrame({'dmi': dmi.values, 'n34': n34.values})
+
+    result = smf.ols(formula='n34~dmi', data=df).fit()
+    n34_pred_dmi = result.params[1] * dmi.values + result.params[0]
+
+    result = smf.ols(formula='dmi~n34', data=df).fit()
+    dmi_pred_n34 = result.params[1] * n34.values + result.params[0]
+
+    return n34 - n34_pred_dmi, dmi - dmi_pred_n34
+
+def RegWEffect(n34, dmi,data=None, data2=None, m=9,two_variables=False):
+    var_reg_n34_2=0
+    var_reg_dmi_2=1
+
+    data['time'] = n34
+     #print('Full Season')
+    aux = LinearReg(data.groupby('month')[m], 'time')
+    # aux = xr.polyval(data.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
+    #       aux.var_polyfit_coefficients[1]
+    var_reg_n34 = aux.var_polyfit_coefficients[0]
+
+    data['time'] = dmi
+    aux = LinearReg(data.groupby('month')[m], 'time')
+    var_reg_dmi = aux.var_polyfit_coefficients[0]
+
+    if two_variables:
+        print('Two Variables')
+
+        data2['time'] = n34
+        #print('Full Season data2, m ignored')
+        aux = LinearReg(data2.groupby('month')[m], 'time')
+        var_reg_n34_2 = aux.var_polyfit_coefficients[0]
+
+        data2['time'] = dmi
+        aux = LinearReg(data2.groupby('month')[m], 'time')
+        var_reg_dmi_2 = aux.var_polyfit_coefficients[0]
+
+    return var_reg_n34, var_reg_dmi, var_reg_n34_2, var_reg_dmi_2
+
+def RegWOEffect(n34, n34_wo_dmi, dmi, dmi_wo_n34, m=9, datos=None):
+
+    datos['time'] = n34
+
+    aux = LinearReg(datos.groupby('month')[m], 'time')
+    aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) +\
+          aux.var_polyfit_coefficients[1]
+
+    #wo n34
+    var_regdmi_won34 = datos.groupby('month')[m]-aux
+
+    var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m] #index wo influence
+    var_dmi_won34 = LinearReg(var_regdmi_won34,'time')
+
+    #-----------------------------------------#
+
+    datos['time'] = dmi
+    aux = LinearReg(datos.groupby('month')[m], 'time')
+    aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
+          aux.var_polyfit_coefficients[1]
+
+    #wo dmi
+    var_regn34_wodmi = datos.groupby('month')[m]-aux
+
+    var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
+    var_n34_wodmi = LinearReg(var_regn34_wodmi,'time')
+
+    return var_n34_wodmi.var_polyfit_coefficients[0],\
+           var_dmi_won34.var_polyfit_coefficients[0],\
+           var_regn34_wodmi,var_regdmi_won34
+
+def Corr(datos, index, time_original, m=9):
+    aux_corr1 = xr.DataArray(datos.groupby('month')[m]['var'],
+                             coords={'time': time_original.groupby('time.month')[m].values,
+                                     'lon': datos.lon.values, 'lat': datos.lat.values},
+                             dims=['time', 'lat', 'lon'])
+    aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
+                             coords={'time': time_original.groupby('time.month')[m]},
+                             dims={'time'})
+
+    return xr.corr(aux_corr1, aux_corr2, 'time')
+
+def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
+            , dpi=100, save=False, title='\m/', name_fig='fig_PlotReg', sig=True, out_dir=''
+            ,two_variables = False, data2=None, data_cor2=None, levels2 = np.linspace(-100,100,2)
+            , sig2=True, sig_point2=False, color_sig2='k'
+            , color_contour2='k',step=1,SA=False, color_map='#d9d9d9'
+            , color_sig='magenta', sig_point=False, r_crit=1):
+
+    import matplotlib.pyplot as plt
+    levels_contour = levels.copy()
+    if isinstance(levels_contour, np.ndarray):
+        levels_contour = levels_contour[levels_contour != 0]
+    else:
+        levels_contour.remove(0)
+
+    crs_latlon = ccrs.PlateCarree()
+    if SA:
+        fig = plt.figure(figsize=(5, 6), dpi=dpi)
+        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+        ax.set_extent([270,330, -60,20], crs=crs_latlon)
+    else:
+        fig = plt.figure(figsize=(7, 3.5), dpi=dpi)
+        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+        ax.set_extent([30, 340, -80, 20], crs=crs_latlon)
+
+    ax.contour(data.lon[::step], data.lat[::step], data[::step, ::step], linewidths=.5, alpha=0.5,
+               levels=levels_contour, transform=crs_latlon, colors='black')
+
+    im = ax.contourf(data.lon[::step], data.lat[::step], data[::step,::step],levels=levels,
+                     transform=crs_latlon, cmap=cmap, extend='both')
+    if sig:
+        if sig_point:
+            colors_l = [color_sig, color_sig]
+            cs = ax.contourf(data_cor.lon, data_cor.lat, data_cor.where(np.abs(data_cor) > np.abs(r_crit)),
+                             transform=crs_latlon, colors='none', hatches=["...", "..."],
+                             extend='lower')
+            for i, collection in enumerate(cs.collections):
+                collection.set_edgecolor(colors_l[i % len(colors_l)])
+
+            for collection in cs.collections:
+                collection.set_linewidth(0.)
+            # para hgt200 queda mejor los dos juntos
+            # ax.contour(data_cor.lon[::step], data_cor.lat[::step], data_cor[::step, ::step],
+            #            levels=np.linspace(-r_crit, r_crit, 2),
+            #            colors=color_sig, transform=crs_latlon, linewidths=1)
+
+        else:
+            ax.contour(data_cor.lon[::step], data_cor.lat[::step], data_cor[::step, ::step],
+                       levels=np.linspace(-r_crit, r_crit, 2),
+                       colors=color_sig, transform=crs_latlon, linewidths=1)
+
+
+    if two_variables:
+        ax.contour(data2.lon, data2.lat, data2, levels=levels2,
+                   colors=color_contour2, transform=crs_latlon, linewidths=1)
+        if sig2:
+            if sig_point2:
+                colors_l = [color_sig2, color_sig2]
+                cs = ax.contourf(data_cor2.lon, data_cor2.lat, data_cor2.where(np.abs(data_cor2) > np.abs(r_crit)),
+                                 transform=crs_latlon, colors='none', hatches=["...", "..."],
+                                 extend='lower')
+                for i, collection in enumerate(cs.collections):
+                    collection.set_edgecolor(colors_l[i % len(colors_l)])
+
+                for collection in cs.collections:
+                    collection.set_linewidth(0.)
+                # para hgt200 queda mejor los dos juntos
+                ax.contour(data_cor2.lon[::step], data_cor2.lat[::step], data_cor2[::step, ::step],
+                           levels=np.linspace(-r_crit, r_crit, 2),
+                           colors=color_sig2, transform=crs_latlon, linewidths=1)
+            else:
+                ax.contour(data_cor2.lon, data_cor2.lat, data_cor2, levels=np.linspace(-r_crit, r_crit, 2),
+                       colors=color_sig2, transform=crs_latlon, linewidths=1)
+                from matplotlib import colors
+                cbar = colors.ListedColormap([color_sig2, 'white', color_sig2])
+                cbar.set_over(color_sig2)
+                cbar.set_under(color_sig2)
+                cbar.set_bad(color='white')
+                ax.contourf(data_cor2.lon, data_cor2.lat, data_cor2, levels=[-1,-r_crit, 0, r_crit,1],
+                       cmap=cbar, transform=crs_latlon, linewidths=1, alpha=0.3)
+
+    cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
+    cb.ax.tick_params(labelsize=8)
+    ax.add_feature(cartopy.feature.LAND, facecolor='white', edgecolor=color_map)
+    #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    # ax.add_feature(cartopy.feature.BORDERS, linestyle='-', alpha=.5)
+    if SA:
+        ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5, zorder=17)
+        #ax.add_feature(cartopy.feature.COASTLINE)
+        ocean = cartopy.feature.NaturalEarthFeature('physical', 'ocean',
+                                                    scale='50m', facecolor='white', alpha=1)
+        ax.add_feature(ocean, linewidth=0.2, zorder=15)
+        ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
+        ax.set_yticks(np.arange(-60, 20, 20), crs=crs_latlon)
+
+        ax2 = ax.twinx()
+        ax2.set_yticks([])
+        #ax2.set_xticks([])
+
+    else:
+        ax.set_xticks(np.arange(30, 340, 30), crs=crs_latlon)
+        ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
+        ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+        ax.coastlines(color=color_map, linestyle='-', alpha=1)
+    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', zorder=20)
+    lon_formatter = LongitudeFormatter(zero_direction_label=True)
+    lat_formatter = LatitudeFormatter()
+    ax.xaxis.set_major_formatter(lon_formatter)
+    ax.yaxis.set_major_formatter(lat_formatter)
+    #ax2.spines['left'].set_color('k')
+
+    ax.tick_params(labelsize=7)
+    plt.title(title, fontsize=10)
+    plt.tight_layout()
+
+    if save:
+        print('save: ' + out_dir + name_fig + '.jpg')
+        plt.savefig(out_dir + name_fig + '.jpg')
+        plt.close()
+
+    else:
+        plt.show()
+
+
+def ComputeWithEffect(data=None, data2=None, n34=None, dmi=None,
+                     two_variables=False, full_season=False,
+                     time_original=None,m=9):
+    print('Reg...')
+    print('#-- With influence --#')
+    aux_n34, aux_dmi, aux_n34_2, aux_dmi_2 = RegWEffect(data=data, data2=data2,
+                                                       n34=n34.__mul__(1 / n34.std('time')),
+                                                       dmi=dmi.__mul__(1 / dmi.std('time')),
+                                                       m=m, two_variables=two_variables)
+    if full_season:
+        print('Full Season')
+        n34 = n34.rolling(time=5, center=True).mean()
+        dmi = dmi.rolling(time=5, center=True).mean()
+
+    print('Corr...')
+    aux_corr_n34 = Corr(datos=data, index=n34, time_original=time_original, m=m)
+    aux_corr_dmi = Corr(datos=data, index=dmi, time_original=time_original, m=m)
+
+    aux_corr_dmi_2 = 0
+    aux_corr_n34_2 = 0
+    if two_variables:
+        print('Corr2..')
+        aux_corr_n34_2 = Corr(datos=data2, index=n34, time_original=time_original, m=m)
+        aux_corr_dmi_2 = Corr(datos=data2, index=dmi, time_original=time_original, m=m)
+
+    return aux_n34, aux_corr_n34, aux_dmi, aux_corr_dmi, aux_n34_2, aux_corr_n34_2, aux_dmi_2, aux_corr_dmi_2
+
+def ComputeWithoutEffect(data, n34, dmi, m, time_original):
+    # -- Without influence --#
+    print('# -- Without influence --#')
+    print('Reg...')
+    # dmi wo n34 influence and n34 wo dmi influence
+    dmi_wo_n34, n34_wo_dmi = LinearReg1_D(n34.__mul__(1 / n34.std('time')),
+                                          dmi.__mul__(1 / dmi.std('time')))
+
+    # Reg WO
+    aux_n34_wodmi, aux_dmi_won34, data_n34_wodmi, data_dmi_won34 = \
+        RegWOEffect(n34=n34.__mul__(1 / n34.std('time')),
+                   n34_wo_dmi=n34_wo_dmi,
+                   dmi=dmi.__mul__(1 / dmi.std('time')),
+                   dmi_wo_n34=dmi_wo_n34,
+                   m=m, datos=data)
+
+    print('Corr...')
+    aux_corr_n34 = Corr(datos=data_n34_wodmi, index=n34_wo_dmi, time_original=time_original,m=m)
+    aux_corr_dmi = Corr(datos=data_dmi_won34, index=dmi_wo_n34, time_original=time_original,m=m)
+
+    return aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi

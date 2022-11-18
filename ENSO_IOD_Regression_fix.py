@@ -128,7 +128,7 @@ def RegWEffect(n34, dmi,data=None, data2=None, m=9,two_variables=False):
         aux = LinearReg(data2.groupby('month')[m], 'time')
         var_reg_n34_2 = aux.var_polyfit_coefficients[0]
 
-        data['time'] = dmi
+        data2['time'] = dmi
         aux = LinearReg(data2.groupby('month')[m], 'time')
         var_reg_dmi_2 = aux.var_polyfit_coefficients[0]
 
@@ -179,7 +179,7 @@ def Corr(datos, index, time_original, m=9):
 def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
             , dpi=100, save=False, title='\m/', name_fig='fig_PlotReg', sig=True
             ,two_variables = False, data2=None, data_cor2=None, levels2 = np.linspace(-100,100,2)
-            , sig2=True, step=1,SA=False, color_map = '#d9d9d9', color_sig='magenta', sig_point=False):
+            , sig2=True, step=1,SA=False, color_map = '#d9d9d9', color_sig='magenta', sig_point=False, r_crit=1):
 
     levels_contour = levels.copy()
     if isinstance(levels_contour, np.ndarray):
