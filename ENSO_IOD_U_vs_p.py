@@ -265,7 +265,7 @@ for nc_date_dir in dir_dates:
         s_count = 0
         for s in seasons:
             aux_comp0 = data.sel(lat=slice(0, -80))
-            aux_comp = aux_comp0.sel(lon=slice(130, 290))
+            aux_comp = aux_comp0.sel(lon=slice(130, 70))
 
             comp2 = u_clim.sel(lat=slice(0, -80), time=u_clim.time.dt.month.isin(mm[s_count]))
             comp2 = comp2.mean(['lon', 'time'])

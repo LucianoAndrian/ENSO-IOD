@@ -48,6 +48,9 @@ def OrdenarNC_wTime_fromW(data):
         )
     )
     return newdata
+
+def SigDivMask(data, thr):
+    return xr.where(np.abs(data) < thr, np.nan, 1)
 ########################################################################################################################
 
 variables = ['div_from_w', 'vp_from_w']
@@ -110,23 +113,23 @@ for s in seasons_name:
                                                   full_season=False, time_original=time_original)
     v_count=0
     print('Plot')
-    PlotReg(data=aux_n34, data_cor=aux_corr_n34,
+    PlotReg(data=aux_n34, data_cor=aux_corr_n34*SigDivMask(aux_n34, scales[0][3]),
             levels=scales[v_count], cmap=cbar, dpi=dpi,
             title='Velocity Potential [cont.], divegence [shading] - 200hPa' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4',
             name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_N34',
-            save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
+            save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
             two_variables=True,
             SA=False, step=1,
             color_map='grey', color_sig='k', color_sig2='grey',
             data2=aux_n34_2, data_cor2=aux_corr_n34_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir)
 
-    PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
+    PlotReg(data=aux_dmi, data_cor=aux_corr_dmi*SigDivMask(aux_dmi, scales[0][3]),
             levels=scales[v_count], cmap=cbar, dpi=dpi,
             title='Velocity Potential [cont.], divegence [shading] - 200hPa' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI',
             name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI',
-            save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
+            save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
             two_variables=True,
             SA=False, step=1,
             color_map='grey', color_sig='k', color_sig2='grey',
@@ -138,23 +141,23 @@ for s in seasons_name:
         ComputeWithoutEffect(data_vp, n34, dmi, seasons[s_count], time_original)
 
 
-    PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34,
+    PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34*SigDivMask(aux_n34_wodmi, scales[0][3]),
             levels=scales[v_count], cmap=cbar, dpi=dpi,
             title='Velocity Potential [cont.], divegence [shading] - 200hPa' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4 -{DMI}',
             name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
-            save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
+            save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
             two_variables=True,
             SA=False, step=1,
             color_map='grey', color_sig='k', color_sig2='grey',
             data2=aux_n34_wodmi_2, data_cor2=aux_corr_n34_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir)
 
-    PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
+    PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi*SigDivMask(aux_dmi_won34, scales[0][3]),
             levels=scales[v_count], cmap=cbar, dpi=dpi,
             title='Velocity Potential [cont.], divegence [shading] - 200hPa' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI -{Niño3.4}',
             name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_won34',
-            save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
+            save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
             two_variables=True,
             SA=False, step=1,
             color_map='grey', color_sig='k', color_sig2='grey',
