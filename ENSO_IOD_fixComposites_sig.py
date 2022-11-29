@@ -108,6 +108,13 @@ def Plot(comp, levels, cmap, step1, contour1=True,
         xticks = np.arange(50, 270, 60)
         yticks = np.arange(-20, 20, 20)
 
+    elif mapa.lower()=='hs':
+        fig_size = (8, 3)
+        extent = [0, 359, -90, 20]
+        xticks = np.arange(0, 330, 30)
+        yticks = np.arange(-90, 20, 10)
+        if proj != 'eq':
+            fig_size = (5, 5)
     else:
         fig_size = (8, 3)
         extent = [30, 330, -80, 20]
@@ -277,12 +284,13 @@ cmap_t_pp = [cbar_t, cbar_pp, cbar_pp]
 cmap_era5 = [cbar_t, cbar_t_r]
 ########################################################################################################################
 #T y PP con contornos de HGT200
+
 v_count = 0
 plt.rcParams['hatch.linewidth'] = 2
 for v in variables_t_p:
     data = xr.open_dataset(data_dir_t_pp + v)
     data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
-    data2 = data2.sel(lon=slice(270, 330), lat=slice(15, -60))
+    data2 = data2.sel(lat=slice(15, -90))
     #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
 
     c_count = 0
@@ -443,3 +451,46 @@ for c in cases:
     c_count += 1
 
 ########################################################################################################################
+# prueba hemisferio
+########################################################################################################################
+#T y PP con contornos de HGT200
+variables_t_p = ['t_cru_HS_d_w_c_1950-2020_0.25.nc', 'pp_gpcc_HS_d_w_c_1950-2020_0.25.nc']
+variables_ERA5 = ['hgt200_HS_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
+v_count = 0
+plt.rcParams['hatch.linewidth'] = 2
+for v in variables_t_p:
+    data = xr.open_dataset(data_dir_t_pp + v)
+    data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
+    data2 = data2.sel(lat=slice(20, -90))
+    #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
+
+    c_count = 0
+    for c in cases:
+        s_count = 0
+        for s in seasons:
+            comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+                                              two_variables=True, data2=data2)
+
+            data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
+                                       '_' + c + '1950_2020_' + s + '.nc')
+
+            comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+            sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+            sig = sig.where(np.isnan(sig['var']), 0)
+
+            if v_count != 0:
+                v_count_sc = 2
+            else:
+                v_count_sc = 0
+
+            #MakeMask(pp, dataname='cluster')
+            Plot(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
+                 two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
+                 mapa='sa',
+                 title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+                 name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w',
+                 dpi=dpi, save=save, comp_sig=sig, color_sig='k')
+
+            s_count += 1
+        c_count += 1
+    v_count += 1

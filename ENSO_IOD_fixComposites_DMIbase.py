@@ -14,6 +14,7 @@ import cartopy.crs as ccrs
 import os
 #from ENSO_IOD_Funciones import OpenDatasets
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
+import matplotlib.path as mpath
 import warnings
 warnings.filterwarnings("ignore")
 ########################################################################################################################
@@ -87,11 +88,12 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None):
         return comp, case_num
 
 
+
 def Plot(comp, levels, cmap, step1, contour1=True,
          two_variables=False, comp2=None, levels2=np.linspace(-1,1,13), step2=4,
          mapa='sa', title='title', name_fig='name_fig', dpi=100, save=save,
          comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#4B4B4B',
-         out_dir=out_dir_w_sig):
+         out_dir=out_dir_w_sig, proj='eq'):
 
     import matplotlib.pyplot as plt
 
@@ -107,11 +109,20 @@ def Plot(comp, levels, cmap, step1, contour1=True,
         xticks = np.arange(50, 270, 60)
         yticks = np.arange(-20, 20, 20)
 
+    elif mapa.lower()=='hs':
+        fig_size = (8, 3)
+        extent = [0, 359, -90, 20]
+        xticks = np.arange(0, 330, 30)
+        yticks = np.arange(-90, 20, 10)
+        if proj != 'eq':
+            fig_size = (5, 5)
     else:
         fig_size = (8, 3)
         extent = [30, 330, -80, 20]
         xticks = np.arange(30, 330, 30)
         yticks = np.arange(-80, 20, 10)
+        if proj != 'eq':
+            fig_size = (5, 5)
 
     levels_contour = levels.copy()
     comp_var = comp['var']
@@ -128,10 +139,18 @@ def Plot(comp, levels, cmap, step1, contour1=True,
         else:
             levels_contour2.remove(0)
 
-    fig = plt.figure(figsize=fig_size, dpi=dpi)
-    ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     crs_latlon = ccrs.PlateCarree()
-    ax.set_extent(extent, crs=crs_latlon)
+    fig = plt.figure(figsize=fig_size, dpi=dpi)
+    if proj=='eq':
+        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+        ax.set_extent(extent, crs=crs_latlon)
+    else:
+        ax = plt.axes(projection=ccrs.SouthPolarStereo(central_longitude=200))
+        ax.set_extent([30, 340, -90, 0],
+                          ccrs.PlateCarree(central_longitude=200))
+
+
+
     if two_variables:
         ax.contour(comp2.lon[::step2], comp2.lat[::step2], comp_var2[::step2, ::step2],
                    linewidths=linewidht2, levels=levels_contour2, transform=crs_latlon, colors='k')
@@ -159,13 +178,33 @@ def Plot(comp, levels, cmap, step1, contour1=True,
     ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor=color_map)
     ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
     ax.coastlines(color=color_map, linestyle='-', alpha=1)
-    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
-    ax.set_xticks(xticks, crs=crs_latlon)
-    ax.set_yticks(yticks, crs=crs_latlon)
-    lon_formatter = LongitudeFormatter(zero_direction_label=True)
-    lat_formatter = LatitudeFormatter()
-    ax.xaxis.set_major_formatter(lon_formatter)
-    ax.yaxis.set_major_formatter(lat_formatter)
+
+    if proj=='eq':
+        ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+        ax.set_xticks(xticks, crs=crs_latlon)
+        ax.set_yticks(yticks, crs=crs_latlon)
+        lon_formatter = LongitudeFormatter(zero_direction_label=True)
+        lat_formatter = LatitudeFormatter()
+        ax.xaxis.set_major_formatter(lon_formatter)
+        ax.yaxis.set_major_formatter(lat_formatter)
+    else:
+        gls = ax.gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
+                               y_inline=True, xlocs=range(-180, 180, 30), ylocs=np.arange(-80, 0, 20))
+
+        r_extent = 1.2e7
+        ax.set_xlim(-r_extent, r_extent)
+        ax.set_ylim(-r_extent, r_extent)
+        circle_path = mpath.Path.unit_circle()
+        circle_path = mpath.Path(circle_path.vertices.copy() * r_extent,
+                                 circle_path.codes.copy())
+        ax.set_boundary(circle_path)
+        ax.set_frame_on(False)
+        plt.draw()
+        for ea in gls._labels:
+            pos = ea[2].get_position()
+            if (pos[0] == 150):
+                ea[2].set_position([0, pos[1]])
+
     ax.tick_params(labelsize=7)
     plt.title(title, fontsize=10)
     plt.tight_layout()
@@ -415,3 +454,47 @@ for c in cases:
     c_count += 1
 
 ########################################################################################################################
+########################################################################################################################
+# prueba hemisferio
+########################################################################################################################
+#T y PP con contornos de HGT200
+variables_t_p = ['t_cru_HS_d_w_c_1950-2020_0.25.nc', 'pp_gpcc_HS_d_w_c_1950-2020_0.25.nc']
+variables_ERA5 = ['hgt200_HS_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
+v_count = 0
+plt.rcParams['hatch.linewidth'] = 2
+for v in variables_t_p:
+    data = xr.open_dataset(data_dir_t_pp + v)
+    data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
+    data2 = data2.sel(lat=slice(20, -90))
+    #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
+
+    c_count = 0
+    for c in cases:
+        s_count = 0
+        for s in seasons:
+            comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+                                              two_variables=True, data2=data2)
+
+            data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
+                                       '_' + c + '1950_2020_' + s + '.nc')
+
+            comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+            sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+            sig = sig.where(np.isnan(sig['var']), 0)
+
+            if v_count != 0:
+                v_count_sc = 2
+            else:
+                v_count_sc = 0
+
+            #MakeMask(pp, dataname='cluster')
+            Plot(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
+                 two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
+                 mapa='hs', significance=False,
+                 title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+                 name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_HS_mer_d_w',
+                 dpi=dpi, save=save, comp_sig=sig, color_sig='k')
+
+            s_count += 1
+        c_count += 1
+    v_count += 1

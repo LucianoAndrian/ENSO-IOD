@@ -1,5 +1,7 @@
 import xarray as xr
 import numpy as np
+import os
+os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
 dir_files = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/merged/'
 out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
@@ -52,3 +54,42 @@ for v in variables:
 
     n += 1
 ########################################################################################################################
+#probando hemisferio
+########################################################################################################################
+# variables =['hgt200', 'div200', 'slp', 'vp200', 'vp500', 'UV200', 'UV200']
+# name_variables = ['z', 'd', 'msl', 'w', 'w', 'u', 'v']
+
+n = 0
+#for v in variables:
+v = 'hgt200'
+n_v='z'
+    #n_v = name_variables[n]
+
+print(v)
+data = xr.open_dataset(dir_files + 'ERA5_' + v + '_50-20_mer.nc')
+if n_v == 'u':
+    print('Drop v')
+    data = data.drop('v')
+elif n_v == 'v':
+    print('Drop u')
+    data = data.drop('u')
+
+data = data.rename({n_v: 'var'})
+data = data.rename({'longitude': 'lon'})
+data = data.rename({'latitude': 'lat'})
+
+data = Weights(data)
+data = data.sel(lat=slice(20, -90))
+data = Detrend(data, 'time')
+
+print('to_netcdf...')
+if v == 'UV200':
+    data.to_netcdf(out_dir + n_v + '_HS_mer_d_w.nc')
+else:
+    data.to_netcdf(out_dir + v + '_HS_mer_d_w.nc')
+
+
+
+
+
+    n += 1

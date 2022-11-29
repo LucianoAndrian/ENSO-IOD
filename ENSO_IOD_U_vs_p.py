@@ -257,41 +257,48 @@ aux = aux.sel(lat=slice(0, -90))
 #u_clim = DetrendClim(aux, 'time')
 u_clim = aux.rolling(time=3, center=True).mean()
 
+regiones = [[40,130], [130,290], [40,290]] # indico, pacifico, los dos
+
 mm = [7,10]
-date_dir_count = 0
-for nc_date_dir in dir_dates:
-    c_count = 0
-    for c in cases:
-        s_count = 0
-        for s in seasons:
-            aux_comp0 = data.sel(lat=slice(0, -80))
-            aux_comp = aux_comp0.sel(lon=slice(130, 70))
 
-            comp2 = u_clim.sel(lat=slice(0, -80), time=u_clim.time.dt.month.isin(mm[s_count]))
-            comp2 = comp2.mean(['lon', 'time'])
+for r in regiones:
+    date_dir_count = 0
+    for nc_date_dir in dir_dates:
+        c_count = 0
+        for c in cases:
+            s_count = 0
+            for s in seasons:
+                aux_comp0 = data.sel(lat=slice(0, -80))
+                aux_comp = aux_comp0.sel(lon=slice(r[0], r[1]))
 
-            # comp2, num_case = CaseComp(aux_comp2, s, mmonth=min_max_months[s_count], c=c,
-            #                            two_variables=False, data2=None, nc_date_dir=nc_date_dir, clim=True)
+                comp2 = u_clim.sel(lat=slice(0, -80), time=u_clim.time.dt.month.isin(mm[s_count]))
+                comp2 = comp2.mean(['lon', 'time'])
 
-            comp1, num_case = CaseComp(aux_comp, s, mmonth=min_max_months[s_count], c=c,
-                                       two_variables=False, nc_date_dir=nc_date_dir,
-                                       zonalA=True, data2=aux_comp0)
+                # comp2, num_case = CaseComp(aux_comp2, s, mmonth=min_max_months[s_count], c=c,
+                #                            two_variables=False, data2=None, nc_date_dir=nc_date_dir, clim=True)
 
-            if date_dir_count == 1:
-                add_to_name_fig = ''
-            else:
-                add_to_name_fig = ''
+                comp1, num_case = CaseComp(aux_comp, s, mmonth=min_max_months[s_count], c=c,
+                                           two_variables=False, nc_date_dir=nc_date_dir,
+                                           zonalA=True, data2=aux_comp0)
 
-            PlotU(comp=comp1, cmap=cbar_t, contour=False,
-                  levels=[-8, -6, -4, -2, -1, -.5, 0, .5, 1, 2, 4, 6, 8],
-                  title="U* - 130E - 70W" + add_to_name_fig + ' ' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-                  name_fig="U_" + s + '_' + cases[c_count] + '_130E_70W_' + '_mer_d_w' + add_to_name_fig,
-                  dpi=dpi, save=save, out_dir=out_dir[date_dir_count],
-                  comp2=comp2, comp_var2=comp2['var'], levels2=np.arange(-10, 35, 5), colors2='k', lwd=1)
+                if date_dir_count == 1:
+                    add_to_name_fig = ''
+                else:
+                    add_to_name_fig = ''
 
-            s_count += 1
-        c_count += 1
-    date_dir_count += 1
+                PlotU(comp=comp1, cmap=cbar_t, contour=False,
+                      levels=[-8, -6, -4, -2, -1, -.5, 0, .5, 1, 2, 4, 6, 8],
+                      title='U* - ' + str(r[0]) + 'E - ' + str(r[1]) + 'E' + add_to_name_fig + ' ' + '\n' + title_case[
+                          c_count] + '\n' + s + ' - Events: ' + str(num_case),
+                      name_fig="U_" + s + '_' + cases[c_count] + '_' + str(r[0]) + 'E_' + str(
+                          r[1]) + 'E' + '_' + '_mer_d_w' + add_to_name_fig,
+                      dpi=dpi, save=save, out_dir=out_dir[date_dir_count],
+                      comp2=comp2, comp_var2=comp2['var'], levels2=np.arange(-10, 35, 5), colors2='k', lwd=1)
+
+                s_count += 1
+            c_count += 1
+        date_dir_count += 1
+
 
 #----------------------------------------------------------------------------------------------------------------------#
 ########################################################################################################################

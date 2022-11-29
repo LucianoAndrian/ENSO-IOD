@@ -126,3 +126,53 @@ data_50_20 = data_50_20.sel(lon=slice(270, 330), lat=slice(15, -60))
 data_50_20 = Detrend(data_50_20, 'time')
 data_50_20.to_netcdf(out_dir + 'pp_cmap_d_w_c_1979-2020_2.5.nc')
 
+########################################################################################################################
+# Prueba hemisferio
+########################################################################################################################
+
+# T CRU
+data = xr.open_dataset(dir_files + 't_cru0.25.nc')
+data = data.drop('stn')
+data = data.rename({'tmp':'var'})
+data = ChangeLons(data)
+
+#data_20_20 = data.sel(time=slice('1920-01-16', '2020-12-16'))
+data_50_20 = data.sel(time=slice('1950-01-16', '2020-12-16'))
+
+del data
+
+#data_20_20 = Weights(data_20_20)
+data_50_20 = Weights(data_50_20)
+
+#data_20_20 = data_20_20.sel(lat=slice(-90, 20))
+data_50_20 = data_50_20.sel(lat=slice(-90, 20))
+
+#data_20_20 = Detrend(data_20_20, 'time')
+data_50_20 = Detrend(data_50_20, 'time')
+
+#data_20_20.to_netcdf(out_dir + 't_cru_d_w_c_1920-2020_0.25.nc')
+data_50_20.to_netcdf(out_dir + 't_cru_HS_d_w_c_1950-2020_0.25.nc')
+
+
+
+
+# PP GPCC
+data = xr.open_dataset(dir_files + 'pp_gpcc_v2020_0.25.nc')
+data = data.rename({'precip':'var'})
+
+#data_20_20 = data.sel(time=slice('1920-01-16', '2020-12-16'))
+data_50_20 = data.sel(time=slice('1950-01-16', '2020-12-16'))
+
+del data
+
+#data_20_20 = Weights(data_20_20)
+data_50_20 = Weights(data_50_20)
+
+#data_20_20 = data_20_20.sel(lon=slice(270, 330), lat=slice(15, -60))
+data_50_20 = data_50_20.sel(lat=slice(20, -90))
+
+#data_20_20 = Detrend(data_20_20, 'time')
+data_50_20 = Detrend(data_50_20, 'time')
+
+#data_20_20.to_netcdf(out_dir + 'pp_gpcc_d_w_c_1920-2020_0.25.nc')
+data_50_20.to_netcdf(out_dir + 'pp_gpcc_HS_d_w_c_1950-2020_0.25.nc')
