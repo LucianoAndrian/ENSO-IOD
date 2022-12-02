@@ -19,8 +19,8 @@ nc_date_dir2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_d
 dir_dates = [nc_date_dir1, nc_date_dir2]
 
 set = False
-save = True
-dpi = 150
+save = False
+dpi = 70
 #lon_cut=60
 ########################################################################################################################
 def Detrend(xrda, dim):
@@ -154,10 +154,10 @@ def PlotU(comp, levels = np.linspace(-30,30,11), cmap='RdBu_r',
     plt.yscale('log')
     ax.set_ylabel("Pressure [hPa]")
     ax.set_yscale('log')
-    ax.set_ylim(10.*np.ceil(comp.level.values.max()/10.), comp.level.values.min())
+    ax.set_ylim(10.*np.ceil(comp.level.values.max()/10.), 100)
     subs = [1,2,5]
-    if comp.level.values.max()/comp.level.values.min() < 30.:
-        subs = [1,2,3,4,5,6,7,8,9,10,11]
+    if comp.level.values.max()/100 < 100.:
+        subs = [1,2,3,4,5,6,7,8,9]
     y1loc = matplotlib.ticker.LogLocator(base=10., subs=subs)
     ax.yaxis.set_major_locator(y1loc)
     fmt = matplotlib.ticker.FormatStrFormatter("%g")
@@ -250,6 +250,7 @@ cbar_sst.set_bad(color='white')
 #----------------------------------------------------------------------------------------------------------------------#
 data = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/ERA5_U_mer_d_w.nc')
 data = data.sortby('level', ascending=False)
+
 
 aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/ERA5_U_lvs_xrmer.nc')
 aux = aux.rename({'longitude': 'lon', 'latitude': 'lat', 'u': 'var'})
