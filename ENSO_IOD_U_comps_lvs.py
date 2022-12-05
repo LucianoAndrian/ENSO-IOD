@@ -170,14 +170,6 @@ mm = [7,10]
 data = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/ERA5_U_mer_d_w.nc')
 data = data.sortby('level', ascending=False) # estan TODOS los niveles
 
-data_dir_count=1
-d_d = dir_dates[1]
-c_count=4
-c=cases[4]
-s_count=1
-s = 'SON'
-
-lv = 850
 date_dir_count = 0
 for d_d in dir_dates:
 
@@ -281,9 +273,9 @@ for d_d in dir_dates:
                 r_count += 1
 
             #-- titulo y guardado del plot --#
-            fig.suptitle(c + 'number cases:' + str(num_case))
+            fig.suptitle(c + ' - number cases:' + str(num_case))
             if save:
-                plt.savefig(out_dir[date_dir_count] + 'U_zonal_' + c + '_' + s + '.jpg', d=400)
+                plt.savefig(out_dir[date_dir_count] + 'U_zonal_' + c + '_' + s + '.jpg', dpi=400)
             else:
                 plt.show()
 
@@ -291,3 +283,116 @@ for d_d in dir_dates:
         c_count += 1
     date_dir_count += 1
 ########################################################################################################################
+#-- U* vs U' --#
+########################################################################################################################
+
+date_dir_count = 0
+for d_d in dir_dates:
+
+    c_count = 0
+    for c in cases:
+        s_count = 0
+        for s in seasons:
+
+            fig = plt.figure(figsize=(8,4), dpi=400)
+            gs = fig.add_gridspec(2, 2)
+
+            # campos de anomalias zonales -----------------------------------------------------------------------------#
+            lv_count = 0
+            for lv in [850, 200]:
+                ax = fig.add_subplot(gs[lv_count, 0],
+                                     projection=ccrs.PlateCarree(central_longitude=180))
+                crs_latlon = ccrs.PlateCarree()
+                ax.set_extent([30, 340, -80, 10], crs=crs_latlon)
+
+                #-- composicion de la anomalia zonal de U en lv --#
+                aux_comp = data.sel(level=lv)
+                comp, num_case = CaseComp(data=aux_comp, s=s, mmonth=min_max_months[s_count],
+                                          c=c, two_variables=True, nc_date_dir=d_d,
+                                          zonalA=True, ZA_type='campo', data2=aux_comp)
+
+
+                #-- media climatologica de U en lv --#
+                aux_clim = aux_comp.rolling(time=3, center=True).mean()
+                aux_clim = aux_clim.sel(time=aux_clim.time.dt.month.isin(mm[s_count])).mean('time')
+
+                # Plot ----------------------------------------------------------------------------------#
+                ax.contour(aux_clim.lon[::step], aux_clim.lat[::step], aux_clim['var'][::step, ::step],
+                           transform=crs_latlon, colors=['#5A5A5A', '#313131', 'k'],
+                           levels=[20, 30, 40], linewidths=1.5)
+                im = ax.contourf(comp.lon[::step], comp.lat[::step], comp['var'][::step, ::step],
+                                 levels=[-12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4, 6, 8, 10, 12],
+                                 transform=crs_latlon, cmap=cbar_t, extend='both')
+                cb = plt.colorbar(im, fraction=0.018, pad=0.035, shrink=0.8)
+                cb.ax.tick_params(labelsize=5)
+                ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor='#4B4B4B')
+                ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+                ax.coastlines(color='#4B4B4B', linestyle='-', alpha=1)
+                ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+                ax.set_xticks(np.arange(30, 340, 25), crs=crs_latlon)
+                ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
+                lon_formatter = LongitudeFormatter(zero_direction_label=True)
+                lat_formatter = LatitudeFormatter()
+                ax.xaxis.set_major_formatter(lon_formatter)
+                ax.yaxis.set_major_formatter(lat_formatter)
+                ax.tick_params(labelsize=5)
+                ax.set_title('U* y U clim. [cont.] - ' + str(lv) + 'hPa',  fontsize=10)
+                plt.tight_layout()
+
+                lv_count += 1
+            #----------------------------------------------------------------------------------------------------------#
+            # U'-------------------------------------------------------------------------------------------------------#
+            lv_count = 0
+            for lv in [850, 200]:
+                ax = fig.add_subplot(gs[lv_count, 1],
+                                     projection=ccrs.PlateCarree(central_longitude=180))
+                crs_latlon = ccrs.PlateCarree()
+                ax.set_extent([30, 340, -80, 10], crs=crs_latlon)
+
+                #-- composicion de la anomalia zonal de U en lv --#
+                aux_comp = data.sel(level=lv)
+                comp, num_case, x = CaseComp(data=aux_comp, s=s, mmonth=min_max_months[s_count],
+                                          c=c, two_variables=True, nc_date_dir=d_d,
+                                          zonalA=False, ZA_type='campo', data2=aux_comp)
+
+
+                #-- media climatologica de U en lv --#
+                aux_clim = aux_comp.rolling(time=3, center=True).mean()
+                aux_clim = aux_clim.sel(time=aux_clim.time.dt.month.isin(mm[s_count])).mean('time')
+
+                # Plot ----------------------------------------------------------------------------------#
+                ax.contour(aux_clim.lon[::step], aux_clim.lat[::step], aux_clim['var'][::step, ::step],
+                           transform=crs_latlon, colors=['#5A5A5A', '#313131', 'k'],
+                           levels=[20, 30, 40], linewidths=1.5)
+                im = ax.contourf(comp.lon[::step], comp.lat[::step], comp['var'][::step, ::step],
+                                 levels=[-12, -10, -8, -6, -4, -2, -1, 0, 1, 2, 4, 6, 8, 10, 12],
+                                 transform=crs_latlon, cmap=cbar_t, extend='both')
+                cb = plt.colorbar(im, fraction=0.018, pad=0.035, shrink=0.8)
+                cb.ax.tick_params(labelsize=5)
+                ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor='#4B4B4B')
+                ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+                ax.coastlines(color='#4B4B4B', linestyle='-', alpha=1)
+                ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+                ax.set_xticks(np.arange(30, 340, 25), crs=crs_latlon)
+                ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
+                lon_formatter = LongitudeFormatter(zero_direction_label=True)
+                lat_formatter = LatitudeFormatter()
+                ax.xaxis.set_major_formatter(lon_formatter)
+                ax.yaxis.set_major_formatter(lat_formatter)
+                ax.tick_params(labelsize=5)
+                ax.set_title("U' y U clim. [cont.] - " + str(lv) + 'hPa',  fontsize=10)
+                plt.tight_layout()
+
+                lv_count += 1
+
+
+            #-- titulo y guardado del plot --#
+            fig.suptitle("U* vs U'" + '\n' + c + ' - number cases:' + str(num_case))
+            if save:
+                plt.savefig(out_dir[date_dir_count] + 'U_zonal_vs_U_' + c + '_' + s + '.jpg', dpi=400)
+            else:
+                plt.show()
+
+            s_count += 1
+        c_count += 1
+    date_dir_count += 1
