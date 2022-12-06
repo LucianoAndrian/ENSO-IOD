@@ -25,23 +25,23 @@ cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg', 'si
          'neutros', 'dmi_neg_n34_pos', 'dmi_pos_n34_neg']
 
 cases = ['dmi_neg_n34_pos', 'dmi_pos_n34_neg']
-
-
+cases = ['dmi_pos', 'dmi_neg', 'n34_pos', 'n34_neg']
+seasons = ['JJA', 'SON']
 # SST ##################################################################################################################
-def SelectEvents(s):
-    for c in cases:
-        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
-            .rename({'__xarray_dataarray_variable__': 'index'})
+def SelectEvents(c):
+    s = 'SON' #for s in seasons:
+    aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+        .rename({'__xarray_dataarray_variable__': 'index'})
 
-        data_sst_s = xr.open_dataset(data_dir + 'sst_' + s.lower() + '.nc' )
+    data_sst_s = xr.open_dataset(data_dir + 'sst_' + s.lower() + '.nc')
 
-        case_events = SelectVariables(aux_cases, data_sst_s)
+    case_events = SelectVariables(aux_cases, data_sst_s)
 
-        case_events.to_netcdf(out_dir + c + '_' + s + '.nc')
+    case_events.to_netcdf(out_dir + c + '_' + s + '.nc')
 
 # Multiprocess #########################################################################################################
 pool = ThreadPool(4) # uno por season
-pool.map(SelectEvents, [s for s in seasons])
+pool.map(SelectEvents, [c for c in cases])
 ########################################################################################################################
 
 # HGT ##################################################################################################################
@@ -60,14 +60,29 @@ def SelectEventsHGT(s):
 
         case_events.to_netcdf(out_dir + 'hgt_' + c + '_' + s + '.nc')
 
+def SelectEventsHGT(c):
+    s = 'JJA' #for s in ['JJA','SON']:
+    try:
+        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+            .rename({'__xarray_dataarray_variable__': 'index'})
+    except:
+        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+            .rename({'sst': 'index'})
+
+    data_hgt_s = xr.open_dataset(data_dir + 'hgt_' + s.lower() + '.nc')
+
+    case_events = SelectVariables(aux_cases, data_hgt_s)
+
+    case_events.to_netcdf(out_dir + 'hgt_' + c + '_' + s + '.nc')
+
 # Multiprocess #########################################################################################################
 pool = ThreadPool(4) # uno por season
-pool.map(SelectEventsHGT, [s for s in seasons])
+pool.map(SelectEventsHGT, [c for c in cases])
 ########################################################################################################################
 
 # PP ###################################################################################################################
-def SelectEventsPP(s):
-    for c in cases:
+def SelectEventsPP(c):
+    for s in seasons:
         try:
             aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
                 .rename({'__xarray_dataarray_variable__': 'index'})
@@ -83,12 +98,12 @@ def SelectEventsPP(s):
 
 # Multiprocess #########################################################################################################
 pool = ThreadPool(4) # uno por season
-pool.map(SelectEventsPP, [s for s in seasons])
+pool.map(SelectEventsPP, [c for c in cases])
 ########################################################################################################################
 
 # T ####################################################################################################################
-def SelectEventsT(s):
-    for c in cases:
+def SelectEventsT(c):
+    for s in seasons:
         try:
             aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
                 .rename({'__xarray_dataarray_variable__': 'index'})
@@ -106,7 +121,7 @@ def SelectEventsT(s):
 # por alguna razon esto no anda...
 # el uso momentaneo de casi todos los nucleos lo detiene? --> probar en otro momento
 pool = ThreadPool(4) # uno por season
-pool.map(SelectEventsT, [s for s in seasons])
+pool.map(SelectEventsT, [c for c in cases])
 
 for s in seasons:
     SelectEventsT(s)
