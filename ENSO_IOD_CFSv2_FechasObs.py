@@ -23,16 +23,27 @@ cfsv2_cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 
 seasons = ['JJA', 'SON']
-cases = ['DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg', 'DMI_sim_pos', 'DMI_sim_neg',
+cases_obs = ['DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg', 'DMI_sim_pos', 'DMI_sim_neg',
          'Neutral']
 
-def SelectEvents_ObsDates(variable, s):
-    obs_dates = xr.open_dataset(obs_dates_dir + '1920_2020_' + s.upper() + '.nc')
-    cfsv2_case = xr.open_dataset(cfsv2_cases_dir + variable + '_' + s.lower() + '.nc')
+cases_mod = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg',
+        'sim_pos', 'sim_neg', 'neutros']
 
-    for c in cases:
-        cfsv2_select_case = cfsv2_case.sel(time=cfsv2_case.time.dt.year.isin(obs_dates[c].values))
-        cfsv2_select_case.to_netcdf(out_dir + variable + '_' + c + '_' + s + '_CFSv2_obsDates.nc')
+def SelectEvents_ObsDates(variable, s):
+    if variable != 'tref':
+        obs_dates = xr.open_dataset(obs_dates_dir + '1920_2020_' + s.upper() + '.nc')
+        cfsv2_case = xr.open_dataset(cfsv2_cases_dir + variable + '_' + s.lower() + '.nc')
+
+        for c, c_mod in zip(cases_obs, cases_mod):
+            cfsv2_select_case = cfsv2_case.sel(time=cfsv2_case.time.dt.year.isin(obs_dates[c].values))
+            cfsv2_select_case.to_netcdf(out_dir + variable + '_' + c_mod + '_' + s + '_CFSv2_obsDates.nc')
+    else:
+        obs_dates = xr.open_dataset(obs_dates_dir + '1920_2020_' + s.upper() + '.nc')
+        cfsv2_case = xr.open_dataset(cfsv2_cases_dir + variable + '_' + s.lower() + '_nodetrend.nc')
+
+        for c, c_mod in zip(cases_obs, cases_mod):
+            cfsv2_select_case = cfsv2_case.sel(time=cfsv2_case.time.dt.year.isin(obs_dates[c].values))
+            cfsv2_select_case.to_netcdf(out_dir + variable + '_' + c_mod + '_' + s + '_CFSv2_obsDates.nc')
 
 if SelectDates:
     # SST ##############################################################################################################
@@ -48,15 +59,6 @@ if SelectDates:
     SelectEvents_ObsDates('prec', 'SON')
 
     # T ################################################################################################################
-
-    def SelectEvents_ObsDates(variable, s):
-        obs_dates = xr.open_dataset(obs_dates_dir + '1920_2020_' + s.upper() + '.nc')
-        cfsv2_case = xr.open_dataset(cfsv2_cases_dir + variable + '_' + s.lower() + '_nodetrend.nc')
-
-        for c in cases:
-            cfsv2_select_case = cfsv2_case.sel(time=cfsv2_case.time.dt.year.isin(obs_dates[c].values))
-            cfsv2_select_case.to_netcdf(out_dir + variable + '_' + c + '_' + s + '_CFSv2_obsDates.nc')
-
     SelectEvents_ObsDates('tref', 'JJA')
     SelectEvents_ObsDates('tref', 'SON')
 
@@ -65,7 +67,7 @@ if SelectDates:
 ########################################################################################################################
 seasons = ['JJA', 'SON']
 cases = ['DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg', 'DMI_sim_pos', 'DMI_sim_neg']
-
+cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg','sim_pos', 'sim_neg']
 title_case = ['DMI pure - positive',
               'DMI pure - negative',
               'El Niño pure', 'La Niña pure',
@@ -175,7 +177,7 @@ def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
 scale = [-1.5, -1, -0.5, -0.2, 0, 0.2, 0.5, 1, 1.5]
 
 for s in seasons:
-    neutro = xr.open_dataset(cases_dir + 'sst_Neutral_' + s + '_CFSv2_obsDates.nc').rename({'sst':'var'})
+    neutro = xr.open_dataset(cases_dir + 'sst_neutros_' + s + '_CFSv2_obsDates.nc').rename({'sst':'var'})
     c_count = 0
     for c in cases:
         case = xr.open_dataset(cases_dir + 'sst_' + c + '_' + s + '_CFSv2_obsDates.nc').rename({'sst':'var'})
@@ -249,7 +251,7 @@ def Plot(comp, comp_var, levels = np.linspace(-1,1,11),
 #----------------------------------------------------------------------------------------------------------------------#
 
 for s in seasons:
-    neutro = xr.open_dataset(cases_dir + 'hgt_Neutral_' + s + '_CFSv2_obsDates.nc').rename({'hgt':'var'})
+    neutro = xr.open_dataset(cases_dir + 'hgt_neutros_' + s + '_CFSv2_obsDates.nc').rename({'hgt':'var'})
     c_count = 0
     neutro = neutro.__mul__(9.80665)
     for c in cases:
@@ -333,7 +335,7 @@ for s in seasons:
         name_fig_end = 'NoDetrend'
         title_trend = 'No Detrend'
 
-    neutro = xr.open_dataset(cases_dir + 'prec_Neutral_' + s + file_name_end).rename({'prec':'var'})
+    neutro = xr.open_dataset(cases_dir + 'prec_neutros_' + s + file_name_end).rename({'prec':'var'})
     neutro *= 30 #mm/day -> mm/month
     c_count = 0
     for c in cases:
