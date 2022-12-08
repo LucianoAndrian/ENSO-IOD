@@ -3,7 +3,6 @@ Anomalía de PP (y T cuando ande) en SA según la magnitud de los índices
 (Similar a *2D_bins_DMI_N34_3.0.py, pero en lugar de regiones para todo SA)
 """
 ########################################################################################################################
-import matplotlib.pyplot as plt
 import xarray as xr
 import numpy as np
 import os
@@ -16,8 +15,8 @@ cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/' # campos de las varia
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/CuadByCases/'
 out_data_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 
-save = False
-dpi = 50
+save = True
+dpi = 500
 ########################################################################################################################
 cases = ['dmi_puros_pos', 'dmi_puros_neg',
         'n34_puros_pos', 'n34_puros_neg',
@@ -222,7 +221,7 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=False,
                      levels_clim=levels_clim, cbar_clim='Spectral',
                      title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=dpi,
                      x_lon=np.arange(30, 340, 25), x_lat=np.arange(-80, 20, 10),
-                     figsize=[20,12], usemask=False, hcolorbar=True, save=save)
+                     figsize=[20,10], usemask=False, hcolorbar=True, save=save)
 
 # Signal-to-Noise ratio
 levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
@@ -237,6 +236,5 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=True,
                      levels_clim=levels_clim, cbar_clim='YlGnBu',
                      title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=dpi,
                      x_lon=np.arange(30, 340, 25), x_lat=np.arange(-80, 20, 10),
-                     figsize=[20, 13], usemask=False, hcolorbar=True, save=save)
+                     figsize=[20, 10], usemask=False, hcolorbar=True, save=save)
 ########################################################################################################################
-

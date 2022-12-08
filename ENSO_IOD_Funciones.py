@@ -1655,8 +1655,12 @@ def SelectNMMEFiles(model_name, variable, dir, anio='0', in_month='0', by_r=Fals
 def SelectVariables(dates, data):
 
     t_count=0
+    t_count_aux = 0
     for t in dates.index:
-        r_t = t.r.values
+        try:
+            r_t = t.r.values
+        except:
+            r_t = dates.r[t_count_aux].values
         L_t = t.L.values
         t_t = t.values
         try: #q elegancia la de francia...
@@ -1685,7 +1689,7 @@ def SelectBins(data, min, max, sd=1):
 
 def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
                 bin_limits, bins_by_cases_dmi, bins_by_cases_n34, dates_dir, cases_dir,
-                snr=False, neutro_clim=False):
+                snr=False, neutro_clim=False, obsdates=False):
 
     # 1. se abren los archivos de los índices (completos y se pesan por su SD)
     # tambien los archivos de la variable en cuestion pero para cada "case" = c
@@ -1697,24 +1701,26 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     data_dates_n34_or /= data_dates_n34_or.mean('r').std()
 
     # 1.1 Climatología y case
-    if v == 'tref':
-        end_nc_file = '_nodetrend.nc'
-    else:
-        end_nc_file = '.nc'
+    end_nc_file = '.nc' if v != 'tref' else '_nodetrend.nc'
 
     if neutro_clim:
         clim = xr.open_dataset(cases_dir + v + '_neutros' + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor
     else:
         clim = xr.open_dataset(cases_dir + v + '_' + s.lower() + end_nc_file).rename({v_name: 'var'}) * fix_factor
+
     case = xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor
+
     # Anomalía
     for l in [0, 1, 2, 3]:
-        if l == 0:
-            anom = case.sel(time=case.time.dt.month.isin(mm - l)) - \
-                   clim.sel(time=clim.time.dt.month.isin(mm - l)).mean(['r', 'time'])
+        try:
+            clim_aux = clim.sel(time=clim.time.dt.month.isin(mm - l)).mean(['r', 'time'])
+        except:
+            clim_aux = clim.sel(time=clim.time.dt.month.isin(mm - l)).mean(['time'])
+
+        if l==0:
+            anom = case.sel(time=case.time.dt.month.isin(mm - l)) - clim_aux
         else:
-            anom2 = case.sel(time=case.time.dt.month.isin(mm - l)) - \
-                    clim.sel(time=clim.time.dt.month.isin(mm - l)).mean(['r', 'time'])
+            anom2 = case.sel(time=case.time.dt.month.isin(mm - l)) - clim_aux
             anom = xr.concat([anom, anom2], dim='time')
 
     # 1.2
@@ -1727,22 +1733,28 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     # con .sortby(..time.dt.month) en cada caso se simplifica el problema
     # y coinciden todos los eventos en fecha, r y L
 
-    cases_date_dir = '/pikachu/datos/luciano.andrian/cases_dates/'
-    try:
-        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
-            .rename({'__xarray_dataarray_variable__': 'index'})
-    except:
-        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
-            .rename({'sst': 'index'})
+    if obsdates: # por ahora no funca
+        print('Fechas Observadas deshabilitado')
+        return
+        # aux_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
+        # aux_cases = xr.open_dataset(aux_dir + v + '_' + c + '_' + s + '_CFSv2_obsDates.nc')\
+        #     .rename({v: 'index'})
+        # aux_cases['index'] = aux_cases.time
+        # aux_cases = aux_cases.drop(['lon', 'lat'])
+    else:
+        cases_date_dir = '/pikachu/datos/luciano.andrian/cases_dates/'
+        try:
+            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                .rename({'__xarray_dataarray_variable__': 'index'})
+        except:
+            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                .rename({'sst': 'index'})
 
     case_sel_dmi = SelectVariables(aux_cases, data_dates_dmi_or)
-    # spread = case - comp
-    # spread = spread.std('time')
-
     case_sel_dmi = case_sel_dmi.sortby(case_sel_dmi.time.dt.month)
-
     case_sel_dmi_n34 = SelectVariables(aux_cases, data_dates_n34_or)
     case_sel_dmi_n34 = case_sel_dmi_n34.sortby(case_sel_dmi_n34.time.dt.month)
+
     # 2.1 uniendo var, dmi y n34
     data_merged = xr.Dataset(
         data_vars=dict(
@@ -1800,8 +1812,6 @@ def DetrendClim(data, mm, v_name='prec'):
         elif v_name == 'hgt':
             aux_trend = xr.polyval(season_data['time'], aux.hgt_polyfit_coefficients[0])  # al rededor de la media
 
-
-
         if l == 0:
             season_anom_detrend = season_data - aux_trend
         else:
@@ -1817,7 +1827,7 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                          cases_dir, dates_dir,
                          x_lon=np.arange(280, 330, 10), x_lat=np.arange(-60, 20, 20),
                          figsize=[16,17], usemask=True, hcolorbar=False, save=True,
-                         proj='eq'):
+                         proj='eq', obsdates=False):
 
     # no, una genialidad...
     sec_plot = [13, 14, 10, 11,
@@ -1860,11 +1870,10 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                                                   s=s, mm=mm, c=cases[c_count], c_count=c_count,
                                                   bin_limits=bin_limits, bins_by_cases_dmi=bins_by_cases_dmi,
                                                   bins_by_cases_n34=bins_by_cases_n34, snr=snr,
-                                                  cases_dir=cases_dir, dates_dir=dates_dir)
+                                                  cases_dir=cases_dir, dates_dir=dates_dir, obsdates=obsdates)
 
             mask = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(aux)
             mask = xr.where(np.isnan(mask), mask, 1)
-
 
             bins_aux_dmi = bins_by_cases_dmi[c_count]
             bins_aux_n34 = bins_by_cases_n34[c_count]
@@ -1874,36 +1883,21 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                     if proj != 'eq':
                         axs[n].set_extent([30, 340, -90, 0],
                                           ccrs.PlateCarree(central_longitude=200))
-
                     comp_case = cases_bin[b_dmi][b_n34]
 
                     if v == 'prec' and s == 'JJA':
-                        # dry_season_mask = xr.open_dataset(cases_dir + 'precaug_mask_to_dry_season.nc')
-                        # dry_season_mask = dry_season_mask.where(dry_season_mask.prec>10) # pp mayor a 35mm
 
                         mask2 = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(comp_case_clim)
                         mask2 = xr.where(np.isnan(mask2), mask2, 1)
                         mask2 = mask2.to_dataset(name='prec')
 
-                        # dry_season_mask = dry_season_mask.where(dry_season_mask.lat>-19)
-                        # dry_season_mask = dry_season_mask.where(dry_season_mask.lon>293)
-                        # dry_season_mask = xr.where(np.isnan(dry_season_mask), dry_season_mask, 1)
-                        # dry_season_mask = xr.where(dry_season_mask.lat <= -19, 1, dry_season_mask)
-                        # dry_season_mask = xr.where(dry_season_mask.lon <= 293, 1, dry_season_mask)
-
-
-
                         dry_season_mask = comp_case_clim.where(comp_case_clim.prec>30)
                         dry_season_mask = xr.where(np.isnan(dry_season_mask), dry_season_mask, 1)
-
                         dry_season_mask *= mask2
 
                         if snr:
-                            #comp_case['var'] *= mask_cluster.cluster
                             comp_case['var'] *= dry_season_mask.prec
-
                         else:
-                            #comp_case *= mask_cluster.prec.values
                             comp_case *= dry_season_mask.prec.values
 
                     if usemask:
@@ -2009,12 +2003,6 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
             axs[12].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
             axs[12].set_xticks([])
             axs[12].set_yticks([])
-            # axs[12].set_xticks(x_lon, crs=crs_latlon)
-            # axs[12].set_yticks(x_lat, crs=crs_latlon)
-            # lon_formatter = LongitudeFormatter(zero_direction_label=True)
-            # lat_formatter = LatitudeFormatter()
-            # axs[12].xaxis.set_major_formatter(lon_formatter)
-            # axs[12].yaxis.set_major_formatter(lat_formatter)
         else:
             gls = axs[12].gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
                                    y_inline=True, xlocs=range(-180, 180, 30), ylocs=np.arange(-80, 0, 20))
@@ -2033,17 +2021,6 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                 pos = ea[2].get_position()
                 if (pos[0] == 150):
                     ea[2].set_position([0, pos[1]])
-
-        # axs[12].add_feature(cartopy.feature.LAND, facecolor='lightgrey')
-        # axs[12].add_feature(cartopy.feature.COASTLINE)
-        # axs[12].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
-        # axs[12].set_xticks(x_lon, crs=crs_latlon)
-        # axs[12].set_yticks(x_lat, crs=crs_latlon)
-        # lon_formatter = LongitudeFormatter(zero_direction_label=True)
-        # lat_formatter = LatitudeFormatter()
-        # axs[12].xaxis.set_major_formatter(lon_formatter)
-        # axs[12].yaxis.set_major_formatter(lat_formatter)
-        # axs[12].tick_params(labelsize=5)
 
         # Colorbar, por ahora vertical. tratando de optimizar el espacio en la verticar de la figura...
         if hcolorbar:
