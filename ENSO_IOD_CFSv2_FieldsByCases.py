@@ -110,7 +110,8 @@ ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=False,
                      cases_dir=cases_dir, dates_dir=dates_dir,
                      levels_main=levels, cbar_main=cbar_pp,
                      levels_clim=levels_clim, cbar_clim='terrain_r',
-                     title_var='Prec', name_fig='prec', dpi=dpi, save=save)
+                     title_var='Prec', name_fig='prec', dpi=dpi, save=save,
+                     out_dir=out_dir)
 
 # Signal-to-Noise ratio
 levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
@@ -123,7 +124,8 @@ ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=True,
                      cases_dir=cases_dir, dates_dir=dates_dir,
                      levels_main=levels, cbar_main=cbar_snr,
                      levels_clim=levels_clim, cbar_clim='terrain_r',
-                     title_var='Prec', name_fig='prec', dpi=dpi, save=save)
+                     title_var='Prec', name_fig='prec', dpi=dpi, save=save,
+                     out_dir=out_dir)
 
 ########################################################################################################################
 # Temp #################################################################################################################
@@ -163,7 +165,8 @@ ComputeFieldsByCases(v='tref', v_name='tref', fix_factor=1, snr=False,
                      cases_dir=cases_dir, dates_dir=dates_dir,
                      levels_main=levels, cbar_main=cbar_t,
                      levels_clim=levels_clim, cbar_clim='Spectral_r',
-                     title_var='Temp', name_fig='temp', dpi=dpi, save=save)
+                     title_var='Temp', name_fig='temp', dpi=dpi, save=save,
+                     out_dir=out_dir)
 
 # Signal-to-Noise ratio
 levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
@@ -176,7 +179,8 @@ ComputeFieldsByCases(v='tref', v_name='tref', fix_factor=1, snr=True,
                      cases_dir=cases_dir, dates_dir=dates_dir,
                      levels_main=levels, cbar_main=cbar_snr_t,
                      levels_clim=levels_clim, cbar_clim='Spectral_r',
-                     title_var='Tref', name_fig='tref', dpi=dpi, save=save)
+                     title_var='Tref', name_fig='tref', dpi=dpi, save=save,
+                     out_dir=out_dir)
 
 ########################################################################################################################
 # HGT #################################################################################################################
@@ -221,7 +225,8 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=False,
                      levels_clim=levels_clim, cbar_clim='Spectral',
                      title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=dpi,
                      x_lon=np.arange(30, 340, 25), x_lat=np.arange(-80, 20, 10),
-                     figsize=[20,10], usemask=False, hcolorbar=True, save=save)
+                     figsize=[20,10], usemask=False, hcolorbar=True, save=save,
+                     out_dir=out_dir)
 
 # Signal-to-Noise ratio
 levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
@@ -236,5 +241,6 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=True,
                      levels_clim=levels_clim, cbar_clim='YlGnBu',
                      title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=dpi,
                      x_lon=np.arange(30, 340, 25), x_lat=np.arange(-80, 20, 10),
-                     figsize=[20, 10], usemask=False, hcolorbar=True, save=save)
+                     figsize=[20, 10], usemask=False, hcolorbar=True, save=save,
+                     out_dir=out_dir)
 ########################################################################################################################

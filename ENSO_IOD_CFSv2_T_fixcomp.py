@@ -66,7 +66,7 @@ def SpatialProbability(data, mask):
                 / len(data['var'][:, lt, ln])
     return prob*mask
 ########################################################################################################################
-seasons = ['JJA', 'JAS', 'ASO', 'SON']
+seasons = ['SON']
 cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg', 'sim_pos', 'sim_neg']
 
 title_case = ['DMI pure - positive',

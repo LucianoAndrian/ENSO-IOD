@@ -17,8 +17,8 @@ from ENSO_IOD_Funciones import MakeMask
 ########################################################################################################################
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/PP/'
-save = False
-dpi = 100
+save = True
+dpi = 200
 detrend = True
 # Funciones ############################################################################################################
 def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
@@ -68,7 +68,7 @@ def SpatialProbability(data, mask):
                 / len(data['var'][:, lt, ln])
     return prob*mask
 ########################################################################################################################
-seasons = ['JJA', 'JAS', 'ASO', 'SON']
+seasons = ['SON']
 cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg', 'sim_pos', 'sim_neg']
 
 title_case = ['DMI pure - positive',

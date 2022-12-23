@@ -122,36 +122,36 @@ data = data.rolling(time=3, center=True).mean()
 data_1982_1998 = data.sel(time=data.time.dt.year.isin(np.linspace(1982,1998,17)))
 data_1999_2011 = data.sel(time=data.time.dt.year.isin(np.linspace(1999,2011,13)))
 
-
-#- Climatologias y anomalias detrend por seasons ----------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------------------------#
-jja_clim_82_98, jja_clim_99_11, jja_anom_82_98, jja_anom_99_11 = \
-    TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 7)
-jja_anom_82_98_detrend, jja_anom_99_11_detrend = \
-    Detrend_Seasons(jja_anom_82_98, jja_anom_99_11, 7)
-
-jja_hindcast_detrend = xr.concat([jja_anom_82_98_detrend, jja_anom_99_11_detrend], dim='time')
-
-jja_clim_99_11 = jja_clim_99_11.load()
-
-#----------------------------------------------------------------------------------------------------------------------#
-jas_clim_82_98, jas_clim_99_11, jas_anom_82_98, jas_anom_99_11 = \
-    TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 8)
-jas_anom_82_98_detrend, jas_anom_99_11_detrend = \
-    Detrend_Seasons(jas_anom_82_98, jas_anom_99_11, 8)
-
-jas_hindcast_detrend = xr.concat([jas_anom_82_98_detrend, jas_anom_99_11_detrend], dim='time')
-
-jas_clim_99_11 = jas_clim_99_11.load()
-#----------------------------------------------------------------------------------------------------------------------#
-aso_clim_82_98, aso_clim_99_11, aso_anom_82_98, aso_anom_99_11 = \
-    TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 9)
-aso_anom_82_98_detrend, aso_anom_99_11_detrend = \
-    Detrend_Seasons(aso_anom_82_98, aso_anom_99_11, 9)
-
-aso_hindcast_detrend = xr.concat([aso_anom_82_98_detrend, aso_anom_99_11_detrend], dim='time')
-
-aso_clim_99_11 = aso_clim_99_11.load()
+#
+# #- Climatologias y anomalias detrend por seasons ----------------------------------------------------------------------#
+# #----------------------------------------------------------------------------------------------------------------------#
+# jja_clim_82_98, jja_clim_99_11, jja_anom_82_98, jja_anom_99_11 = \
+#     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 7)
+# jja_anom_82_98_detrend, jja_anom_99_11_detrend = \
+#     Detrend_Seasons(jja_anom_82_98, jja_anom_99_11, 7)
+#
+# jja_hindcast_detrend = xr.concat([jja_anom_82_98_detrend, jja_anom_99_11_detrend], dim='time')
+#
+# jja_clim_99_11 = jja_clim_99_11.load()
+#
+# #----------------------------------------------------------------------------------------------------------------------#
+# jas_clim_82_98, jas_clim_99_11, jas_anom_82_98, jas_anom_99_11 = \
+#     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 8)
+# jas_anom_82_98_detrend, jas_anom_99_11_detrend = \
+#     Detrend_Seasons(jas_anom_82_98, jas_anom_99_11, 8)
+#
+# jas_hindcast_detrend = xr.concat([jas_anom_82_98_detrend, jas_anom_99_11_detrend], dim='time')
+#
+# jas_clim_99_11 = jas_clim_99_11.load()
+# #----------------------------------------------------------------------------------------------------------------------#
+# aso_clim_82_98, aso_clim_99_11, aso_anom_82_98, aso_anom_99_11 = \
+#     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 9)
+# aso_anom_82_98_detrend, aso_anom_99_11_detrend = \
+#     Detrend_Seasons(aso_anom_82_98, aso_anom_99_11, 9)
+#
+# aso_hindcast_detrend = xr.concat([aso_anom_82_98_detrend, aso_anom_99_11_detrend], dim='time')
+#
+# aso_clim_99_11 = aso_clim_99_11.load()
 #----------------------------------------------------------------------------------------------------------------------#
 son_clim_82_98, son_clim_99_11, son_anom_82_98, son_anom_99_11 = \
     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 10)
@@ -177,22 +177,25 @@ data = data.sel(lon=slice(30, 340), lat=slice(-80, 20), P=200)
 data = data.drop('P')
 data = data.drop('Z')
 
+#media movil de 3 meses para separar en estaciones
+data = data.rolling(time=3, center=True).mean()
+
 #- Anomalias detrend por seasons --------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------------#
-jja_realtime_detrend = Anom_Detrend_SeasonRealTime(data, jja_clim_99_11, 7)
-jas_realtime_detrend = Anom_Detrend_SeasonRealTime(data, jas_clim_99_11, 8)
-aso_realtime_detrend = Anom_Detrend_SeasonRealTime(data, aso_clim_99_11, 9)
+# jja_realtime_detrend = Anom_Detrend_SeasonRealTime(data, jja_clim_99_11, 7)
+# jas_realtime_detrend = Anom_Detrend_SeasonRealTime(data, jas_clim_99_11, 8)
+# aso_realtime_detrend = Anom_Detrend_SeasonRealTime(data, aso_clim_99_11, 9)
 son_realtime_detrend = Anom_Detrend_SeasonRealTime(data, son_clim_99_11, 10)
 
 ########################################################################################################################
-jja_f = xr.concat([jja_hindcast_detrend, jja_realtime_detrend], dim='time')
-jas_f = xr.concat([jas_hindcast_detrend, jas_realtime_detrend], dim='time')
-aso_f = xr.concat([aso_hindcast_detrend, aso_realtime_detrend], dim='time')
+# jja_f = xr.concat([jja_hindcast_detrend, jja_realtime_detrend], dim='time')
+# jas_f = xr.concat([jas_hindcast_detrend, jas_realtime_detrend], dim='time')
+# aso_f = xr.concat([aso_hindcast_detrend, aso_realtime_detrend], dim='time')
 son_f = xr.concat([son_hindcast_detrend, son_realtime_detrend], dim='time')
 
 # save ----------------------------------------------------------------------------------------------------------------#
-jja_f.to_netcdf(out_dir + 'hgt_jja.nc')
-jas_f.to_netcdf(out_dir + 'hgt_jas.nc')
-aso_f.to_netcdf(out_dir + 'hgt_aso.nc')
+# jja_f.to_netcdf(out_dir + 'hgt_jja.nc')
+# jas_f.to_netcdf(out_dir + 'hgt_jas.nc')
+# aso_f.to_netcdf(out_dir + 'hgt_aso.nc')
 son_f.to_netcdf(out_dir + 'hgt_son.nc')
 ########################################################################################################################

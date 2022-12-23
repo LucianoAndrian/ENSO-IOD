@@ -61,7 +61,7 @@ def Plot(comp, comp_var, levels = np.linspace(-1,1,11),
         plt.show()
 
 ########################################################################################################################
-seasons = ['JJA', 'JAS', 'ASO', 'SON']
+seasons = ['SON']
 cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg', 'sim_pos', 'sim_neg']
 
 title_case = ['DMI pure - positive',

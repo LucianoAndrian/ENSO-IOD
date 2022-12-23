@@ -1827,7 +1827,7 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                          cases_dir, dates_dir,
                          x_lon=np.arange(280, 330, 10), x_lat=np.arange(-60, 20, 20),
                          figsize=[16,17], usemask=True, hcolorbar=False, save=True,
-                         proj='eq', obsdates=False):
+                         proj='eq', obsdates=False,  out_dir='~/'):
 
     # no, una genialidad...
     sec_plot = [13, 14, 10, 11,
@@ -1845,8 +1845,8 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
     # ------------------------------------------------------------------------------------------------------------------#
     num_neutros = [483, 585, 676, 673]
     porcentaje = 0.1
-    mm = 7
-    for s in ['JJA', 'JAS', 'ASO', 'SON']:
+    mm = 10
+    for s in ['SON']:
         n_check = []
         sec_count = 0
         ct = 0

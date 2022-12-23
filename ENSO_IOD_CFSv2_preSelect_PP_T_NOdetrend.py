@@ -14,7 +14,7 @@ dir_rt = '/pikachu/datos/osman/nmme/monthly/real_time/'
 out_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 v = 'tref'
 save_nc = True
-testtrend = True
+testtrend = False
 # Funciones ############################################################################################################
 def fix_calendar(ds, timevar='time'):
     """
@@ -198,36 +198,36 @@ data_1999_2011 = data.sel(time=data.time.dt.year.isin(np.linspace(1999,2011,13))
 
 #- Climatologias y anomalias detrend por seasons ----------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------------#
-jja_clim_82_98, jja_clim_99_11, jja_anom_82_98, jja_anom_99_11 = \
-    TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 7)
+# jja_clim_82_98, jja_clim_99_11, jja_anom_82_98, jja_anom_99_11 = \
+#     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 7)
 # jja_anom_82_98_detrend, jja_anom_99_11_detrend = \
 #     Detrend_Seasons(jja_anom_82_98, jja_anom_99_11, 7)
 
 #jja_hindcast_detrend = xr.concat([jja_anom_82_98_detrend, jja_anom_99_11_detrend], dim='time')
-jja_hindcast = xr.concat([jja_anom_82_98, jja_anom_99_11], dim='time')
+# jja_hindcast = xr.concat([jja_anom_82_98, jja_anom_99_11], dim='time')
+#
+# jja_clim_99_11 = jja_clim_99_11.load()
 
-jja_clim_99_11 = jja_clim_99_11.load()
-
-#----------------------------------------------------------------------------------------------------------------------#
-jas_clim_82_98, jas_clim_99_11, jas_anom_82_98, jas_anom_99_11 = \
-    TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 8)
+# #----------------------------------------------------------------------------------------------------------------------#
+# jas_clim_82_98, jas_clim_99_11, jas_anom_82_98, jas_anom_99_11 = \
+#     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 8)
 # jas_anom_82_98_detrend, jas_anom_99_11_detrend = \
 #     Detrend_Seasons(jas_anom_82_98, jas_anom_99_11, 8)
 
 # jas_hindcast_detrend = xr.concat([jas_anom_82_98_detrend, jas_anom_99_11_detrend], dim='time')
-jas_hindcast = xr.concat([jas_anom_82_98, jas_anom_99_11], dim='time')
-
-jas_clim_99_11 = jas_clim_99_11.load()
+# jas_hindcast = xr.concat([jas_anom_82_98, jas_anom_99_11], dim='time')
+#
+# jas_clim_99_11 = jas_clim_99_11.load()
 #----------------------------------------------------------------------------------------------------------------------#
-aso_clim_82_98, aso_clim_99_11, aso_anom_82_98, aso_anom_99_11 = \
-    TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 9)
+# aso_clim_82_98, aso_clim_99_11, aso_anom_82_98, aso_anom_99_11 = \
+#     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 9)
 # aso_anom_82_98_detrend, aso_anom_99_11_detrend = \
 #     Detrend_Seasons(aso_anom_82_98, aso_anom_99_11, 9)
 
 #aso_hindcast_detrend = xr.concat([aso_anom_82_98_detrend, aso_anom_99_11_detrend], dim='time')
-aso_hindcast = xr.concat([aso_anom_82_98, aso_anom_99_11], dim='time')
-
-aso_clim_99_11 = aso_clim_99_11.load()
+# aso_hindcast = xr.concat([aso_anom_82_98, aso_anom_99_11], dim='time')
+#
+# aso_clim_99_11 = aso_clim_99_11.load()
 #----------------------------------------------------------------------------------------------------------------------#
 son_clim_82_98, son_clim_99_11, son_anom_82_98, son_anom_99_11 = \
     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 10)
@@ -255,6 +255,8 @@ if v=='prec':
     data = data.sel(time=data.time.dt.year.isin(np.linspace(2011, 2020, 10)))
     data = data.sel(lon=slice(275, 330), lat=slice(-60, 15))
     data = data.sel(r=slice(1, 24))
+    # media movil de 3 meses para separar en estaciones
+    data = data.rolling(time=3, center=True).mean()
 else:
     print(v)
     print('(es una mierda...)')
@@ -275,11 +277,15 @@ else:
     data0['L'] = [0, 1, 2, 3]
     data0 = xr.decode_cf(fix_calendar(data0))  # corrigiendo fechas
     data0 = data0.sel(time=data0.time.dt.year.isin(2011))
+    # media movil de 3 meses para separar en estaciones
+    data0 = data0.rolling(time=3, center=True).mean()
 
     data1 = data1.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
     data1['L'] = [0, 1, 2, 3]
     data1 = xr.decode_cf(fix_calendar(data1))  # corrigiendo fechas
     data1 = data1.sel(time=data1.time.dt.year.isin(np.linspace(2012, 2020, 9)))
+    # media movil de 3 meses para separar en estaciones
+    data1 = data1.rolling(time=3, center=True).mean()
 
     data = xr.concat([data0, data1], dim='time')
 
@@ -290,22 +296,22 @@ else:
 # aso_realtime_detrend = Anom_Detrend_SeasonRealTime(data, aso_clim_99_11, 9)
 # son_realtime_detrend = Anom_Detrend_SeasonRealTime(data, son_clim_99_11, 10)
 
-jja_realtime = Anom_Detrend_SeasonRealTime(data, jja_clim_99_11, 7)
-jas_realtime = Anom_Detrend_SeasonRealTime(data, jas_clim_99_11, 8)
-aso_realtime = Anom_Detrend_SeasonRealTime(data, aso_clim_99_11, 9)
+# jja_realtime = Anom_Detrend_SeasonRealTime(data, jja_clim_99_11, 7)
+# jas_realtime = Anom_Detrend_SeasonRealTime(data, jas_clim_99_11, 8)
+# aso_realtime = Anom_Detrend_SeasonRealTime(data, aso_clim_99_11, 9)
 son_realtime = Anom_Detrend_SeasonRealTime(data, son_clim_99_11, 10)
 
 ########################################################################################################################
-jja_f = xr.concat([jja_hindcast, jja_realtime], dim='time')
-jas_f = xr.concat([jas_hindcast, jas_realtime], dim='time')
-aso_f = xr.concat([aso_hindcast, aso_realtime], dim='time')
+# jja_f = xr.concat([jja_hindcast, jja_realtime], dim='time')
+# jas_f = xr.concat([jas_hindcast, jas_realtime], dim='time')
+# aso_f = xr.concat([aso_hindcast, aso_realtime], dim='time')
 son_f = xr.concat([son_hindcast, son_realtime], dim='time')
 
 # save ----------------------------------------------------------------------------------------------------------------#
 if save_nc:
-    jja_f.to_netcdf(out_dir + v + '_jja_nodetrend.nc')
-    jas_f.to_netcdf(out_dir + v + '_jas_nodetrend.nc')
-    aso_f.to_netcdf(out_dir + v + '_aso_nodetrend.nc')
+    # jja_f.to_netcdf(out_dir + v + '_jja_nodetrend.nc')
+    # jas_f.to_netcdf(out_dir + v + '_jas_nodetrend.nc')
+    # aso_f.to_netcdf(out_dir + v + '_aso_nodetrend.nc')
     son_f.to_netcdf(out_dir + v + '_son_nodetrend.nc')
 
 ########################################################################################################################
@@ -313,26 +319,26 @@ if save_nc:
 if testtrend:
     out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/PP/TrendTest/'
 
-    jja_trend_test = TestTrendMK(data_dask=jja_f, main_month_season=7)
-    jas_trend_test = TestTrendMK(data_dask=jas_f, main_month_season=8)
-    aso_trend_test = TestTrendMK(data_dask=aso_f, main_month_season=9)
+    # jja_trend_test = TestTrendMK(data_dask=jja_f, main_month_season=7)
+    # jas_trend_test = TestTrendMK(data_dask=jas_f, main_month_season=8)
+    # aso_trend_test = TestTrendMK(data_dask=aso_f, main_month_season=9)
     son_trend_test = TestTrendMK(data_dask=son_f, main_month_season=10)
 
-    jja_trend_test = jja_trend_test.rename({v: 'var'})
-    jas_trend_test = jas_trend_test.rename({v: 'var'})
-    aso_trend_test = aso_trend_test.rename({v: 'var'})
+    # jja_trend_test = jja_trend_test.rename({v: 'var'})
+    # jas_trend_test = jas_trend_test.rename({v: 'var'})
+    # aso_trend_test = aso_trend_test.rename({v: 'var'})
     son_trend_test = son_trend_test.rename({v: 'var'})
 
 
     for l in [0, 1, 2, 3]:
-        Plot(comp=jja_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
-             title=v + ' JJA - Significant Trend - Leadtime ' + str(l), name_fig=v + 'jja_trend_l_' + str(l))
-
-        Plot(comp=jas_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
-             title=v + ' JAS - Significant Trend - Leadtime ' + str(l), name_fig=v + 'jas_trend_l_' + str(l))
-
-        Plot(comp=aso_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
-             title=v + ' ASO - Significant Trend - Leadtime ' + str(l), name_fig=v + 'aso_trend_l_' + str(l))
+        # Plot(comp=jja_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
+        #      title=v + ' JJA - Significant Trend - Leadtime ' + str(l), name_fig=v + 'jja_trend_l_' + str(l))
+        #
+        # Plot(comp=jas_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
+        #      title=v + ' JAS - Significant Trend - Leadtime ' + str(l), name_fig=v + 'jas_trend_l_' + str(l))
+        #
+        # Plot(comp=aso_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
+        #      title=v + ' ASO - Significant Trend - Leadtime ' + str(l), name_fig=v + 'aso_trend_l_' + str(l))
 
         Plot(comp=son_trend_test.sel(L=l), levels=[0, 0.05], cmap='firebrick', dpi=200, save=True,
              title=v + ' SON - Significant Trend - Leadtime ' + str(l), name_fig=v + 'son_trend_l_' + str(l))
