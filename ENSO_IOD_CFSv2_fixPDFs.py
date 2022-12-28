@@ -21,7 +21,7 @@ from sklearn.cluster import KMeans
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/PDFs/'
 
-save = True
+save = False
 dpi = 200
 # Funciones ############################################################################################################
 def best_fit_distribution(data, size, start, end):
@@ -180,7 +180,7 @@ pre_box = [0, 1, 2]
 pre_box_lat = [[-60, 0], [-60, -20], [-60, -20]]
 pre_box_lon = [[290, 330], [290, 330], [280, 290]]
 
-seasons = ['JJA', 'JAS', 'ASO', 'SON']
+seasons = ['SON']
 cases = ['dmi_puros_pos', 'dmi_puros_neg',
         'n34_puros_pos', 'n34_puros_neg',
         'sim_pos', 'sim_neg',
