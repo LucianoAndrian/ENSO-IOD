@@ -20,8 +20,8 @@ from ENSO_IOD_Funciones import ComputeWithEffect, ComputeWithoutEffect, PlotReg
 ########################################################################################################################
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/regression/fix/OV/'
 
-save = False
-dpi = 150
+save = True
+dpi = 300
 full_season = False
 text = False
 # Functions ############################################################################################################
@@ -124,7 +124,7 @@ for s in seasons_name:
             levels=scale, cmap=cbar, dpi=dpi,
             title='SST' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4',
-            name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_N34',
+            name_fig='sst_' + s + str(p[0]) + '_' + str(p[1]) + '_N34',
             save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
             two_variables=False,
             SA=False, step=1,
@@ -134,7 +134,7 @@ for s in seasons_name:
             levels=scale, cmap=cbar, dpi=dpi,
             title='SST' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI',
-            name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI',
+            name_fig='sst_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI',
             save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
             two_variables=False,
             SA=False, step=1,
@@ -148,7 +148,7 @@ for s in seasons_name:
             levels=scale, cmap=cbar, dpi=dpi,
             title='SST' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4 -{DMI}',
-            name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
+            name_fig='sst_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
             save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
             two_variables=False,
             SA=False, step=1,
@@ -158,7 +158,7 @@ for s in seasons_name:
             levels=scale, cmap=cbar, dpi=dpi,
             title='SST' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI -{Niño3.4}',
-            name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_won34',
+            name_fig='sst_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_won34',
             save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
             two_variables=False,
             SA=False, step=1,
