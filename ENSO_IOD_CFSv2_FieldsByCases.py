@@ -230,6 +230,13 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=False,
 
 # Signal-to-Noise ratio
 levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
+levels = [-1,-.8,-.6,-.5,-.1,0,0.1,0.5,0.6,0.8,1]
+cbar_snr_t = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#6FFE9B', '#FFFFFF',
+                                  '#FFFFFF', '#FFFFFF',
+                                  '#FEB77E','#CA3E72','#782281','#251255'])
+cbar_snr_t.set_over('#251255')
+cbar_snr_t.set_under('#070B4F')
+cbar_snr_t.set_bad(color='white')
 
 ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=True,
                      data=data,

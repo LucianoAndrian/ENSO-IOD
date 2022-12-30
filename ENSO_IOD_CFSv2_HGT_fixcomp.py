@@ -77,6 +77,13 @@ cbar.set_over('#641B00')
 cbar.set_under('#012A52')
 cbar.set_bad(color='white')
 
+cbar_snr = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#6FFE9B', '#FFFFFF',
+                                  '#FFFFFF', '#FFFFFF',
+                                  '#FEB77E','#CA3E72','#782281','#251255'])
+cbar_snr.set_over('#251255')
+cbar_snr.set_under('#070B4F')
+cbar_snr.set_bad(color='white')
+
 scale = [-300,-250,-200,-150,-100,-50,-25,0,25,50,100,150,200,250,300]
 scale_cont= [-300,-250,-200,-150,-100,-50,-25,25,50,100,150,200,250,300]
 
@@ -92,11 +99,21 @@ for s in seasons:
             num_case = len(case.time)
             comp = case.mean('time') - neutro.mean('time')
             comp_var = comp['var']
-            Plot(comp, comp_var, levels=scale,
-                 cmap=cbar, dpi=dpi, step=1, name_fig='hgt_' + c + '_' + s,
-                 title='Mean Composite - CFSv2 - ' + s + '\n' + title_case[c_count] + '\n' + ' ' + 'HGT 200hPa'
+            # Plot(comp, comp_var, levels=scale,
+            #      cmap=cbar, dpi=dpi, step=1, name_fig='hgt_' + c + '_' + s,
+            #      title='Mean Composite - CFSv2 - ' + s + '\n' + title_case[c_count] + '\n' + ' ' + 'HGT 200hPa'
+            #            + ' - ' + 'Cases: ' + str(num_case),
+            #      save=save)
+
+            spread = case - comp
+            spread = spread.std('time')
+            snr = comp / spread
+            Plot(snr, snr['var'], levels = [-1,-.8,-.6,-.5,-.1,0,0.1,0.5,0.6,0.8,1],
+                 cmap=cbar_snr, dpi=dpi, step=1, name_fig='SNR_hgt_' + c + '_' + s,
+                 title='Signal-to-noise ratio - CFSv2 - ' + s + '\n' + title_case[c_count] + '\n' + ' ' + 'HGT 200hPa'
                        + ' - ' + 'Cases: ' + str(num_case),
                  save=save)
+
         except:
             print('Error in ' + c + ' - ' + s)
 
