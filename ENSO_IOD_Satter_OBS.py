@@ -8,31 +8,11 @@ import matplotlib.pyplot as plt
 from ENSO_IOD_Funciones import DMI2, Nino34CPC
 ########################################################################################################################
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/scatter/'
-save = True
-dpi = 400
+save = False
+dpi = 100
+
 ########################################################################################################################
-i = 1920
-end = 2020
-seasons = ['JJA', 'JAS', 'ASO', 'SON']
-seasons_n = [7,8,9,10]
-########################################################################################################################
-# indices: ------------------------------------------------------------------------------------------------------------#
-dmi, dmi_2, dmi_3 = DMI2(filter_bwa=False, start_per=str(i), end_per=str(end),
-                         sst_anom_sd=False, opposite_signs_criteria=False)
-
-aux = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
-n34, n34_2, n34_3 = Nino34CPC(aux, start=i)
-
-dmi_3 = dmi_3.sel(time=slice('1950-01-01', '2020-12-01'))
-dmi = dmi.where(dmi.Años>=1950).dropna()
-
-n34 = n34.sel(time=slice('1950-01-01', '2020-12-01'))
-n34_3 = n34_3.where(n34_3.Años>=1950).dropna()
-
-dmi_3 = dmi_3 / dmi_3.std('time')
-n34 = n34 / n34.std('time')
-
-for s in seasons_n:
+def auxScatter(n34, n34_3, dmi, dmi_3, s):
     dmi_todos = dmi_3.sel(time=dmi_3.time.dt.month.isin([s]))
     dmi_criteria_y = dmi.where((dmi.Mes == s)).Años.dropna().values
 
@@ -77,48 +57,105 @@ for s in seasons_n:
     n34_un_neg = n34_un.where(n34_un < 0)
     n34_un_neg_dmi_values = dmi_todos.sel(time=dmi_todos.time.isin(n34_un_neg.time))
 
+    return dmi_un_pos, dmi_un_pos_n34_values, dmi_un_neg, dmi_un_neg_n34_values, \
+           n34_un_pos, n34_un_pos_dmi_values, n34_un_neg, n34_un_neg_dmi_values, \
+           dmi_sim_pos, n34_sim_pos, dmi_sim_neg, n34_sim_neg, dmi_todos, n34_todos
+########################################################################################################################
+i = 1920
+end = 2020
+seasons = ['JJA', 'JAS', 'ASO', 'SON']
+seasons_n = [7,8,9,10]
+########################################################################################################################
+# indices: ------------------------------------------------------------------------------------------------------------#
+dmi, dmi_2, dmi_3 = DMI2(filter_bwa=False, start_per=str(i), end_per=str(end),
+                         sst_anom_sd=False, opposite_signs_criteria=False)
+
+dmi_td, dmi_2, dmi_3_td = DMI2(filter_bwa=False, start_per=str(i), end_per=str(end),
+                         sst_anom_sd=False, opposite_signs_criteria=True)
+
+aux = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
+n34, n34_2, n34_3 = Nino34CPC(aux, start=i)
+
+dmi_3 = dmi_3.sel(time=slice('1950-01-01', '2020-12-01'))
+dmi = dmi.where(dmi.Años>=1950).dropna()
+dmi_3_td = dmi_3_td.sel(time=slice('1950-01-01', '2020-12-01'))
+dmi_td = dmi_td.where(dmi_td.Años>=1950).dropna()
+
+n34 = n34.sel(time=slice('1950-01-01', '2020-12-01'))
+n34_3 = n34_3.where(n34_3.Años>=1950).dropna()
+
+dmi_3 = dmi_3 / dmi_3.std('time')
+dmi_3_td = dmi_3_td / dmi_3_td.std('time')
+n34 = n34 / n34.std('time')
+
+for s in seasons_n:
+    dmi_un_pos, dmi_un_pos_n34_values, dmi_un_neg, dmi_un_neg_n34_values, \
+    n34_un_pos, n34_un_pos_dmi_values, n34_un_neg, n34_un_neg_dmi_values, \
+    dmi_sim_pos, n34_sim_pos, dmi_sim_neg, n34_sim_neg, dmi_todos, n34_todos = \
+        auxScatter(n34, n34_3, dmi, dmi_3, s)
+
+    dmi_un_pos_td, dmi_un_pos_n34_values_td, dmi_un_neg_td, dmi_un_neg_n34_values_td, \
+    n34_un_pos_td, n34_un_pos_dmi_values_td, n34_un_neg_td, n34_un_neg_dmi_values_td, \
+    dmi_sim_pos_td, n34_sim_pos_td, dmi_sim_neg_td, n34_sim_neg_td, dmi_todos, n34_todos =\
+        auxScatter(n34, n34_3, dmi_td, dmi_3_td, s)
+    #------------------------------------------------------------------------------------------------------------------#
+
     fig, ax = plt.subplots(dpi=dpi)
-    plt.scatter(x=dmi_un_pos.values, y=dmi_un_pos_n34_values.values, marker='>',
-                s=50, edgecolor='firebrick', facecolor='none', alpha=1, label='IOD+, NO ENSO')
-    plt.scatter(x=dmi_un_neg.values, y=dmi_un_neg_n34_values.values, marker='<',
-                s=50, facecolor='none', edgecolor='lime', alpha=1, label='IOD-, NO ENSO')
 
-    plt.scatter(y=n34_un_pos.values, x=n34_un_pos_dmi_values.values, marker='^',
-                s=50, facecolor='none', edgecolor='darkorange', alpha=1, label='Niño, NO IOD')
-    plt.scatter(y=n34_un_neg.values, x=n34_un_neg_dmi_values.values, marker='v',
-                s=50,facecolor='none', edgecolor='blue', alpha=1, label='Niña, NO IOD')
-
-    plt.scatter(x=dmi_todos, y=n34_todos, marker='x', label = 'Niño3.4 vs DMI',
+    plt.scatter(x=dmi_todos, y=n34_todos, marker='.', label='Niño3.4 vs DMI',
                 s=20, edgecolor='k', color='dimgray', alpha=1)
 
+    plt.scatter(x=dmi_un_pos.values, y=dmi_un_pos_n34_values.values, marker='>',
+                s=70, edgecolor='firebrick', facecolor='firebrick', alpha=1, label='IOD+, NO ENSO')
+    plt.scatter(x=dmi_un_neg.values, y=dmi_un_neg_n34_values.values, marker='<',
+                s=70, facecolor='limegreen', edgecolor='limegreen', alpha=1, label='IOD-, NO ENSO')
+
+    # plt.scatter(y=n34_un_pos.values, x=n34_un_pos_dmi_values.values, marker='^',
+    #             s=50, edgecolors='darkorange', facecolor='none', alpha=1, label='Niña, NO IOD')
+    # plt.scatter(y=n34_un_neg.values, x=n34_un_neg_dmi_values.values, marker='v',
+    #             s=50, edgecolors='blue', facecolor='none', alpha=1, label='Niña, NO IOD')
+    plt.scatter(y=n34_un_pos.values, x=n34_un_pos_dmi_values.values, marker='^',
+                s=70, edgecolors='navy', facecolor='navy', alpha=1, label='Niña, NO IOD')
+    plt.scatter(y=n34_un_neg.values, x=n34_un_neg_dmi_values.values, marker='v',
+                s=70, edgecolors='deeppink', facecolor='deeppink', alpha=1, label='Niña, NO IOD')
+
     plt.scatter(x=dmi_sim_pos.values, y=n34_sim_pos.values, marker='s', s=50,
-                edgecolor='k',color='red', alpha=1, label='Niño & IOD+')
+                edgecolor='red',color='red', alpha=1, label='Niño & IOD+')
     plt.scatter(x=dmi_sim_neg.values, y=n34_sim_neg.values, marker='s', s=50,
-                edgecolor='k', color='lightseagreen', alpha=1, label='Niña & IOD-')
+                edgecolor='deepskyblue', color='deepskyblue', alpha=1, label='Niña & IOD-')
 
-    plt.legend(loc=(-0,.63))
+    plt.scatter(x=dmi_sim_pos_td.values, y=n34_sim_pos_td.values, marker='+', s=70,
+                color='k', alpha=1)
+    plt.scatter(x=dmi_sim_neg_td.values, y=n34_sim_neg_td.values, marker='+', s=70,
+                color='k', alpha=1)
+    plt.scatter(x=dmi_un_pos_td.values, y=dmi_un_pos_n34_values_td.values, marker='+',
+                s=70, color='k', alpha=1)
+    plt.scatter(x=dmi_un_neg_td.values, y=dmi_un_neg_n34_values_td.values, marker='+',
+                s=70, color='k', alpha=1)
 
-    plt.ylim((-4, 4));
-    plt.xlim((-4, 4))
-    plt.axhspan(-.4, .4, alpha=0.2, color='black', zorder=0)
+    plt.legend(loc=(.01,.62))
+
+    plt.ylim((-5, 5))
+    plt.xlim((-5, 5))
+    plt.axhspan(-.5, .5, alpha=0.2, color='black', zorder=0)
     plt.axvspan(-.5, .5, alpha=0.2, color='black', zorder=0)
     # ax.grid(True)
     fig.set_size_inches(6, 6)
     plt.xlabel('IOD', size=15)
     plt.ylabel('Niño 3.4', size=15)
 
-    plt.text(-3.8, 3.6, 'EN/IOD-', dict(size=15))
-    plt.text(-.3, 3.6, 'EN', dict(size=15))
-    plt.text(+2.3, 3.6, 'EN/IOD+', dict(size=15))
-    plt.text(+3, -.1, 'IOD+', dict(size=15))
-    plt.text(+2.6, -3.9, 'LN/IOD+', dict(size=15))
-    plt.text(-.3, -3.9, 'LN', dict(size=15))
-    plt.text(-3.8, -3.9, ' LN/IOD-', dict(size=15))
-    plt.text(-3.8, -.1, 'IOD-', dict(size=15))
+    plt.text(-4.8, 4.6, 'EN/IOD-', dict(size=15))
+    plt.text(-.3, 4.6, 'EN', dict(size=15))
+    plt.text(+3.1, 4.6, 'EN/IOD+', dict(size=15))
+    plt.text(+3.8, -.1, 'IOD+', dict(size=15))
+    plt.text(+3.1, -4.9, 'LN/IOD+', dict(size=15))
+    plt.text(-.3, -4.9, 'LN', dict(size=15))
+    plt.text(-4.8, -4.9, ' LN/IOD-', dict(size=15))
+    plt.text(-4.8, -.1, 'IOD-', dict(size=15))
     plt.title(seasons[s-7] + ' - ' + 'OBS')
     plt.tight_layout()
     if save:
-        plt.savefig(out_dir + 'ENSO_IOD_Scatter_NO SSTanoms' + seasons[s-7] + '_OBS.jpg')
+        plt.savefig(out_dir + 'ENSO_IOD_Scatter_comparision_dmi' + seasons[s-7] + '_OBS_oneTrue.jpg')
     else:
         plt.show()
 ########################################################################################################################
