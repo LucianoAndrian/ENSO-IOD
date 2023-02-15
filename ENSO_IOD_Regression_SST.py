@@ -20,8 +20,8 @@ from ENSO_IOD_Funciones import ComputeWithEffect, ComputeWithoutEffect, PlotReg
 ########################################################################################################################
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/regression/fix/OV/'
 
-save = True
-dpi = 300
+save = False
+dpi = 100
 full_season = False
 text = False
 # Functions ############################################################################################################
@@ -110,6 +110,7 @@ data_sst = data_sst.groupby('time.month') - data_sst.groupby('time.month').mean(
 # 3-month running mean ------------------------------------------------------------------------------------------------#
 # data_div = data_div.rolling(time=3, center=True).mean()
 # data_vp = data_vp.rolling(time=3, center=True).mean()
+data_sst = data_sst.rolling(time=3, center=True).mean()
 
 s_count=0
 for s in seasons_name:

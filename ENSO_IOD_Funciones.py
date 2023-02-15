@@ -1421,7 +1421,8 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
             ,two_variables = False, data2=None, data_cor2=None, levels2 = np.linspace(-100,100,2)
             , sig2=True, sig_point2=False, color_sig2='k'
             , color_contour2='k',step=1,SA=False, color_map='#d9d9d9'
-            , color_sig='magenta', sig_point=False, r_crit=1):
+            , color_sig='magenta', sig_point=False, r_crit=1
+            , third_variable=False, data3=None, levels3=np.linspace(-1,1,11)):
 
     import matplotlib.pyplot as plt
     levels_contour = levels.copy()
@@ -1475,7 +1476,7 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
                 colors_l = [color_sig2, color_sig2]
                 cs = ax.contourf(data_cor2.lon, data_cor2.lat, data_cor2.where(np.abs(data_cor2) > np.abs(r_crit)),
                                  transform=crs_latlon, colors='none', hatches=["...", "..."],
-                                 extend='lower')
+                                 extend='lower', alpha=0.5)
                 for i, collection in enumerate(cs.collections):
                     collection.set_edgecolor(colors_l[i % len(colors_l)])
 
@@ -1495,6 +1496,10 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
                 cbar.set_bad(color='white')
                 ax.contourf(data_cor2.lon, data_cor2.lat, data_cor2, levels=[-1,-r_crit, 0, r_crit,1],
                        cmap=cbar, transform=crs_latlon, linewidths=1, alpha=0.3)
+
+    if third_variable:
+        ax.contour(data3.lon, data3.lat, data3,
+                   colors='lime', transform=crs_latlon, linewidths=1.5)
 
     cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
     cb.ax.tick_params(labelsize=8)

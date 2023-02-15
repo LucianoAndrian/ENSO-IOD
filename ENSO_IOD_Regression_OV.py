@@ -64,6 +64,7 @@ SA = False
 sig = True
 
 scales = [[-5e-06, -4.33e-07, 0, 4.33e-07, 5e-06], np.linspace(-4.5e6, 4.5e6, 13)]
+scale_sst = [-1, -.75, -.5, -.25, -.1, 0, .1, .25, .5, .75, 1]
 
 cbar = colors.ListedColormap(['#9B1C00','#B9391B', '#CD4838', '#E25E55', '#F28C89',
                               'white',
@@ -94,27 +95,44 @@ data_vp = xr.open_dataset(data_dir + variables[1] + '.nc')
 data_vp = Detrend(OrdenarNC_wTime_fromW(data_vp.rename({'velocity_potential':'var'})), 'time')
 data_vp = data_vp.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
 
+data_sst = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
+data_sst = data_sst.rename({'sst':'var'})
+data_sst = data_sst.drop('time_bnds')
+data_sst = Detrend(data_sst, 'time')
+data_sst = data_sst.sel(time=slice('1950-01-01', '2020-12-01'))
+
 time_original = data_div.time
 
 # Anomaly -------------------------------------------------------------------------------------------------------------#
 data_div = data_div.groupby('time.month') - data_div.groupby('time.month').mean('time', skipna=True)
 data_vp = data_vp.groupby('time.month') - data_vp.groupby('time.month').mean('time', skipna=True)
+data_sst = data_sst.groupby('time.month') - data_sst.groupby('time.month').mean('time', skipna=True)
 
 # 3-month running mean ------------------------------------------------------------------------------------------------#
 data_div = data_div.rolling(time=3, center=True).mean()
 data_vp = data_vp.rolling(time=3, center=True).mean()
+data_sst = data_sst.rolling(time=3, center=True).mean()
 
-s_count=0
-for s in seasons_name:
+for s, s_count in zip(seasons_name, [0,1]):
     aux_n34, aux_corr_n34, aux_dmi, \
     aux_corr_dmi, aux_n34_2, aux_corr_n34_2, \
     aux_dmi_2, aux_corr_dmi_2 = ComputeWithEffect(data=data_div, data2=data_vp, n34=n34, dmi=dmi,
                                                   two_variables=two_variables, m=seasons[s_count],
                                                   full_season=False, time_original=time_original)
+
+    aux_n34_sst, aux_corr_n34_sst, aux_dmi_sst, \
+    aux_corr_dmi_sst, aux_n34_2_sst, aux_corr_n34_2_sst, \
+    aux_dmi_2_sst, aux_corr_dmi_2_sst = ComputeWithEffect(data=data_sst, data2=None, n34=n34, dmi=dmi,
+                                                  two_variables=False, m=seasons[s_count],
+                                                  full_season=False, time_original=time_original)
     v_count=0
+    #terminar esto
+    # nueva mascara para la corr. una q sea posta. graficar solo los sig.
+    #solucionar el problema de la div., es muy ruidosa para graficar contorno
+    # probar otro step o intercambiar con sst
     print('Plot')
-    PlotReg(data=aux_n34, data_cor=aux_corr_n34*SigDivMask(aux_n34, scales[0][3]),
-            levels=scales[v_count], cmap=cbar, dpi=dpi,
+    PlotReg(data=aux_n34_sst, data_cor=aux_corr_n34*SigDivMask(aux_n34, 0.1),
+            levels=scale_sst, cmap=cbar, dpi=dpi,
             title='Velocity Potential [cont.], divegence [shading] - 200hPa' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4',
             name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_N34',
@@ -122,7 +140,8 @@ for s in seasons_name:
             two_variables=True,
             SA=False, step=1,
             color_map='grey', color_sig='k', color_sig2='grey',
-            data2=aux_n34_2, data_cor2=aux_corr_n34_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir)
+            data2=aux_n34_2, data_cor2=aux_corr_n34_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir,
+            third_variable=True, data3=aux_n34*SigDivMask(aux_n34, scales[0][3]), levels3=[-2.3e-6,-1e-6, 0, 1e-6, 2.3e-6])
 
     PlotReg(data=aux_dmi, data_cor=aux_corr_dmi*SigDivMask(aux_dmi, scales[0][3]),
             levels=scales[v_count], cmap=cbar, dpi=dpi,
@@ -163,7 +182,6 @@ for s in seasons_name:
             color_map='grey', color_sig='k', color_sig2='grey',
             data2=aux_dmi_won34_2, data_cor2=aux_corr_dmi_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir)
 
-    s_count+=1
 
 ########################################################################################################################
 #--------------------------------------------------- RWS --------------------------------------------------------------#
