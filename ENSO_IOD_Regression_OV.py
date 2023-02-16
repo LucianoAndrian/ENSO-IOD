@@ -64,13 +64,13 @@ SA = False
 sig = True
 
 scales = [[-5e-06, -4.33e-07, 0, 4.33e-07, 5e-06], np.linspace(-4.5e6, 4.5e6, 13)]
-scale_sst = [-1, -.75, -.5, -.25, -.1, 0, .1, .25, .5, .75, 1]
+scale_sst = [-1, -.5, -.1, 0, .1, .5, 1]
 
-cbar = colors.ListedColormap(['#9B1C00','#B9391B', '#CD4838', '#E25E55', '#F28C89',
+cbar = colors.ListedColormap(['#CD4838', '#E25E55', '#F28C89',
                               'white',
-                              '#83B9EB', '#5E9AD7', '#3C7DC3', '#2064AF', '#014A9B'][::-1])
-cbar.set_over('#641B00')
-cbar.set_under('#012A52')
+                              '#83B9EB', '#5E9AD7', '#3C7DC3'][::-1])
+cbar.set_over('#CD4838')
+cbar.set_under('#3C7DC3')
 cbar.set_bad(color='white')
 
 p = [1950, 2020]
@@ -131,56 +131,61 @@ for s, s_count in zip(seasons_name, [0,1]):
     #solucionar el problema de la div., es muy ruidosa para graficar contorno
     # probar otro step o intercambiar con sst
     print('Plot')
-    PlotReg(data=aux_n34_sst, data_cor=aux_corr_n34*SigDivMask(aux_n34, 0.1),
+    PlotReg(data=aux_n34_sst*SigDivMask(aux_corr_n34_sst, r_crit), data_cor=aux_corr_n34_sst*SigDivMask(aux_corr_n34_sst, r_crit),
             levels=scale_sst, cmap=cbar, dpi=dpi,
-            title='Velocity Potential [cont.], divegence [shading] - 200hPa' + '\n' + s +
+            title='SST[shading], Velocity Potential [black cont.], divegence [green cont.] - 200hPa' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4',
             name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_N34',
-            save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
+            save=save, sig=False, sig_point=True, sig2=False, sig_point2=False,
             two_variables=True,
             SA=False, step=1,
             color_map='grey', color_sig='k', color_sig2='grey',
             data2=aux_n34_2, data_cor2=aux_corr_n34_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir,
-            third_variable=True, data3=aux_n34*SigDivMask(aux_n34, scales[0][3]), levels3=[-2.3e-6,-1e-6, 0, 1e-6, 2.3e-6])
+            third_variable=True, data3=aux_n34, levels3=[-4.33e-07, 4.33e-07])
 
-    PlotReg(data=aux_dmi, data_cor=aux_corr_dmi*SigDivMask(aux_dmi, scales[0][3]),
-            levels=scales[v_count], cmap=cbar, dpi=dpi,
-            title='Velocity Potential [cont.], divegence [shading] - 200hPa' + '\n' + s +
+    PlotReg(data=aux_dmi_sst*SigDivMask(aux_corr_dmi_sst, r_crit), data_cor=aux_corr_dmi*SigDivMask(aux_dmi, scales[0][3]),
+            levels=scale_sst, cmap=cbar, dpi=dpi,
+            title='SST[shading], Velocity Potential [black cont.], divegence [green cont.] - 200hPa' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI',
             name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI',
-            save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
+            save=save, sig=False, sig_point=True, sig2=False, sig_point2=False,
             two_variables=True,
             SA=False, step=1,
             color_map='grey', color_sig='k', color_sig2='grey',
-            data2=aux_dmi_2, data_cor2=aux_corr_dmi_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir)
+            data2=aux_dmi_2, data_cor2=aux_corr_dmi_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir,
+            third_variable=True, data3=aux_dmi, levels3=[-4.33e-07, 4.33e-07])
 
     aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi = \
         ComputeWithoutEffect(data_div, n34, dmi, seasons[s_count], time_original)
     aux_n34_wodmi_2, aux_corr_n34_2, aux_dmi_won34_2, aux_corr_dmi_2 = \
         ComputeWithoutEffect(data_vp, n34, dmi, seasons[s_count], time_original)
+    aux_n34_wodmi_sst, aux_corr_n34_sst, aux_dmi_won34_sst, aux_corr_dmi_sst = \
+        ComputeWithoutEffect(data_sst, n34, dmi, seasons[s_count], time_original)
 
 
-    PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34*SigDivMask(aux_n34_wodmi, scales[0][3]),
-            levels=scales[v_count], cmap=cbar, dpi=dpi,
-            title='Velocity Potential [cont.], divegence [shading] - 200hPa' + '\n' + s +
+    PlotReg(data=aux_n34_wodmi_sst*SigDivMask(aux_corr_n34_sst, r_crit), data_cor=aux_corr_n34_sst*SigDivMask(aux_n34_wodmi_sst, r_crit),
+            levels=scale_sst, cmap=cbar, dpi=dpi,
+            title='SST[shading], Velocity Potential [black cont.], divegence [green cont.] - 200hPa' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4 -{DMI}',
             name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
-            save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
+            save=save, sig=False, sig_point=True, sig2=False, sig_point2=False,
             two_variables=True,
             SA=False, step=1,
             color_map='grey', color_sig='k', color_sig2='grey',
-            data2=aux_n34_wodmi_2, data_cor2=aux_corr_n34_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir)
+            data2=aux_n34_wodmi_2, data_cor2=aux_corr_n34_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir,
+            third_variable=True, data3=aux_n34_wodmi, levels3=[-4.33e-07, 4.33e-07])
 
-    PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi*SigDivMask(aux_dmi_won34, scales[0][3]),
-            levels=scales[v_count], cmap=cbar, dpi=dpi,
-            title='Velocity Potential [cont.], divegence [shading] - 200hPa' + '\n' + s +
+    PlotReg(data=aux_dmi_won34_sst*SigDivMask(aux_corr_dmi_sst, r_crit), data_cor=aux_corr_dmi*SigDivMask(aux_dmi_won34, scales[0][3]),
+            levels=scale_sst, cmap=cbar, dpi=dpi,
+            title='SST[shading], Velocity Potential [black cont.], divegence [green cont.] - 200hPa' + '\n' + s +
                           ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI -{Niño3.4}',
             name_fig='vp_div_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_won34',
-            save=save, sig=True, sig_point=True, sig2=False, sig_point2=False,
+            save=save, sig=False, sig_point=True, sig2=False, sig_point2=False,
             two_variables=True,
             SA=False, step=1,
             color_map='grey', color_sig='k', color_sig2='grey',
-            data2=aux_dmi_won34_2, data_cor2=aux_corr_dmi_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir)
+            data2=aux_dmi_won34_2, data_cor2=aux_corr_dmi_2, levels2=scales[1], r_crit=r_crit, out_dir=out_dir,
+            third_variable=True, data3=aux_dmi_won34, levels3=[-4.33e-07, 4.33e-07])
 
 
 ########################################################################################################################
