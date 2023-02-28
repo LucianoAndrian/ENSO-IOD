@@ -63,7 +63,7 @@ two_variables=True
 SA = False
 sig = True
 
-scales = [[-5e-06, -4.33e-07, 0, 4.33e-07, 5e-06], np.linspace(-4.5e6, 4.5e6, 13)]
+scales = [[-5e-06, -4.33e-07, 0, 4.33e-07, 5e-06], [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, 0, 0.5e6, 1e6, 1.5e6, 2e6, 2.5e6, 3e6]]
 scale_sst = [-1, -.5, -.1, 0, .1, .5, 1]
 
 cbar = colors.ListedColormap(['#CD4838', '#E25E55', '#F28C89',
