@@ -22,7 +22,7 @@ out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/regression/fix/OV/'
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
 save = True
-dpi = 300
+dpi = 100
 full_season = False
 text = False
 # Functions ############################################################################################################

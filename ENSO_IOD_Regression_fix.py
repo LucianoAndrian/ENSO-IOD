@@ -3,14 +3,12 @@ ENSO vs IOD Regression
 T, PP y HGT200
 """
 ########################################################################################################################
-from itertools import groupby
 import warnings
 warnings.filterwarnings( "ignore", module = "matplotlib\..*" )
 import xarray as xr
 import numpy as np
 import pandas as pd
 pd.options.mode.chained_assignment = None
-import statsmodels.formula.api as sm
 import os
 import cartopy.feature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
@@ -19,8 +17,6 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from ENSO_IOD_Funciones import Nino34CPC
 from ENSO_IOD_Funciones import DMI
-import cartopy.feature as cfeature
-from ENSO_IOD_Funciones import MakeMask
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
 ########################################################################################################################
@@ -193,9 +189,9 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
         ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
         ax.set_extent([270,330, -60,20], crs=crs_latlon)
     else:
-        fig = plt.figure(figsize=(7, 3.5), dpi=dpi)
+        fig = plt.figure(figsize=(9, 3.5), dpi=dpi)
         ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
-        ax.set_extent([30, 340, -80, 20], crs=crs_latlon)
+        ax.set_extent([0, 359, -80, 20], crs=crs_latlon)
 
     ax.contour(data.lon[::step], data.lat[::step], data[::step, ::step], linewidths=.5, alpha=0.5,
                levels=levels_contour, transform=crs_latlon, colors='black')
@@ -250,10 +246,11 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
         #ax2.set_xticks([])
 
     else:
-        ax.set_xticks(np.arange(30, 340, 30), crs=crs_latlon)
+        ax.set_xticks(np.arange(0, 360, 30), crs=crs_latlon)
         ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
         ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
         ax.coastlines(color=color_map, linestyle='-', alpha=1)
+
     ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', zorder=20)
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
@@ -324,22 +321,26 @@ def ComputeWithoutEffect(data, n34, dmi, m):
     return aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi
 
 ########################################################################################################################
-variables = ['pp_gpcc_or', 't_cru', 'hgt200_mer_d_w', 'pp_gpcc_0.25', 'pp_cmap', 'pp_prec']
+# variables = ['pp_gpcc_or', 't_cru', 'hgt200_HS_mer_d_w', 'pp_gpcc_0.25', 'pp_cmap', 'pp_prec']
+# name_var = ['precip']
+# title_var = ['PP GPCC', 'T Cru', 'HGT200 ERA5', 'PP GPCC 0.25 pr', 'PP CMAP', 'PP PREC']
+# seasons = [7, 10] # main month
+# seasons_name = ['JJA', 'SON']
+# interp = False
+# two_variables=False
+# SA = [True, True, False, True, True, True]
+sig = True
+
+variables = ['hgt200_HS_mer_d_w']
 name_var = ['precip']
-title_var = ['PP GPCC', 'T Cru', 'HGT200 ERA5', 'PP GPCC 0.25 pr', 'PP CMAP', 'PP PREC']
+title_var = ['HGT200 ERA5']
 seasons = [7, 10] # main month
 seasons_name = ['JJA', 'SON']
 interp = False
 two_variables=False
-SA = [True, True, False, True, True, True]
-sig = True
+SA = [False]
 
-scales = [np.linspace(-15, 15, 13),   #pp
-          [-.6,-.4,-.2,-.1,-.05,0,0.05,0.1,0.2,0.4,0.6], #t
-          [-150,-100,-75,-50,-25,-15,0,15,25,50,75,100,150], #hgt200
-          np.linspace(-15, 15, 13), #pp
-          np.linspace(-15, 15, 13),#pp
-          np.linspace(-15, 15, 13)]#pp
+scales = [[-150,-100,-75,-50,-25,-15,0,15,25,50,75,100,150]]
 
 
 cbar = colors.ListedColormap(['#9B1C00','#B9391B', '#CD4838', '#E25E55', '#F28C89', '#FFCECC',
@@ -357,7 +358,7 @@ cbar_pp.set_under('#3F2404')
 cbar_pp.set_over('#00221A')
 cbar_pp.set_bad(color='white')
 
-cmap = [cbar_pp, cbar, cbar, cbar_pp, cbar_pp, cbar_pp]
+cmap = [cbar]
 
 periodos = [[1950,2020]]
 t_critic = 1.66 # es MUY similar (2 digitos) para ambos períodos
@@ -372,7 +373,7 @@ for v in variables:
         y1 = 29
     else:
         y1 = 0
-    if v != 'hgt200_mer_d_w':
+    if v != 'hgt200_HS_mer_d_w':
         plt.rcParams['hatch.linewidth'] = 2
         for p in periodos:
             r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0]) - 2) / t_critic) ** 2) + 1))
@@ -514,7 +515,7 @@ for v in variables:
                     two_variables=False,
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
-                    color_sig='k', sig_point=True)
+                    color_sig='k', sig_point=True, r_crit=r_crit)
 
             PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
@@ -526,7 +527,7 @@ for v in variables:
                     two_variables=False,
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
-                    color_sig='k', sig_point=True)
+                    color_sig='k', sig_point=True, r_crit=r_crit)
 
             del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, aux_corr_n34, \
                 aux_corr_dmi_2, aux_corr_n34_2
@@ -549,7 +550,7 @@ for v in variables:
                     two_variables=False,
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
-                    color_sig='k', sig_point=True)
+                    color_sig='k', sig_point=True, r_crit=r_crit)
 
             PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=200,
@@ -560,7 +561,7 @@ for v in variables:
                     two_variables=False,
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
-                    color_sig='k', sig_point=True)
+                    color_sig='k', sig_point=True, r_crit=r_crit)
 
             del aux_n34_wodmi, aux_dmi_won34, aux_corr_dmi, aux_corr_n34, \
                 aux_n34_wodmi_2, aux_dmi_won34_2, aux_corr_dmi_2, aux_corr_n34_2

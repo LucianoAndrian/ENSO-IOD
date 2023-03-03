@@ -1437,9 +1437,9 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
         ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
         ax.set_extent([270,330, -60,20], crs=crs_latlon)
     else:
-        fig = plt.figure(figsize=(7, 3.5), dpi=dpi)
+        fig = plt.figure(figsize=(9, 3.5), dpi=dpi)
         ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
-        ax.set_extent([30, 340, -80, 20], crs=crs_latlon)
+        ax.set_extent([0, 359, -80, 20], crs=crs_latlon)
 
     ax.contour(data.lon[::step], data.lat[::step], data[::step, ::step], linewidths=.5, alpha=0.5,
                levels=levels_contour, transform=crs_latlon, colors='black')
@@ -1520,7 +1520,7 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
         #ax2.set_xticks([])
 
     else:
-        ax.set_xticks(np.arange(30, 340, 30), crs=crs_latlon)
+        ax.set_xticks(np.arange(0, 360, 30), crs=crs_latlon)
         ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
         ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
         ax.coastlines(color=color_map, linestyle='-', alpha=1)

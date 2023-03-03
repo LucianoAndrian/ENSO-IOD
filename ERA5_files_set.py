@@ -61,8 +61,8 @@ for v in variables:
 
 n = 0
 #for v in variables:
-v = 'hgt200'
-n_v='z'
+v = 'div200'
+n_v='d'
     #n_v = name_variables[n]
 
 print(v)
