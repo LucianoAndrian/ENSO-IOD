@@ -21,8 +21,8 @@ warnings.filterwarnings("ignore")
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/' #fechas
 data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' #T y PP ya procesados
 data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/' # ERA5 ya procesados
-out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/DMIbase/'
-out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/DMIbase/'
+out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/DMIbase/HS/'
+out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/DMIbase/HS/'
 
 #Plot
 save = True
@@ -105,15 +105,15 @@ def Plot(comp, levels, cmap, step1, contour1=True,
 
     elif mapa.lower()=='tropical':
         fig_size = (7, 2)
-        extent = [50, 270, -20, 20]
-        xticks = np.arange(50, 270, 60)
+        extent = [40, 280, -20, 20]
+        xticks = np.arange(40, 280, 60)
         yticks = np.arange(-20, 20, 20)
 
     elif mapa.lower()=='hs':
-        fig_size = (8, 3)
-        extent = [0, 359, -90, 20]
-        xticks = np.arange(0, 330, 30)
-        yticks = np.arange(-90, 20, 10)
+        fig_size = (9, 3.5)
+        extent = [0, 359, -80, 20]
+        xticks = np.arange(0, 360, 30)
+        yticks = np.arange(-80, 20, 10)
         if proj != 'eq':
             fig_size = (5, 5)
     else:
@@ -226,7 +226,7 @@ seasons = ('JJA', 'SON')
 min_max_months = [[6,8],[9,11]]
 
 variables_t_p = ['t_cru_d_w_c_1950-2020_0.25.nc', 'pp_gpcc_d_w_c_1950-2020_0.25.nc', 'pp_prec_d_w_c_1950-2020_2.5.nc']
-variables_ERA5 = ['hgt200_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
+variables_ERA5 = ['hgt200_HS_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
 
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_neg', 'DMI_pos', 'DMI_un_pos',
          'DMI_un_neg','N34_pos', 'N34_neg', 'N34_un_pos', 'N34_un_neg']
@@ -287,45 +287,45 @@ cbar_sst.set_bad(color='white')
 cmap_t_pp = [cbar_t, cbar_pp, cbar_pp]
 cmap_era5 = [cbar_t, cbar_t_r]
 ########################################################################################################################
-#T y PP con contornos de HGT200
-v_count = 0
-plt.rcParams['hatch.linewidth'] = 2
-for v in variables_t_p:
-    data = xr.open_dataset(data_dir_t_pp + v)
-    data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
-    data2 = data2.sel(lon=slice(270, 330), lat=slice(15, -60))
-    #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
-
-    c_count = 0
-    for c in cases:
-        s_count = 0
-        for s in seasons:
-            comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-                                              two_variables=True, data2=data2)
-
-            data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
-                                       '_' + c + '1950_2020_' + s + '_DMIbase.nc')
-
-            comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
-            sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
-            sig = sig.where(np.isnan(sig['var']), 0)
-
-            if v_count != 0:
-                v_count_sc = 2
-            else:
-                v_count_sc = 0
-
-            #MakeMask(pp, dataname='cluster')
-            Plot(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
-                 two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
-                 mapa='sa', significance=True,
-                 title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-                 name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w_NSA',
-                 dpi=dpi, save=save, comp_sig=sig, color_sig='k')
-
-            s_count += 1
-        c_count += 1
-    v_count += 1
+# #T y PP con contornos de HGT200
+# v_count = 0
+# plt.rcParams['hatch.linewidth'] = 2
+# for v in variables_t_p:
+#     data = xr.open_dataset(data_dir_t_pp + v)
+#     data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
+#     data2 = data2.sel(lon=slice(270, 330), lat=slice(15, -60))
+#     #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
+#
+#     c_count = 0
+#     for c in cases:
+#         s_count = 0
+#         for s in seasons:
+#             comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+#                                               two_variables=True, data2=data2)
+#
+#             data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
+#                                        '_' + c + '1950_2020_' + s + '_DMIbase.nc')
+#
+#             comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+#             sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+#             sig = sig.where(np.isnan(sig['var']), 0)
+#
+#             if v_count != 0:
+#                 v_count_sc = 2
+#             else:
+#                 v_count_sc = 0
+#
+#             #MakeMask(pp, dataname='cluster')
+#             Plot(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
+#                  two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
+#                  mapa='sa', significance=True,
+#                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+#                  name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w_NSA',
+#                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
+#
+#             s_count += 1
+#         c_count += 1
+#     v_count += 1
 
 # HGT -----------------------------------------------------------------------------------------------------------------#
 plt.rcParams['hatch.linewidth'] = 1.5
@@ -357,7 +357,7 @@ for v in variables_ERA5:
                  contour1=contours1[v_count-2], two_variables=False,
                  mapa='hs', significance=True,
                  title=v_name[v_count+1] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-                 name_fig=v_name_fig[v_count+1]  + s + '_' + cases[c_count] + '_mer_d_w_NSA',
+                 name_fig=v_name_fig[v_count+1]  + s + '_' + cases[c_count] + '_mer_d_w_NSA_HS',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
 
             s_count += 1
@@ -381,7 +381,7 @@ v = 'sst'
 data = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
 data = data.rename({'sst':'var'})
 data = Detrend(data, 'time')
-data = data.sel(lon=slice(50, 270), lat=slice(20, -20))
+data = data.sel(lon=slice(40, 280), lat=slice(20, -20))
 
 c_count = 0
 for c in cases:
@@ -393,7 +393,7 @@ for c in cases:
         Plot(comp=comp1, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=False,
              two_variables=False, mapa='tropical', significance=False,
              title='SST' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-             name_fig='SST_' + s + '_' + cases[c_count] + '_d_NSA',
+             name_fig='SST_' + s + '_' + cases[c_count] + '_d_NSA_HS',
              dpi=dpi, save=save, out_dir=out_dir_no_sig)
 
         s_count += 1
@@ -445,7 +445,7 @@ for c in cases:
              two_variables=True, comp2=comp2, levels2=np.linspace(-4.5e6, 4.5e6, 13), significance=False,
              mapa='HS',
              title='Div200hpa [shade] - VP [cont.]' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-             name_fig='divp_' + s + '_' + cases[c_count] + '_d_NSA',
+             name_fig='divp_' + s + '_' + cases[c_count] + '_d_NSA_HS',
              dpi=dpi, save=save, linewidht2=.8, out_dir=out_dir_no_sig)
 
 
