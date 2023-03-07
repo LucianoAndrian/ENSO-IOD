@@ -92,8 +92,9 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None):
 def Plot(comp, levels, cmap, step1, contour1=True,
          two_variables=False, comp2=None, levels2=np.linspace(-1,1,13), step2=4,
          mapa='sa', title='title', name_fig='name_fig', dpi=100, save=save,
-         comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#4B4B4B',
-         out_dir=out_dir_w_sig, proj='eq'):
+         comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#d9d9d9',
+         out_dir=out_dir_w_sig, proj='eq',
+         third_variable=False, comp3=None, levels_contour3=np.linspace(-1,1,13)):
 
     import matplotlib.pyplot as plt
 
@@ -162,6 +163,14 @@ def Plot(comp, levels, cmap, step1, contour1=True,
     im = ax.contourf(comp.lon[::step1], comp.lat[::step1], comp_var[::step1, ::step1],
                      levels=levels, transform=crs_latlon, cmap=cmap, extend='both')
 
+    if third_variable:
+        comp_var3 = comp3['var']
+        tv=ax.contour(comp3.lon[::2], comp3.lat[::2], comp_var3[::2,::2],levels=levels_contour3,
+                   colors=['#D300FF','#00FF5D'], transform=crs_latlon, linewidths=1.5)
+        tv.monochrome = True
+        for col, ls in zip(tv.collections, tv._process_linestyles()):
+            col.set_linestyle(ls)
+
     if significance:
         colors_l = [color_sig, color_sig]
         comp_sig_var = comp_sig['var']
@@ -175,8 +184,8 @@ def Plot(comp, levels, cmap, step1, contour1=True,
 
     cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
     cb.ax.tick_params(labelsize=8)
-    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor=color_map)
-    ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    ax.add_feature(cartopy.feature.LAND, facecolor='white', edgecolor=color_map)
+    #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
     ax.coastlines(color=color_map, linestyle='-', alpha=1)
 
     if proj=='eq':
@@ -431,6 +440,11 @@ data1 = Detrend(OrdenarNC_wTime_fromW(data1.rename({'divergence':'var'})), 'time
 data2 = xr.open_dataset(data_dir_era5 + v_from_w[1] + '.nc')
 data2 = Detrend(OrdenarNC_wTime_fromW(data2.rename({'velocity_potential':'var'})), 'time')
 
+data3 = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
+data3 = data3.rename({'sst':'var'})
+data3 = Detrend(data3, 'time')
+
+
 c_count = 0
 for c in cases:
     s_count = 0
@@ -441,12 +455,16 @@ for c in cases:
         comp2, num_case = CaseComp(data2, s, mmonth=min_max_months[s_count], c=c,
                                    two_variables=False, data2=None)
 
-        Plot(comp=comp1, levels=np.linspace(-0.5e-5, 0.5e-5, 13), cmap=cbar_sst, step1=1, contour1=True,
+        comp3, num_case = CaseComp(data3, s, mmonth=min_max_months[s_count], c=c,
+                                   two_variables=False, data2=None)
+
+        Plot(comp=comp3, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=True,
              two_variables=True, comp2=comp2, levels2=np.linspace(-4.5e6, 4.5e6, 13), significance=False,
              mapa='HS',
              title='Div200hpa [shade] - VP [cont.]' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-             name_fig='divp_' + s + '_' + cases[c_count] + '_d_NSA_HS',
-             dpi=dpi, save=save, linewidht2=.8, out_dir=out_dir_no_sig)
+             name_fig='divp_' + s + '_' + cases[c_count] + '_d_NSA_HS', color_map='grey',
+             dpi=dpi, save=save, linewidht2=.8, out_dir=out_dir_no_sig,
+             third_variable=True, comp3=comp1, levels_contour3=[-1.6e-06, 1.6e-06])
 
 
 

@@ -1253,11 +1253,11 @@ def PlotWAFCountours(comp, comp_var, title='Fig', name_fig='Fig',
     from numpy import ma
     import matplotlib.pyplot as plt
 
-    fig = plt.figure(figsize=(8, 3), dpi=dpi)
+    fig = plt.figure(figsize=(9, 3.5), dpi=dpi)
 
     ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     crs_latlon = ccrs.PlateCarree()
-    ax.set_extent([30, 340, -80, 20], crs=crs_latlon)
+    ax.set_extent([0, 359, -80, 20], crs=crs_latlon)
 
 
     im = ax.contourf(comp.lon[::step], comp.lat[::step], comp_var[::step,::step],
@@ -1290,7 +1290,7 @@ def PlotWAFCountours(comp, comp_var, title='Fig', name_fig='Fig',
     #ax.add_feature(cartopy.feature.COASTLINE)
     ax.coastlines(color=color_map, linestyle='-', alpha=1, linewidth=0.6)
     ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
-    ax.set_xticks(np.arange(30, 340, 25), crs=crs_latlon)
+    ax.set_xticks(np.arange(0, 360, 30), crs=crs_latlon)
     ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()

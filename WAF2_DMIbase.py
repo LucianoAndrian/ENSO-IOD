@@ -6,7 +6,8 @@ data_dir2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/WAF/no_sstanoms/'
 
-save=False
+save=True
+dpi=500
 ## Functions ###########################################################################################################
 def CompositeSimple(original_data, index, mmin, mmax):
     def is_months(month, mmin, mmax):
@@ -71,7 +72,7 @@ data = data.rename({'streamfunction': 'var'})
 
 data2 = xr.open_dataset(data_dir2 + 'RWS.nc')
 
-data3 = xr.open_dataset(data_dir2 + 'hgt200_mer_d_w.nc')
+data3 = xr.open_dataset(data_dir2 + 'hgt200_HS_mer_d_w.nc')
 
 from matplotlib import colors
 cbar_rws = colors.ListedColormap(['#4FCDF4','white', '#F4C847'])
@@ -191,7 +192,7 @@ for c in cases:
         weights_arr[0, :, :] = weights
 
         PlotWAFCountours(comp, comp['var'], title=title, name_fig=name_fig,
-                         save=save, dpi=200, levels=np.linspace(-1.2e-10, 1.2e-10, 4),
+                         save=save, dpi=dpi, levels=np.linspace(-1.2e-10, 1.2e-10, 4),
                          contour=False, cmap=cbar_rws, number_events=case,
                          waf=True, px=px*weights_arr , py=py*weights_arr , text=False, waf_scale=waf_scale,
                          two_variables=True, comp2=comp2, step=1, step_waf=5,
