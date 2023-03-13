@@ -20,6 +20,7 @@ out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/KS/no_sstanoms/'
 
 save = True
 step = 1
+dpi=300
 v = 'Ks'; print('\U0001F60D')
 # Functions ############################################################################################################
 def CompComp(eta_grad_y, u, index, mmin, mmax):
@@ -40,7 +41,7 @@ def CompComp(eta_grad_y, u, index, mmin, mmax):
 
 
 def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
-         SA=False, dpi=100, save=True, step=1,contourf=True,
+         SA=False, dpi=100, save=True, step=1,contourf=True, step_c=5,
          name_fig='fig', title='title', contour0=True, color_map='k'):
 
     from numpy import ma
@@ -50,25 +51,25 @@ def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
     fig = plt.figure(figsize=(8, 3), dpi=dpi)
     ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     crs_latlon = ccrs.PlateCarree()
-    ax.set_extent([30, 340, -80, 20], crs=crs_latlon)
+    ax.set_extent([0, 359, -80, 20], crs=crs_latlon)
 
     if contourf:
         im = ax.contourf(comp.lon[::step], comp.lat[::step], comp_var[::step, ::step],
-                         levels=levels, transform=crs_latlon, cmap=cmap, extend='both')
+                         levels=levels, transform=crs_latlon, cmap=cmap, extend='max')
     else:
         im = ax.contour(comp.lon[::step], comp.lat[::step], comp_var[::step, ::step],
                          levels=levels, transform=crs_latlon, cmap=cmap)  # , extend='max')
 
     if contour0:
-        ax.contour(comp.lon, comp.lat, comp_var, levels=0,
-                   transform=crs_latlon, colors='green', linewidths=1)
+        ax.contour(comp.lon[::step_c], comp.lat[::step_c], comp_var[::step_c, ::step_c], levels=[-1],
+                   transform=crs_latlon, colors=['magenta','black'], linewidths=1)
 
     cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
     ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey')
     ax.add_feature(cartopy.feature.COASTLINE)
     ax.coastlines(color=color_map, linestyle='-', alpha=1)
     ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
-    ax.set_xticks(np.arange(30, 340, 25), crs=crs_latlon)
+    ax.set_xticks(np.arange(0, 360, 30), crs=crs_latlon)
     ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
@@ -147,14 +148,14 @@ for c in cases:
         # usando estado basico de cada "case"
         comp = CompComp(eta_grad_y=eta_grad_y, u=u,
                         index=case, mmin=mmin, mmax=mmax)
-
+        comp2 = xr.where(~np.isnan(comp), comp, -1)
         if len(comp) != 0:
-            Plot(comp=comp, levels=[2,3,4], cmap=cbar,
-                 dpi=200, save=save, step=step,
+            Plot(comp=comp2, levels=[1,2,3,4], cmap='Set3_r',
+                 dpi=dpi, save=save, step=step, step_c=2,
                  name_fig=v + '_' + c + '_' + s + '_' + '1950_2020_NSA',
                  title=v + ' - ' +  title_case[c_cases] + '- ' + '\n' + s + ' ' +
                        '1950-2020' + '\n' + 'Ks of Composite',
-                 contour0=False, contourf=True, color_map='k')
+                 contour0=True, contourf=True, color_map='k')
 
         count += 1
     c_cases += 1
