@@ -1351,13 +1351,21 @@ def RegWEffect(n34, dmi,data=None, data2=None, m=9,two_variables=False):
 
     data['time'] = n34
      #print('Full Season')
-    aux = LinearReg(data.groupby('month')[m], 'time')
+    try:
+        aux = LinearReg(data.groupby('month')[m], 'time')
+    except:
+        aux = LinearReg(data.groupby('time.month')[m], 'time')
     # aux = xr.polyval(data.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
     #       aux.var_polyfit_coefficients[1]
     var_reg_n34 = aux.var_polyfit_coefficients[0]
 
     data['time'] = dmi
-    aux = LinearReg(data.groupby('month')[m], 'time')
+    try:
+        aux = LinearReg(data.groupby('month')[m], 'time')
+    except:
+        aux = LinearReg(data.groupby('time.month')[m], 'time')
+
+    var_reg_dmi = aux.var_polyfit_coefficients[0]
     var_reg_dmi = aux.var_polyfit_coefficients[0]
 
     if two_variables:
@@ -1406,14 +1414,22 @@ def RegWOEffect(n34, n34_wo_dmi, dmi, dmi_wo_n34, m=9, datos=None):
            var_regn34_wodmi,var_regdmi_won34
 
 def Corr(datos, index, time_original, m=9):
-    aux_corr1 = xr.DataArray(datos.groupby('month')[m]['var'],
+    try:
+        aux_corr1 = xr.DataArray(datos.groupby('month')[m]['var'],
                              coords={'time': time_original.groupby('time.month')[m].values,
                                      'lon': datos.lon.values, 'lat': datos.lat.values},
                              dims=['time', 'lat', 'lon'])
-    aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
+        aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
                              coords={'time': time_original.groupby('time.month')[m]},
                              dims={'time'})
-
+    except:
+        aux_corr1 = xr.DataArray(datos.groupby('time.month')[m]['var'],
+                             coords={'time': time_original.groupby('time.month')[m].values,
+                                     'lon': datos.lon.values, 'lat': datos.lat.values},
+                             dims=['time', 'lat', 'lon'])
+        aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
+                             coords={'time': time_original.groupby('time.month')[m]},
+                             dims={'time'})
     return xr.corr(aux_corr1, aux_corr2, 'time')
 
 def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
