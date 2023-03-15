@@ -1264,7 +1264,7 @@ def PlotWAFCountours(comp, comp_var, title='Fig', name_fig='Fig',
                      levels=levels,transform=crs_latlon, cmap=cmap, extend='both')
     if contour:
         values = ax.contour(comp.lon, comp.lat, comp_var, levels=levels,
-                            transform=crs_latlon, colors='darkgray', linewidths=1)
+                            transform=crs_latlon, colors='k', linewidths=1)
         ax.clabel(values, inline=1, fontsize=5, fmt='%1.1f')
 
     if contour0:
@@ -1386,28 +1386,50 @@ def RegWOEffect(n34, n34_wo_dmi, dmi, dmi_wo_n34, m=9, datos=None):
 
     datos['time'] = n34
 
-    aux = LinearReg(datos.groupby('month')[m], 'time')
-    aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) +\
-          aux.var_polyfit_coefficients[1]
-
+    try:
+        aux = LinearReg(datos.groupby('month')[m], 'time')
+        aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) +\
+              aux.var_polyfit_coefficients[1]
+    except:
+        aux = LinearReg(datos.groupby('time.month')[m], 'time')
+        aux = xr.polyval(datos.groupby('time.month')[m].time, aux.var_polyfit_coefficients[0]) +\
+              aux.var_polyfit_coefficients[1]
     #wo n34
-    var_regdmi_won34 = datos.groupby('month')[m]-aux
+    try:
+        var_regdmi_won34 = datos.groupby('month')[m]-aux
 
-    var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m] #index wo influence
-    var_dmi_won34 = LinearReg(var_regdmi_won34,'time')
+        var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m] #index wo influence
+        var_dmi_won34 = LinearReg(var_regdmi_won34,'time')
+    except:
+        var_regdmi_won34 = datos.groupby('time.month')[m] - aux
+
+        var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m]  # index wo influence
+        var_dmi_won34 = LinearReg(var_regdmi_won34, 'time')
 
     #-----------------------------------------#
 
     datos['time'] = dmi
-    aux = LinearReg(datos.groupby('month')[m], 'time')
-    aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
+    try:
+        aux = LinearReg(datos.groupby('month')[m], 'time')
+        aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
+          aux.var_polyfit_coefficients[1]
+    except:
+        aux = LinearReg(datos.groupby('time.month')[m], 'time')
+        aux = xr.polyval(datos.groupby('time.month')[m].time, aux.var_polyfit_coefficients[0]) + \
           aux.var_polyfit_coefficients[1]
 
-    #wo dmi
-    var_regn34_wodmi = datos.groupby('month')[m]-aux
 
-    var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
-    var_n34_wodmi = LinearReg(var_regn34_wodmi,'time')
+    #wo
+    try:
+        var_regn34_wodmi = datos.groupby('month')[m]-aux
+        var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
+        var_n34_wodmi = LinearReg(var_regn34_wodmi,'time')
+    except:
+        var_regn34_wodmi = datos.groupby('time.month')[m]-aux
+        var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
+        var_n34_wodmi = LinearReg(var_regn34_wodmi,'time')
+
+
 
     return var_n34_wodmi.var_polyfit_coefficients[0],\
            var_dmi_won34.var_polyfit_coefficients[0],\
@@ -1419,17 +1441,16 @@ def Corr(datos, index, time_original, m=9):
                              coords={'time': time_original.groupby('time.month')[m].values,
                                      'lon': datos.lon.values, 'lat': datos.lat.values},
                              dims=['time', 'lat', 'lon'])
-        aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
-                             coords={'time': time_original.groupby('time.month')[m]},
-                             dims={'time'})
     except:
         aux_corr1 = xr.DataArray(datos.groupby('time.month')[m]['var'],
                              coords={'time': time_original.groupby('time.month')[m].values,
                                      'lon': datos.lon.values, 'lat': datos.lat.values},
                              dims=['time', 'lat', 'lon'])
-        aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
+
+    aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
                              coords={'time': time_original.groupby('time.month')[m]},
                              dims={'time'})
+
     return xr.corr(aux_corr1, aux_corr2, 'time')
 
 def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'

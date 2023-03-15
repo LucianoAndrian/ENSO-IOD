@@ -21,8 +21,8 @@ from ENSO_IOD_Funciones import ComputeWithEffect, ComputeWithoutEffect, PlotReg
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/regression/fix/OV/'
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
-save = True
-dpi = 100
+save = False
+dpi = 50
 full_season = False
 text = False
 # Functions ############################################################################################################
@@ -51,6 +51,12 @@ def OrdenarNC_wTime_fromW(data):
 
 def SigDivMask(data, thr):
     return xr.where(np.abs(data) < thr, np.nan, 1)
+
+def MakerMaskSig(data):
+    mask_sig = data.where((data < -1 * r_crit) | (data > r_crit))
+    mask_sig = mask_sig.where(np.isnan(mask_sig), 1)
+
+    return mask_sig
 ########################################################################################################################
 
 variables = ['div_from_w', 'vp_from_w']
@@ -261,4 +267,123 @@ for s in seasons_name:
 
     s_count+=1
 ########################################################################################################################
+# stream function e intento WAF
 ########################################################################################################################
+# data: ---------------------------------------------------------------------------------------------------------------#
+cbar = colors.ListedColormap(['#9B1C00','#B9391B', '#CD4838', '#E25E55', '#F28C89', '#FFCECC',
+                              'white',
+                              '#B3DBFF', '#83B9EB', '#5E9AD7', '#3C7DC3', '#2064AF', '#014A9B'][::-1])
+cbar.set_over('#641B00')
+cbar.set_under('#012A52')
+cbar.set_bad(color='white')
+
+
+data_sf = xr.open_dataset(data_dir + 'sf.nc')
+data_sf = Detrend(OrdenarNC_wTime_fromW(data_sf.rename({'streamfunction':'var'})), 'time')
+data_sf = data_sf.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
+time_original = data_sf.time
+
+# Anomaly -------------------------------------------------------------------------------------------------------------#
+data_sf = data_sf.groupby('time.month') - data_sf.groupby('time.month').mean('time', skipna=True)
+
+# 3-month running mean ------------------------------------------------------------------------------------------------#
+data_sf = data_sf.rolling(time=3, center=True).mean()
+#data_sf = data_sf.sel(variable='var').drop('variable')
+for s, s_count in zip(seasons_name, [0,1]):
+    aux_n34, aux_corr_n34, aux_dmi, \
+    aux_corr_dmi, aux_n34_2, aux_corr_n34_2, \
+    aux_dmi_2, aux_corr_dmi_2 = ComputeWithEffect(data=data_sf, data2=None, n34=n34, dmi=dmi,
+                                                  two_variables=False, m=seasons[s_count],
+                                                  full_season=False, time_original=time_original)
+
+    v_count=0
+    print('Plot')
+    PlotReg(data=aux_n34*MakerMaskSig(aux_corr_n34), data_cor=None,
+            levels= [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, -0.25e6, 0, 0.25e6, 0.5e6, 1e6, 1.5e6, 2e6, 2.5e6, 3e6],
+            cmap=cbar, dpi=dpi,
+            title='sf200' + '\n' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4',
+            name_fig='sf_' + s + str(p[0]) + '_' + str(p[1]) + '_N34',
+            save=save, sig=False, sig_point=False, sig2=False, sig_point2=False,
+            two_variables=True,
+            SA=False, step=1,
+            color_map='grey', color_sig='k', color_sig2='grey',
+            data2=aux_n34, data_cor2=None,
+            levels2=[-3e6, -2e6, -1e6, -0.5e6, -0.25e6, 0, 0.25e6, 0.5e6, 1e6, 2e6, 3e6],
+            r_crit=r_crit, out_dir=out_dir)
+
+    PlotReg(data=aux_dmi*MakerMaskSig(aux_corr_dmi), data_cor=None,
+            levels= [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, -0.25e6, 0, 0.25e6, 0.5e6, 1e6, 1.5e6, 2e6, 2.5e6, 3e6],
+            cmap=cbar, dpi=dpi,
+            title='sf200' + '\n' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI',
+            name_fig='sf_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI',
+            save=save, sig=False, sig_point=False, sig2=False, sig_point2=False,
+            two_variables=True,
+            SA=False, step=1,
+            color_map='grey', color_sig='k', color_sig2='grey',
+            data2=aux_dmi, data_cor2=None,
+            levels2=[-3e6, -2e6, -1e6, -0.5e6, -0.25e6, 0, 0.25e6, 0.5e6, 1e6, 2e6, 3e6],
+            r_crit=r_crit, out_dir=out_dir)
+
+    aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi = \
+        ComputeWithoutEffect(data_sf, n34, dmi, seasons[s_count], time_original)
+
+    PlotReg(data=aux_n34_wodmi*MakerMaskSig(aux_corr_n34), data_cor=None,
+            levels= [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, -0.25e6, 0, 0.25e6, 0.5e6, 1e6, 1.5e6, 2e6, 2.5e6, 3e6],
+            cmap=cbar, dpi=dpi,
+            title='sf200' + '\n' + s + ' - ' + str(p[0]) + '-' + str(p[1]) +  ' Niño3.4 -{DMI}',
+            name_fig='sf_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
+            save=save, sig=False, sig_point=False, sig2=False, sig_point2=False,
+            two_variables=True,
+            SA=False, step=1,
+            color_map='grey', color_sig='k', color_sig2='grey',
+            data2=aux_n34_wodmi, data_cor2=None,
+            levels2=[-3e6, -2e6, -1e6, -0.5e6, -0.25e6, 0, 0.25e6, 0.5e6, 1e6, 2e6, 3e6],
+            r_crit=r_crit, out_dir=out_dir)
+
+    PlotReg(data=aux_dmi_won34*MakerMaskSig(aux_corr_dmi), data_cor=None,
+            levels= [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, -0.25e6, 0, 0.25e6, 0.5e6, 1e6, 1.5e6, 2e6, 2.5e6, 3e6],
+            cmap=cbar, dpi=dpi,
+            title='sf200' + '\n' + s + ' - ' + str(p[0]) + '-' + str(p[1]) +  ' '
+                                                                              'DMI -{Noño3.4}',
+            name_fig='sf_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_won34',
+            save=save, sig=False, sig_point=False, sig2=False, sig_point2=False,
+            two_variables=True,
+            SA=False, step=1,
+            color_map='grey', color_sig='k', color_sig2='grey',
+            data2=aux_dmi_won34, data_cor2=None,
+            levels2=[-3e6, -2e6, -1e6, -0.5e6, -0.25e6, 0, 0.25e6, 0.5e6, 1e6, 2e6, 3e6],
+            r_crit=r_crit, out_dir=out_dir)
+
+#
+# from ENSO_IOD_Funciones import WAF
+# data_sf = xr.open_dataset(data_dir + 'sf.nc')
+# data_sf = Detrend(OrdenarNC_wTime_fromW(data_sf.rename({'streamfunction':'var'})), 'time')
+# data_sf = data_sf.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
+# time_original = data_sf.time
+# data_clim = data_sf.sel(time=data_sf.time.dt.month.isin(10)).mean('time')
+#
+# aux_xr_dmi_won34 = xr.Dataset(
+#         data_vars=dict(
+#             var=(['lat', 'lon'], aux_dmi_won34)
+#
+#         ),
+#         coords=dict(
+#             lon=(['lon'], aux_dmi_won34.lon),
+#             lat=(['lat'], aux_dmi_won34.lat)
+#         )
+#     )
+# px, py = WAF(data_clim, aux_xr_dmi_won34, data_clim.lon, data_clim.lat, reshape=True, variable='var')
+# px_xr = xr.DataArray(px[0,:,:])
+# py_xr = xr.DataArray(py[0,:,:])
+# from ENSO_IOD_Funciones import PlotWAFCountours
+#
+# weights = np.transpose(np.tile(-2 * np.cos(np.arange(-90, 89) * 1 * np.pi / 180) + 2.1, (359, 1)))
+# weights_arr = np.zeros_like(px)
+# weights_arr[0, :, :] = weights
+#
+# PlotWAFCountours(aux_xr_dmi_won34, aux_xr_dmi_won34['var'], title='title', name_fig='name_fig',
+#                  save=save, dpi=dpi,
+#                  levels=[-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, -0.25e6, 0, 0.25e6, 0.5e6, 1e6, 1.5e6, 2e6, 2.5e6, 3e6],
+#                  contour=True, cmap=cbar, number_events=None,
+#                  waf=True, px=px * weights_arr, py=py * weights_arr, text=False, waf_scale=1/4000,
+#                  two_variables=False, step_waf=5)
