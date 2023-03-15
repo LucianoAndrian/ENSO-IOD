@@ -24,6 +24,9 @@ def Weights(data):
 variables =['hgt200', 'div200', 'slp', 'vp200', 'vp500', 'UV200', 'UV200']
 name_variables = ['z', 'd', 'msl', 'w', 'w', 'u', 'v']
 
+variables =['hgt750']
+name_variables = ['z']
+
 n = 0
 for v in variables:
     n_v = name_variables[n]
@@ -43,7 +46,7 @@ for v in variables:
     data = data.rename({'latitude': 'lat'})
 
     data = Weights(data)
-    data = data.sel(lon=slice(30, 340), lat=slice(20, -80))
+    data = data.sel(lat=slice(20, -80))
     data = Detrend(data, 'time')
 
     print('to_netcdf...')

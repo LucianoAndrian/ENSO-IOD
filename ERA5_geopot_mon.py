@@ -9,7 +9,7 @@ c.retrieve(
         'product_type': 'monthly_averaged_reanalysis',
         'variable': 'geopotential',
         'pressure_level': [
-            '200',
+            '750',
         ],
         'year': [
             '1979', '1980', '1981',
@@ -36,7 +36,7 @@ c.retrieve(
         'time': '00:00',
         #"grid": "2/2"
     },
-    'ERA5_HGT200_79-20.mon.nc')
+    'ERA5_HGT750_79-20.mon.nc')
 
 
 c = cdsapi.Client()

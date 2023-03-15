@@ -320,6 +320,12 @@ def ComputeWithoutEffect(data, n34, dmi, m):
 
     return aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi
 
+
+def MakerMaskSig(data):
+    mask_sig = data.where((data < -1 * r_crit) | (data > r_crit))
+    mask_sig = mask_sig.where(np.isnan(mask_sig), 1)
+
+    return mask_sig
 ########################################################################################################################
 # variables = ['pp_gpcc_or', 't_cru', 'hgt200_HS_mer_d_w', 'pp_gpcc_0.25', 'pp_cmap', 'pp_prec']
 # name_var = ['precip']
@@ -331,16 +337,16 @@ def ComputeWithoutEffect(data, n34, dmi, m):
 # SA = [True, True, False, True, True, True]
 sig = True
 
-variables = ['hgt200_HS_mer_d_w']
+variables = ['hgt200_HS_mer_d_w', 'hgt750_mer_d_w']
 name_var = ['precip']
-title_var = ['HGT200 ERA5']
+title_var = ['HGT200 ERA5', 'HGT750 ERA5']
 seasons = [7, 10] # main month
 seasons_name = ['JJA', 'SON']
 interp = False
 two_variables=False
-SA = [False]
+SA = [False, False]
 
-scales = [[-150,-100,-75,-50,-25,-15,0,15,25,50,75,100,150]]
+scales = [[-150,-100,-75,-50,-25,-15,0,15,25,50,75,100,150], [-150,-100,-75,-50,-25,-15,0,15,25,50,75,100,150]]
 
 
 cbar = colors.ListedColormap(['#9B1C00','#B9391B', '#CD4838', '#E25E55', '#F28C89', '#FFCECC',
@@ -358,7 +364,7 @@ cbar_pp.set_under('#3F2404')
 cbar_pp.set_over('#00221A')
 cbar_pp.set_bad(color='white')
 
-cmap = [cbar]
+cmap = [cbar, cbar]
 
 periodos = [[1950,2020]]
 t_critic = 1.66 # es MUY similar (2 digitos) para ambos períodos
@@ -373,7 +379,7 @@ for v in variables:
         y1 = 29
     else:
         y1 = 0
-    if v != 'hgt200_HS_mer_d_w':
+    if v != 'hgt200_HS_mer_d_w' and v != 'hgt750_mer_d_w':
         plt.rcParams['hatch.linewidth'] = 2
         for p in periodos:
             r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0]) - 2) / t_critic) ** 2) + 1))
@@ -480,7 +486,7 @@ for v in variables:
         plt.rcParams['hatch.linewidth'] = 0.5
         p = periodos[0]
         r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0] + y1) - 2) / t_critic) ** 2) + 1))
-
+        print("r_crit = " + str(r_crit))
         # indices: ------------------------------------------------------------------------------------------------#
         dmi = dmi_or.sel(time=slice(str(p[0] + y1) + '-01-01', str(p[1]) + '-12-01'))
         n34 = n34_or.sel(time=slice(str(p[0] + y1) + '-01-01', str(p[1]) + '-12-01'))
@@ -504,27 +510,33 @@ for v in variables:
                                                           two_variables=two_variables, m=seasons[s_count],
                                                           full_season=False, time_original=time_original)
 
+            mask_sig = aux_corr_n34.where((aux_corr_n34 < -1*r_crit) | (aux_corr_n34 > r_crit))
+            mask_sig = mask_sig.where(np.isnan(mask_sig), 1)
+
+
             print('Plot')
-            PlotReg(data=aux_n34, data_cor=aux_corr_n34,
+            PlotReg(data=aux_n34*MakerMaskSig(aux_corr_n34), data_cor=aux_corr_n34,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4',
                     name_fig=v + '_' + s + '_' + str(p[0] + y1) +
                              '_' + str(p[1]) + '_N34',
-                    save=save, sig=True,
-                    two_variables=False,
+                    save=save, sig=False,
+                    two_variables=True, data2=aux_n34,
+                    sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
                     color_sig='k', sig_point=True, r_crit=r_crit)
 
-            PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
+            PlotReg(data=aux_dmi*MakerMaskSig(aux_corr_dmi), data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI',
                     name_fig=v + '_' + s + '_' + str(p[0] + y1) +
                              '_' + str(p[1]) + '_DMI',
-                    save=save, sig=True,
-                    two_variables=False,
+                    save=save, sig=False,
+                    two_variables=True, data2=aux_dmi,
+                    sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
                     color_sig='k', sig_point=True, r_crit=r_crit)
@@ -541,24 +553,26 @@ for v in variables:
             aux_corr_dmi_2 = 0
 
             print('Plot...')
-            PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34,
+            PlotReg(data=aux_n34_wodmi*MakerMaskSig(aux_corr_n34), data_cor=aux_corr_n34,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
                     name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(p[1]) + '_N34_wodmi',
-                    save=save, sig=True,
-                    two_variables=False,
+                    save=save, sig=False,
+                    two_variables=True, data2=aux_n34_wodmi,
+                    sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
                     color_sig='k', sig_point=True, r_crit=r_crit)
 
-            PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
+            PlotReg(data=aux_dmi_won34*MakerMaskSig(aux_corr_dmi), data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=200,
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI -{N34}',
                     name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(p[1]) + '_DMI_woN34',
-                    save=save, sig=True,
-                    two_variables=False,
+                    save=save, sig=False,
+                    two_variables=True, data2=aux_dmi_won34,
+                    sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
                     color_sig='k', sig_point=True, r_crit=r_crit)

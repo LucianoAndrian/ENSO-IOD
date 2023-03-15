@@ -335,15 +335,17 @@ cmap_era5 = [cbar_t, cbar_t_r]
 #     v_count += 1
 
 # HGT -----------------------------------------------------------------------------------------------------------------#
+# HGT -----------------------------------------------------------------------------------------------------------------#
 plt.rcParams['hatch.linewidth'] = 1.5
 tw=[False, False] # por ahora sin vp
 sig2 = [True, False]
-steps = [1, 4]
+steps = [1, 1]
 contours1 = [True, False]
-v_count = 2
-for v in variables_ERA5:
-    if v_count != 2:
-        break #provisorio
+sig_v = [True, False]
+v_count = 0
+for v in ['hgt200_HS_mer_d_w', 'hgt750_mer_d_w']:
+    # if v_count != 2:
+    #     break #provisorio
     data = xr.open_dataset(data_dir_era5 + v + '.nc')
 
     c_count = 0
@@ -353,18 +355,25 @@ for v in variables_ERA5:
             comp1, num_case = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
                                               two_variables=False, data2=None)
 
-            data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' +
-                                        c + '1950_2020_' + s + '.nc')
+            if sig_v[v_count]:
+                data_sig = xr.open_dataset(sig_dir +  v.split('_')[0] +
+                                       '_' + c + '1950_2020_' + s + '_DMIbase.nc')
+                comp1_i = comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+                sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+                sig = sig.where(np.isnan(sig['var']), 1)
 
-            comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
-            sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
-            sig = sig.where(np.isnan(sig['var']), 0)
+            else:
+                data_sig = None
+                sig = 1
 
-            Plot(comp=comp1, levels=scales[v_count + 1], cmap = cmap_era5[v_count-2], step1=steps[v_count-2],
-                 contour1=contours1[v_count-2], two_variables=False,
-                 mapa='hs', color_map='grey',
-                 title=v_name[v_count+1] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-                 name_fig=v_name_fig[v_count+1]  + s + '_' + cases[c_count] + '_mer_d_w_HS',
+
+            Plot(comp=comp1*sig, levels=[-300, -250, -200, -150, -100, -50, -25, 0, 25, 50, 100, 150, 200, 250, 300],
+                 cmap = cbar_t, step1=1,
+                 contour1=True, two_variables=True, comp2=comp1, linewidht2=1,
+                 levels2=[-300, -200, -100, -50, 0, 50, 100, 200, 300],
+                 mapa='hs', significance=False,
+                 title=v.split('_')[0] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+                 name_fig=v.split('_')[0]  + s + '_' + cases[c_count] + '_mer_d_w_HS',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
 
             s_count += 1
