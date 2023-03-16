@@ -34,7 +34,7 @@ if preproc:
     name_variables = ['u', 'v']
     v_count=0
 
-    for v in ['UV200', 'UV200']:
+    for v in ['UV750', 'UV750']:
         n_v = name_variables[v_count]
         data = xr.open_dataset(dir_files + 'ERA5_' + v + '_50-20_mer.nc')
 
@@ -151,7 +151,7 @@ if SF:
     name_variables = ['u', 'v']
     v_count = 0
 
-    for v in ['UV200', 'UV200']:
+    for v in ['UV750', 'UV750']:
         n_v = name_variables[v_count]
         data = xr.open_dataset(dir_files + 'ERA5_' + v + '_50-20_mer.nc')
 
@@ -188,8 +188,8 @@ if SF:
     vwnd = vwnd.to_array()
     w = VectorWind(uwnd, vwnd)
     sf, vp = w.sfvp()
-    sf.to_netcdf(data_dir + 'sf.nc')
-    vp.to_netcdf(data_dir + 'vp_from_w.nc')
+    sf.to_netcdf(data_dir + 'sf_750.nc')
+    #vp.to_netcdf(data_dir + 'vp_from_w.nc')
     ########################################################################################################################
 
 
