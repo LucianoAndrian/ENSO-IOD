@@ -70,16 +70,7 @@ c.retrieve(
         'variable': 'vertical_velocity',
         'pressure_level': '200',
         'year': [
-            '1950', '1951', '1952',
-            '1953', '1954', '1955',
-            '1956', '1957', '1958',
-            '1959', '1960', '1961',
-            '1962', '1963', '1964',
-            '1965', '1966', '1967',
-            '1968', '1969', '1970',
-            '1971', '1972', '1973',
-            '1974', '1975', '1976',
-            '1977', '1978',
+            '1950', '1951'
         ],
         'month': [
             '01', '02', '03',
@@ -90,7 +81,7 @@ c.retrieve(
         'time': '00:00',
         'product_type': 'reanalysis-monthly-means-of-daily-means',
     },
-    'ERA5_vp200_50-78.nc')
+    '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/downloaded/borrar')
 
 
 c.retrieve(
@@ -133,15 +124,9 @@ c.retrieve(
         'format': 'netcdf',
         'product_type': 'reanalysis-monthly-means-of-daily-means',
         'variable': [
-            'u_component_of_wind'
+            'u_component_of_wind', 'v_component_of_wind'
         ],
-        'pressure_level': [
-            '10', '30', '50'
-            '100', '200', '300',
-            '400', '500', '600',
-            '700','850', '900',
-            '1000',
-        ],
+        'pressure_level': '750',
         'year': [
             '1950', '1951', '1952',
             '1953', '1954', '1955',
@@ -161,6 +146,5 @@ c.retrieve(
             '10', '11', '12',
         ],
         'time': '00:00',
-        'grid': '0.5/0.5',
     },
-    '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/ERA5.mon.U_lvs_50-78.nc')
+    '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/downloaded/ERA5_UV750_50-78.nc')
