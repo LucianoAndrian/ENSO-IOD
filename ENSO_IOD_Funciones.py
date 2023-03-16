@@ -1536,7 +1536,7 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
 
     if third_variable:
         ax.contour(data3.lon[::2], data3.lat[::2], data3[::2,::2],levels=levels3,
-                   colors='#018100', transform=crs_latlon, linewidths=1.5)
+                   colors=['#D300FF','#00FF5D'], transform=crs_latlon, linewidths=1.5)
 
     cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
     cb.ax.tick_params(labelsize=8)

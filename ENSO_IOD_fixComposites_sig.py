@@ -167,9 +167,9 @@ def Plot(comp, levels, cmap, step1, contour1=True,
         comp_var3 = comp3['var']
         tv=ax.contour(comp3.lon[::2], comp3.lat[::2], comp_var3[::2,::2],levels=levels_contour3,
                    colors=['#D300FF','#00FF5D'], transform=crs_latlon, linewidths=1.5)
-        tv.monochrome = True
-        for col, ls in zip(tv.collections, tv._process_linestyles()):
-            col.set_linestyle(ls)
+        # tv.monochrome = True
+        # for col, ls in zip(tv.collections, tv._process_linestyles()):
+        #     col.set_linestyle(ls)
 
     if significance:
         colors_l = [color_sig, color_sig]
@@ -380,42 +380,44 @@ for v in ['hgt200_HS_mer_d_w', 'hgt750_mer_d_w']:
         c_count += 1
     v_count += 1
 
-# SST -----------------------------------------------------------------------------------------------------------------#
-def Detrend(xrda, dim):
-    aux = xrda.polyfit(dim=dim, deg=1)
-    try:
-        trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients)
-    except:
-        trend = xr.polyval(xrda[dim], aux.polyfit_coefficients)
-    dt = xrda - trend
-    return dt
-
-    # ax.set_xticks(np.arange(50, 270, 30), crs=crs_latlon)
-    # ax.set_yticks(np.arange(-20, 20, 10), crs=crs_latlon)
-v_count = 0
-v = 'sst'
-data = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
-data = data.rename({'sst':'var'})
-data = Detrend(data, 'time')
-data = data.sel(lon=slice(50, 270), lat=slice(20, -20))
-
-c_count = 0
-for c in cases:
-    s_count = 0
-    for s in seasons:
-        comp1, num_case = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-                                          two_variables=False)
-
-        Plot(comp=comp1, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=False,
-             two_variables=False, mapa='tropical', significance=False,
-             title='SST' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-             name_fig='SST_' + s + '_' + cases[c_count] + '_d',
-             dpi=dpi, save=save, out_dir=out_dir_no_sig)
-
-        s_count += 1
-    c_count += 1
-
+# # SST -----------------------------------------------------------------------------------------------------------------#
+# #----------------------------------------------------------------------------------------------------------------------#
+# def Detrend(xrda, dim):
+#     aux = xrda.polyfit(dim=dim, deg=1)
+#     try:
+#         trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients)
+#     except:
+#         trend = xr.polyval(xrda[dim], aux.polyfit_coefficients)
+#     dt = xrda - trend
+#     return dt
+#
+#     # ax.set_xticks(np.arange(50, 270, 30), crs=crs_latlon)
+#     # ax.set_yticks(np.arange(-20, 20, 10), crs=crs_latlon)
+# v_count = 0
+# v = 'sst'
+# data = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
+# data = data.rename({'sst':'var'})
+# data = Detrend(data, 'time')
+# data = data.sel(lon=slice(50, 270), lat=slice(20, -20))
+#
+# c_count = 0
+# for c in cases:
+#     s_count = 0
+#     for s in seasons:
+#         comp1, num_case = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+#                                           two_variables=False)
+#
+#         Plot(comp=comp1, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=False,
+#              two_variables=False, mapa='tropical', significance=False,
+#              title='SST' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+#              name_fig='SST_' + s + '_' + cases[c_count] + '_d',
+#              dpi=dpi, save=save, out_dir=out_dir_no_sig)
+#
+#         s_count += 1
+#     c_count += 1
+#----------------------------------------------------------------------------------------------------------------------#
 # Vp y Div ------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
 v_from_w = ['div_from_w', 'vp_from_w'] # creadas a partir de windphsere
 def Detrend(xrda, dim):
     aux = xrda.polyfit(dim=dim, deg=1)
