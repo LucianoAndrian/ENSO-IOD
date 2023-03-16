@@ -618,7 +618,7 @@ for v in variables:
                     two_variables=True, data2=aux_n34,
                     sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
-                    color_map='#4B4B4B',
+                    color_map='#grey',
                     color_sig='k', sig_point=True, r_crit=r_crit,
                     waf=True, px=px_aux_n34*weights_arr, py=py_aux_n34*weights_arr, data_waf=data_sf, aux_waf_scale=1/1000)
 
@@ -632,7 +632,7 @@ for v in variables:
                     two_variables=True, data2=aux_dmi,
                     sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
-                    color_map='#4B4B4B',
+                    color_map='#grey',
                     color_sig='k', sig_point=True, r_crit=r_crit,
                     waf=True, px=px_aux_dmi*weights_arr, py=py_aux_dmi*weights_arr, data_waf=data_sf, aux_waf_scale=1 / 1000)
 
@@ -674,7 +674,7 @@ for v in variables:
                     two_variables=True, data2=aux_n34_wodmi,
                     sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
-                    color_map='#4B4B4B',
+                    color_map='#grey',
                     color_sig='k', sig_point=True, r_crit=r_crit,
                     waf=True, px=px_aux_n34 * weights_arr, py=py_aux_n34 * weights_arr, data_waf=data_sf,
                     aux_waf_scale=1 / 1000)
@@ -688,7 +688,7 @@ for v in variables:
                     two_variables=True, data2=aux_dmi_won34,
                     sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
-                    color_map='#4B4B4B',
+                    color_map='#grey',
                     color_sig='k', sig_point=True, r_crit=r_crit,
                     waf=True, px=px_aux_dmi * weights_arr, py=py_aux_dmi * weights_arr, data_waf=data_sf,
                     aux_waf_scale=1 / 1000)
