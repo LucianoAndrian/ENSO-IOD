@@ -6,9 +6,10 @@ import glob
 import math
 from datetime import datetime
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
-
+########################################################################################################################
+dmi_true_dipole = True
+v = 'hgt200'
 # Functions ############################################################################################################
-
 def CompositeSimple(original_data, index, mmin, mmax):
     def is_months(month, mmin, mmax):
         return (month >= mmin) & (month <= mmax)
@@ -62,73 +63,48 @@ def NumberPerts(data_to_concat, neutro, num = 0):
 
     return M
 ########################################################################################################################
-
-nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
-#data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
-
-#nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
+if dmi_true_dipole:
+    nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
+    out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMI_true_dipole/'
+else:
+    nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
+    out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/'
 
+#----------------------------------------------------------------------------------------------------------------------#
+seasons = ['SON']
+periodos = [['50','20']]
 
-#start = ('1920', '1950')
-seasons = ['JJA', 'SON']
-periodos = [['20','49'], ['50','20']]
+min_max_months = [[9,11]]
+#----------------------------------------------------------------------------------------------------------------------#
 
-min_max_months = [[6,8], [9,11]]
+# cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_neg',
+#          'DMI_pos', 'DMI_un_pos', 'DMI_un_neg',
+#         'N34_pos', 'N34_neg', 'N34_un_pos', 'N34_un_neg']
 
-
-#variables = ['hgt200', 'div', 'psl', 'sf', 'vp', 't_cru', 't_BEIC', 'pp_gpcc']
-#variables = ['t_cru', 'pp_gpcc']
-variables = ['HGT200', 'slp']
-
-cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_neg', 'DMI_pos', 'DMI_un_pos', 'DMI_un_neg',
-         'N34_pos', 'N34_neg', 'N34_un_pos', 'N34_un_neg']
-
+cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
 ########################################################################################################################
 
-#for v in variables:
-
-v = 'pp_prec'
 print('Variable: ' + v)
 
-# for i in periodos:
-#     # print('Período: ' + i[0] + '-' + i[1])
-#     # if i[0] == '20':
-#     #     ruta = data_dir1
-#     #     name = 'ERA20'
-#     # elif i[0] == '50':
-#     #     ruta = data_dir2
-#     #     name = 'ERA5'
-#     # else:
-#     #     print('TA MAL!')
 if v == 'hgt200':
     ruta = data_dir
+    data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
+
+elif v == 'hgt750':
+    ruta = data_dir
     data = xr.open_dataset(ruta + v + '_mer_d_w.nc')
-    data = data.interp(lon=np.arange(30, 340),
-                       lat=np.arange(-80, 20)[::-1])
 else:
-    ruta = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/'
-    if v=='pp_prec':
-        data = xr.open_dataset(ruta + v + '_d_w_c_1950-2020_2.5.nc')
-    else:
-        data = xr.open_dataset(ruta + v + '_d_w_c_1950-2020_1.nc')
+     print('que es esto <<' + v + '>> ?!!!')
+     from sys import exit
+     exit(1)
 
 
-if v == 'psl':
-    print('to hPa')
-    data = data.__mul__(1 / 100)
 
-    # if v == 'hgt200':
-    #     print('drop level')
-    #     data = data.drop('level')
+data = data.interp(lat=np.arange(-80, 20)[::-1])
 
-    # elif (v == 'pp_gpcc') | (v == 't_cru') | (v == 't_BEIC'):
-    #     print('Detrend...')
-    #     data = xrFieldTimeDetrend(data, 'time')
-    #     print('done')
-
-for c in cases:  # simultaneos, aislados, todos, positivos, negativos
+for c in cases:  
     print(c)
     count = 0
     for s in seasons:
@@ -185,7 +161,6 @@ for c in cases:  # simultaneos, aislados, todos, positivos, negativos
             del neutro_new
             del comp_concat
 
-
         # Fechas de los eventos IODS y Ninios detectados a partir de ERSSTv5 en 1920-2020
         aux = xr.open_dataset(nc_date_dir + '1920_2020_' + s + '.nc')
 
@@ -221,8 +196,7 @@ for c in cases:  # simultaneos, aislados, todos, positivos, negativos
             print('quantiles')
             aux = aux.chunk({'time': -1})
             qt = aux.quantile([.05, .95], dim='time', interpolation='linear')
-            qt.to_netcdf('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' +
-                         v + '_' + c + '1950_2020_' + s + '.nc', compute=True)
+            qt.to_netcdf(out_dir + v + '_' + c + '1950_2020_' + s + '.nc', compute=True)
 
             # if name == 'ERA20':
             #     qt.to_netcdf('/datos/luciano.andrian/ncfiles/nc_quantiles/' + v + '_' + c + '_19' + i[0] +
@@ -238,3 +212,43 @@ for c in cases:  # simultaneos, aislados, todos, positivos, negativos
 
     count += 1
 ########################################################################################################################
+print('done!')
+
+
+########################################################################################################################
+# Para setear otras variables y periodos
+########################################################################################################################
+# for i in periodos:
+#     # print('Período: ' + i[0] + '-' + i[1])
+#     # if i[0] == '20':
+#     #     ruta = data_dir1
+#     #     name = 'ERA20'
+#     # elif i[0] == '50':
+#     #     ruta = data_dir2
+#     #     name = 'ERA5'
+#     # else:
+#     #     print('TA MAL!')
+# if v == 'hgt200':
+#     ruta = data_dir
+#     data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
+#     data = data.interp(lat=np.arange(-80, 20)[::-1])
+# else:
+#     ruta = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/'
+#     if v=='pp_prec':
+#         data = xr.open_dataset(ruta + v + '_d_w_c_1950-2020_2.5.nc')
+#     else:
+#         data = xr.open_dataset(ruta + v + '_d_w_c_1950-2020_1.nc')
+
+# 
+# if v == 'psl':
+#     print('to hPa')
+#     data = data.__mul__(1 / 100)
+
+    # if v == 'hgt200':
+    #     print('drop level')
+    #     data = data.drop('level')
+
+    # elif (v == 'pp_gpcc') | (v == 't_cru') | (v == 't_BEIC'):
+    #     print('Detrend...')
+    #     data = xrFieldTimeDetrend(data, 'time')
+    #     print('done')
