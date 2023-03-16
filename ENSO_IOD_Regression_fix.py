@@ -19,15 +19,17 @@ from ENSO_IOD_Funciones import Nino34CPC
 from ENSO_IOD_Funciones import DMI
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
+from ENSO_IOD_Funciones import ComputeWithEffect, ComputeWithoutEffect, WAF
 ########################################################################################################################
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/regression/fix/'
 hgt_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
 ########################################################################################################################
-save = True
-dpi = 300
+save = False
+dpi = 100
 full_season = False
 text = False
+waf = True
 # Functions ############################################################################################################
 def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
 
@@ -79,103 +81,105 @@ def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
         if interp:
             aux = aux.interp(lon=lon_interp, lat=lat_interp)
         return aux
-
-def LinearReg(xrda, dim, deg=1):
-    # liner reg along a single dimension
-    aux = xrda.polyfit(dim=dim, deg=deg, skipna=True)
-    return aux
-
-def LinearReg1_D(dmi, n34):
-    import statsmodels.formula.api as smf
-
-    df = pd.DataFrame({'dmi': dmi.values, 'n34': n34.values})
-
-    result = smf.ols(formula='n34~dmi', data=df).fit()
-    n34_pred_dmi = result.params[1] * dmi.values + result.params[0]
-
-    result = smf.ols(formula='dmi~n34', data=df).fit()
-    dmi_pred_n34 = result.params[1] * n34.values + result.params[0]
-
-    return n34 - n34_pred_dmi, dmi - dmi_pred_n34
-
-def is_months(month, mmin, mmax):
-    return (month >= mmin) & (month <= mmax)
-
-def RegWEffect(n34, dmi,data=None, data2=None, m=9,two_variables=False):
-    var_reg_n34_2=0
-    var_reg_dmi_2=1
-
-    data['time'] = n34
-     #print('Full Season')
-    aux = LinearReg(data.groupby('month')[m], 'time')
-    # aux = xr.polyval(data.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
-    #       aux.var_polyfit_coefficients[1]
-    var_reg_n34 = aux.var_polyfit_coefficients[0]
-
-    data['time'] = dmi
-    aux = LinearReg(data.groupby('month')[m], 'time')
-    var_reg_dmi = aux.var_polyfit_coefficients[0]
-
-    if two_variables:
-        print('Two Variables')
-
-        data2['time'] = n34
-        #print('Full Season data2, m ignored')
-        aux = LinearReg(data2.groupby('month')[m], 'time')
-        var_reg_n34_2 = aux.var_polyfit_coefficients[0]
-
-        data2['time'] = dmi
-        aux = LinearReg(data2.groupby('month')[m], 'time')
-        var_reg_dmi_2 = aux.var_polyfit_coefficients[0]
-
-    return var_reg_n34, var_reg_dmi, var_reg_n34_2, var_reg_dmi_2
-
-def RegWOEffect(n34, n34_wo_dmi, dmi, dmi_wo_n34, m=9, datos=None):
-
-    datos['time'] = n34
-
-    aux = LinearReg(datos.groupby('month')[m], 'time')
-    aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) +\
-          aux.var_polyfit_coefficients[1]
-
-    #wo n34
-    var_regdmi_won34 = datos.groupby('month')[m]-aux
-
-    var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m] #index wo influence
-    var_dmi_won34 = LinearReg(var_regdmi_won34,'time')
-
-    #-----------------------------------------#
-
-    datos['time'] = dmi
-    aux = LinearReg(datos.groupby('month')[m], 'time')
-    aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
-          aux.var_polyfit_coefficients[1]
-
-    #wo dmi
-    var_regn34_wodmi = datos.groupby('month')[m]-aux
-
-    var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
-    var_n34_wodmi = LinearReg(var_regn34_wodmi,'time')
-
-    return var_n34_wodmi.var_polyfit_coefficients[0],\
-           var_dmi_won34.var_polyfit_coefficients[0],\
-           var_regn34_wodmi,var_regdmi_won34
-
-def Corr(datos, index, time_original, m=9):
-    aux_corr1 = xr.DataArray(datos.groupby('month')[m]['var'],
-                             coords={'time': time_original.groupby('time.month')[m].values,
-                                     'lon': datos.lon.values, 'lat': datos.lat.values},
-                             dims=['time', 'lat', 'lon'])
-    aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
-                             coords={'time': time_original.groupby('time.month')[m]},
-                             dims={'time'})
-
-    return xr.corr(aux_corr1, aux_corr2, 'time')
+#
+# def LinearReg(xrda, dim, deg=1):
+#     # liner reg along a single dimension
+#     aux = xrda.polyfit(dim=dim, deg=deg, skipna=True)
+#     return aux
+#
+# def LinearReg1_D(dmi, n34):
+#     import statsmodels.formula.api as smf
+#
+#     df = pd.DataFrame({'dmi': dmi.values, 'n34': n34.values})
+#
+#     result = smf.ols(formula='n34~dmi', data=df).fit()
+#     n34_pred_dmi = result.params[1] * dmi.values + result.params[0]
+#
+#     result = smf.ols(formula='dmi~n34', data=df).fit()
+#     dmi_pred_n34 = result.params[1] * n34.values + result.params[0]
+#
+#     return n34 - n34_pred_dmi, dmi - dmi_pred_n34
+#
+# def is_months(month, mmin, mmax):
+#     return (month >= mmin) & (month <= mmax)
+#
+# def RegWEffect(n34, dmi,data=None, data2=None, m=9,two_variables=False):
+#     var_reg_n34_2=0
+#     var_reg_dmi_2=1
+#
+#     data['time'] = n34
+#      #print('Full Season')
+#     aux = LinearReg(data.groupby('month')[m], 'time')
+#     # aux = xr.polyval(data.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
+#     #       aux.var_polyfit_coefficients[1]
+#     var_reg_n34 = aux.var_polyfit_coefficients[0]
+#
+#     data['time'] = dmi
+#     aux = LinearReg(data.groupby('month')[m], 'time')
+#     var_reg_dmi = aux.var_polyfit_coefficients[0]
+#
+#     if two_variables:
+#         print('Two Variables')
+#
+#         data2['time'] = n34
+#         #print('Full Season data2, m ignored')
+#         aux = LinearReg(data2.groupby('month')[m], 'time')
+#         var_reg_n34_2 = aux.var_polyfit_coefficients[0]
+#
+#         data2['time'] = dmi
+#         aux = LinearReg(data2.groupby('month')[m], 'time')
+#         var_reg_dmi_2 = aux.var_polyfit_coefficients[0]
+#
+#     return var_reg_n34, var_reg_dmi, var_reg_n34_2, var_reg_dmi_2
+#
+# def RegWOEffect(n34, n34_wo_dmi, dmi, dmi_wo_n34, m=9, datos=None):
+#
+#     datos['time'] = n34
+#
+#     aux = LinearReg(datos.groupby('month')[m], 'time')
+#     aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) +\
+#           aux.var_polyfit_coefficients[1]
+#
+#     #wo n34
+#     var_regdmi_won34 = datos.groupby('month')[m]-aux
+#
+#     var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m] #index wo influence
+#     var_dmi_won34 = LinearReg(var_regdmi_won34,'time')
+#
+#     #-----------------------------------------#
+#
+#     datos['time'] = dmi
+#     aux = LinearReg(datos.groupby('month')[m], 'time')
+#     aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
+#           aux.var_polyfit_coefficients[1]
+#
+#     #wo dmi
+#     var_regn34_wodmi = datos.groupby('month')[m]-aux
+#
+#     var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
+#     var_n34_wodmi = LinearReg(var_regn34_wodmi,'time')
+#
+#     return var_n34_wodmi.var_polyfit_coefficients[0],\
+#            var_dmi_won34.var_polyfit_coefficients[0],\
+#            var_regn34_wodmi,var_regdmi_won34
+#
+# def Corr(datos, index, time_original, m=9):
+#     aux_corr1 = xr.DataArray(datos.groupby('month')[m]['var'],
+#                              coords={'time': time_original.groupby('time.month')[m].values,
+#                                      'lon': datos.lon.values, 'lat': datos.lat.values},
+#                              dims=['time', 'lat', 'lon'])
+#     aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
+#                              coords={'time': time_original.groupby('time.month')[m]},
+#                              dims={'time'})
+#
+#     return xr.corr(aux_corr1, aux_corr2, 'time')
 
 def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
             , dpi=100, save=False, title='\m/', name_fig='fig_PlotReg', sig=True
             ,two_variables = False, data2=None, data_cor2=None, levels2 = np.linspace(-100,100,2)
-            , sig2=True, step=1,SA=False, color_map = '#d9d9d9', color_sig='magenta', sig_point=False, r_crit=1):
+            , sig2=True, step=1,SA=False, color_map = '#d9d9d9', color_sig='magenta', sig_point=False, r_crit=1,
+            waf=False, px=None, py=None, aux_waf_scale=1/1000, step_waf=5, data_waf=None):
+    from numpy import ma
 
     levels_contour = levels.copy()
     if isinstance(levels_contour, np.ndarray):
@@ -231,7 +235,24 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
     cb.ax.tick_params(labelsize=8)
     ax.add_feature(cartopy.feature.LAND, facecolor='white', edgecolor=color_map)
     #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-    # ax.add_feature(cartopy.feature.BORDERS, linestyle='-', alpha=.5)
+    # ax.add_feature(cartopy.feature.BORDERS, linestyle='-', alpha=
+    
+    if waf:
+        Q60 = np.percentile(np.sqrt(np.add(np.power(px, 2), np.power(py, 2))), 0)
+        M = np.sqrt(np.add(np.power(px, 2), np.power(py, 2))) < Q60
+        # mask array
+        px_mask = ma.array(px, mask=M)
+        py_mask = ma.array(py, mask=M)
+        # plot vectors
+        lons, lats = np.meshgrid(data_waf.lon.values, data_waf.lat.values)
+        ax.quiver(lons[::step_waf, ::step_waf],
+                  lats[::step_waf, ::step_waf],
+                  px_mask[0, ::step_waf, ::step_waf],
+                  py_mask[0, ::step_waf, ::step_waf], transform=crs_latlon,pivot='tail',
+                  width=0.0020,headwidth=4.1, alpha=1, color='k', scale=aux_waf_scale, scale_units=None)
+                  #, scale=1/10)#, width=1.5e-3, headwidth=3.1,  # headwidht (default3)
+                  #headlength=2.2)  # (default5))
+    
     if SA:
         ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5, zorder=17)
         #ax.add_feature(cartopy.feature.COASTLINE)
@@ -271,54 +292,54 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
         plt.show()
 
 
-def ComputeWithEffect(data=None, data2=None, n34=None, dmi=None,
-                     two_variables=False, full_season=False,
-                     time_original=None,m=9):
-    print('Reg...')
-    print('#-- With influence --#')
-    aux_n34, aux_dmi, aux_n34_2, aux_dmi_2 = RegWEffect(data=data, data2=data2,
-                                                       n34=n34.__mul__(1 / n34.std('time')),
-                                                       dmi=dmi.__mul__(1 / dmi.std('time')),
-                                                       m=m, two_variables=two_variables)
-    if full_season:
-        print('Full Season')
-        n34 = n34.rolling(time=5, center=True).mean()
-        dmi = dmi.rolling(time=5, center=True).mean()
-
-    print('Corr...')
-    aux_corr_n34 = Corr(datos=data, index=n34, time_original=time_original, m=m)
-    aux_corr_dmi = Corr(datos=data, index=dmi, time_original=time_original, m=m)
-
-    aux_corr_dmi_2 = 0
-    aux_corr_n34_2 = 0
-    if two_variables:
-        print('Corr2..')
-        aux_corr_n34_2 = Corr(datos=data2, index=n34, time_original=time_original, m=m)
-        aux_corr_dmi_2 = Corr(datos=data2, index=dmi, time_original=time_original, m=m)
-
-    return aux_n34, aux_corr_n34, aux_dmi, aux_corr_dmi, aux_n34_2, aux_corr_n34_2, aux_dmi_2, aux_corr_dmi_2
-
-def ComputeWithoutEffect(data, n34, dmi, m):
-    # -- Without influence --#
-    print('# -- Without influence --#')
-    print('Reg...')
-    # dmi wo n34 influence and n34 wo dmi influence
-    dmi_wo_n34, n34_wo_dmi = LinearReg1_D(n34.__mul__(1 / n34.std('time')),
-                                          dmi.__mul__(1 / dmi.std('time')))
-
-    # Reg WO
-    aux_n34_wodmi, aux_dmi_won34, data_n34_wodmi, data_dmi_won34 = \
-        RegWOEffect(n34=n34.__mul__(1 / n34.std('time')),
-                   n34_wo_dmi=n34_wo_dmi,
-                   dmi=dmi.__mul__(1 / dmi.std('time')),
-                   dmi_wo_n34=dmi_wo_n34,
-                   m=m, datos=data)
-
-    print('Corr...')
-    aux_corr_n34 = Corr(datos=data_n34_wodmi, index=n34_wo_dmi, time_original=time_original,m=m)
-    aux_corr_dmi = Corr(datos=data_dmi_won34, index=dmi_wo_n34, time_original=time_original,m=m)
-
-    return aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi
+# def ComputeWithEffect(data=None, data2=None, n34=None, dmi=None,
+#                      two_variables=False, full_season=False,
+#                      time_original=None,m=9):
+#     print('Reg...')
+#     print('#-- With influence --#')
+#     aux_n34, aux_dmi, aux_n34_2, aux_dmi_2 = RegWEffect(data=data, data2=data2,
+#                                                        n34=n34.__mul__(1 / n34.std('time')),
+#                                                        dmi=dmi.__mul__(1 / dmi.std('time')),
+#                                                        m=m, two_variables=two_variables)
+#     if full_season:
+#         print('Full Season')
+#         n34 = n34.rolling(time=5, center=True).mean()
+#         dmi = dmi.rolling(time=5, center=True).mean()
+#
+#     print('Corr...')
+#     aux_corr_n34 = Corr(datos=data, index=n34, time_original=time_original, m=m)
+#     aux_corr_dmi = Corr(datos=data, index=dmi, time_original=time_original, m=m)
+#
+#     aux_corr_dmi_2 = 0
+#     aux_corr_n34_2 = 0
+#     if two_variables:
+#         print('Corr2..')
+#         aux_corr_n34_2 = Corr(datos=data2, index=n34, time_original=time_original, m=m)
+#         aux_corr_dmi_2 = Corr(datos=data2, index=dmi, time_original=time_original, m=m)
+#
+#     return aux_n34, aux_corr_n34, aux_dmi, aux_corr_dmi, aux_n34_2, aux_corr_n34_2, aux_dmi_2, aux_corr_dmi_2
+#
+# def ComputeWithoutEffect(data, n34, dmi, m):
+#     # -- Without influence --#
+#     print('# -- Without influence --#')
+#     print('Reg...')
+#     # dmi wo n34 influence and n34 wo dmi influence
+#     dmi_wo_n34, n34_wo_dmi = LinearReg1_D(n34.__mul__(1 / n34.std('time')),
+#                                           dmi.__mul__(1 / dmi.std('time')))
+#
+#     # Reg WO
+#     aux_n34_wodmi, aux_dmi_won34, data_n34_wodmi, data_dmi_won34 = \
+#         RegWOEffect(n34=n34.__mul__(1 / n34.std('time')),
+#                    n34_wo_dmi=n34_wo_dmi,
+#                    dmi=dmi.__mul__(1 / dmi.std('time')),
+#                    dmi_wo_n34=dmi_wo_n34,
+#                    m=m, datos=data)
+#
+#     print('Corr...')
+#     aux_corr_n34 = Corr(datos=data_n34_wodmi, index=n34_wo_dmi, time_original=time_original,m=m)
+#     aux_corr_dmi = Corr(datos=data_dmi_won34, index=dmi_wo_n34, time_original=time_original,m=m)
+#
+#     return aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi
 
 
 def MakerMaskSig(data):
@@ -326,6 +347,42 @@ def MakerMaskSig(data):
     mask_sig = mask_sig.where(np.isnan(mask_sig), 1)
 
     return mask_sig
+
+def Detrend(xrda, dim):
+    aux = xrda.polyfit(dim=dim, deg=1)
+    try:
+        trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients)
+    except:
+        trend = xr.polyval(xrda[dim], aux.polyfit_coefficients)
+    dt = xrda - trend
+    return dt
+
+def OrdenarNC_wTime_fromW(data):
+    newdata = xr.Dataset(
+        data_vars=dict(
+            var=(['time', 'lat', 'lon'], data['var'][0, :, :, :].values)
+
+        ),
+        coords=dict(
+            lon=(['lon'], data.lon),
+            lat=(['lat'], data.lat),
+            time=(['time'], data.time)
+        )
+    )
+    return newdata
+
+
+def MakeXr(data):
+    return xr.Dataset(
+        data_vars=dict(
+            var=(['lat', 'lon'], data)
+
+        ),
+        coords=dict(
+            lon=(['lon'], data.lon),
+            lat=(['lat'], data.lat)
+        )
+    )
 ########################################################################################################################
 # variables = ['pp_gpcc_or', 't_cru', 'hgt200_HS_mer_d_w', 'pp_gpcc_0.25', 'pp_cmap', 'pp_prec']
 # name_var = ['precip']
@@ -501,6 +558,21 @@ for v in variables:
         # 3-month running mean ------------------------------------------------------------------------------------#
         data = data.rolling(time=3, center=True).mean()
 
+        # --- WAF --- #
+        if waf:
+            data_sf = xr.open_dataset(hgt_dir + 'sf.nc')
+            data_sf = Detrend(OrdenarNC_wTime_fromW(data_sf.rename({'streamfunction': 'var'})), 'time')
+            data_sf = data_sf.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
+            # Climatology SON -----------------------------------------------------------------------------------------#
+            aux = data_sf.rolling(time=3, center=True).mean()
+            data_clim = aux.sel(time=aux.time.dt.month.isin(10)).mean('time')
+            # Anomaly -------------------------------------------------------------------------------------------------#
+            data_sf = data_sf.groupby('time.month') - data_sf.groupby('time.month').mean('time', skipna=True)
+            # 3-month running mean ------------------------------------------------------------------------------------#
+            data_sf = data_sf.rolling(time=3, center=True).mean()
+
+
+
         # Seasons -------------------------------------------------------------------------------------------------#
         s_count = 0
         for s in seasons_name:
@@ -510,8 +582,29 @@ for v in variables:
                                                           two_variables=two_variables, m=seasons[s_count],
                                                           full_season=False, time_original=time_original)
 
-            mask_sig = aux_corr_n34.where((aux_corr_n34 < -1*r_crit) | (aux_corr_n34 > r_crit))
-            mask_sig = mask_sig.where(np.isnan(mask_sig), 1)
+            if waf:
+                print('#--- WAF form SF ---#')
+                aux_waf_aux_n34, aux_waf_aux_corr_n34, aux_waf_aux_dmi, \
+                aux_waf_aux_corr_dmi, aux_waf_aux_n34_2, aux_waf_aux_corr_n34_2, \
+                aux_waf_aux_dmi_2, aux_waf_aux_corr_dmi_2 = ComputeWithEffect(data=data_sf, data2=None, n34=n34,
+                                                                              dmi=dmi,
+                                                                              two_variables=False, m=seasons[s_count],
+                                                                              full_season=False,
+                                                                              time_original=time_original)
+
+                aux_waf_aux_n34 = MakeXr(aux_waf_aux_n34)
+                px_aux_n34, py_aux_n34 = WAF(data_clim, aux_waf_aux_n34, data_clim.lon, data_clim.lat, reshape=True, variable='var')
+                px_xr_aux_n34 = xr.DataArray(px_aux_n34[0, :, :])
+                py_xr_aux_n34 = xr.DataArray(py_aux_n34[0, :, :])
+
+                aux_waf_aux_dmi = MakeXr(aux_waf_aux_dmi)
+                px_aux_dmi, py_aux_dmi = WAF(data_clim, aux_waf_aux_dmi, data_clim.lon, data_clim.lat, reshape=True, variable='var')
+                px_xr_aux_dmi = xr.DataArray(px_aux_dmi[0, :, :])
+                py_xr_aux_dmi = xr.DataArray(py_aux_dmi[0, :, :])
+
+                weights = np.transpose(np.tile(-2 * np.cos(np.arange(-90, 89) * 1 * np.pi / 180) + 2.1, (359, 1)))
+                weights_arr = np.zeros_like(px_aux_n34)
+                weights_arr[0, :, :] = weights
 
 
             print('Plot')
@@ -526,7 +619,8 @@ for v in variables:
                     sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
-                    color_sig='k', sig_point=True, r_crit=r_crit)
+                    color_sig='k', sig_point=True, r_crit=r_crit,
+                    waf=True, px=px_aux_n34*weights_arr, py=py_aux_n34*weights_arr, data_waf=data_sf, aux_waf_scale=1/1000)
 
             PlotReg(data=aux_dmi*MakerMaskSig(aux_corr_dmi), data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
@@ -539,18 +633,36 @@ for v in variables:
                     sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
-                    color_sig='k', sig_point=True, r_crit=r_crit)
+                    color_sig='k', sig_point=True, r_crit=r_crit,
+                    waf=True, px=px_aux_dmi*weights_arr, py=py_aux_dmi*weights_arr, data_waf=data_sf, aux_waf_scale=1 / 1000)
 
             del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, aux_corr_n34, \
                 aux_corr_dmi_2, aux_corr_n34_2
 
             aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi = \
-                ComputeWithoutEffect(data, n34, dmi, seasons[s_count])
+                ComputeWithoutEffect(data, n34, dmi, seasons[s_count], time_original)
 
             aux_n34_wodmi_2 = 0
             aux_corr_n34_2 = 0
             aux_dmi_won34_2 = 0
             aux_corr_dmi_2 = 0
+
+            if waf:
+                print('#--- WAF form SF ---#')
+                aux_waf_aux_n34_wodmi, aux_waf_aux_corr_n34, aux_waf_aux_dmi_won34, aux_waf_aux_corr_dmi = \
+                    ComputeWithoutEffect(data_sf, n34, dmi, seasons[s_count], time_original)
+
+                aux_waf_aux_n34 = MakeXr(aux_waf_aux_n34_wodmi)
+                px_aux_n34, py_aux_n34 = WAF(data_clim, aux_waf_aux_n34, data_clim.lon, data_clim.lat, reshape=True, variable='var')
+                px_xr_aux_n34 = xr.DataArray(px_aux_n34[0, :, :])
+                py_xr_aux_n34 = xr.DataArray(py_aux_n34[0, :, :])
+
+                aux_waf_aux_dmi = MakeXr(aux_waf_aux_dmi_won34)
+                px_aux_dmi, py_aux_dmi = WAF(data_clim, aux_waf_aux_dmi, data_clim.lon, data_clim.lat, reshape=True, variable='var')
+                px_xr_aux_dmi = xr.DataArray(px_aux_dmi[0, :, :])
+                py_xr_aux_dmi = xr.DataArray(py_aux_dmi[0, :, :])
+
+
 
             print('Plot...')
             PlotReg(data=aux_n34_wodmi*MakerMaskSig(aux_corr_n34), data_cor=aux_corr_n34,
@@ -563,7 +675,9 @@ for v in variables:
                     sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
-                    color_sig='k', sig_point=True, r_crit=r_crit)
+                    color_sig='k', sig_point=True, r_crit=r_crit,
+                    waf=True, px=px_aux_n34 * weights_arr, py=py_aux_n34 * weights_arr, data_waf=data_sf,
+                    aux_waf_scale=1 / 1000)
 
             PlotReg(data=aux_dmi_won34*MakerMaskSig(aux_corr_dmi), data_cor=aux_corr_dmi,
                     levels=scales[v_count], cmap=cmap[v_count], dpi=200,
@@ -575,7 +689,9 @@ for v in variables:
                     sig2=False, levels2=scales[v_count],
                     SA=SA[v_count], step=1,
                     color_map='#4B4B4B',
-                    color_sig='k', sig_point=True, r_crit=r_crit)
+                    color_sig='k', sig_point=True, r_crit=r_crit,
+                    waf=True, px=px_aux_dmi * weights_arr, py=py_aux_dmi * weights_arr, data_waf=data_sf,
+                    aux_waf_scale=1 / 1000)
 
             del aux_n34_wodmi, aux_dmi_won34, aux_corr_dmi, aux_corr_n34, \
                 aux_n34_wodmi_2, aux_dmi_won34_2, aux_corr_dmi_2, aux_corr_n34_2
