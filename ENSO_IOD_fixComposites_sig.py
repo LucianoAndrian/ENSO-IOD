@@ -28,7 +28,7 @@ out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/HS
 save = True
 dpi = 300
 sig = False
-sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' # resultados de MC
+sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMI_true_dipole/' # resultados de MC
 # Functions ############################################################################################################
 def CompositeSimple(original_data, index, mmin, mmax):
     def is_months(month, mmin, mmax):
@@ -337,6 +337,17 @@ cmap_era5 = [cbar_t, cbar_t_r]
 # HGT -----------------------------------------------------------------------------------------------------------------#
 # HGT -----------------------------------------------------------------------------------------------------------------#
 plt.rcParams['hatch.linewidth'] = 1.5
+cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos',
+         'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
+title_case = ['DMI-ENSO simultaneous positive phase ',
+              'DMI-ENSO simultaneous negative phase ',
+              'DMI pure positive phase ',
+              'DMI pure negative phase ',
+              'ENSO pure positive phase ',
+              'ENSO pure negative phase ']
+seasons = ['SON']
+min_max_months = [[9,11]]
+
 tw=[False, False] # por ahora sin vp
 sig2 = [True, False]
 steps = [1, 1]
@@ -357,7 +368,7 @@ for v in ['hgt200_HS_mer_d_w', 'hgt750_mer_d_w']:
 
             if sig_v[v_count]:
                 data_sig = xr.open_dataset(sig_dir +  v.split('_')[0] +
-                                       '_' + c + '1950_2020_' + s + '_DMIbase.nc')
+                                       '_' + c + '1950_2020_' + s + '.nc')
                 comp1_i = comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
                 sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
                 sig = sig.where(np.isnan(sig['var']), 1)

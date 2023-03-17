@@ -26,10 +26,10 @@ out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/DMIb
 out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/DMIbase/HS/'
 
 #Plot
-save = False
-dpi = 100
+save = True
+dpi = 300
 sig = True
-waf = True
+waf = False # REVISAR!
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/' # resultados de MC
 # Functions ############################################################################################################
 def CompositeSimple(original_data, index, mmin, mmax):
@@ -381,37 +381,45 @@ title_case = ['DMI-ENSO simultaneous positive phase ',
               'ENSO pure negative phase ']
 seasons = ['SON']
 min_max_months = [[9,11]]
-waf_scale=[None, 1/1000]
+waf_scale=[1/1000, 1/1000]
 v_count = 0
-for v, v2 in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], ['sf', 'sf_750']):
+for v, v2, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], ['sf', 'sf_750_test'], [200,750]):
     # if v_count != 2:
     #     break #provisorio
     data = xr.open_dataset(data_dir_era5 + v + '.nc')
-    
+
     if waf:
         data_sf = xr.open_dataset(data_dir_era5 + v2 + '.nc')
-        data_sf = data_sf.rename({'streamfunction':'var'})
+        data_sf = data_sf.rename({'streamfunction': 'var'})
 
     c_count = 0
     for c in cases:
         s_count = 0
         for s in seasons:
             comp1, num_case = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-                                              two_variables=False, data2=None)
-            
+                                       two_variables=False, data2=None)
+
             if waf:
+                print(v)
+                print(v2)
+                print(hpalevel)
                 comp_sf, aux, neutro_comp = CaseComp(data_sf, s, mmonth=min_max_months[s_count], c=c,
                                                      two_variables=False, data2=None,
                                                      return_neutro_comp=True)
-                
-                px, py = WAF(neutro_comp, comp_sf, data_sf.lon, data_sf.lat, reshape=True, variable='var')
+
+                px, py = WAF(neutro_comp, comp_sf, data_sf.lon, data_sf.lat, reshape=True, variable='var', hpalevel=hpalevel)
                 weights = np.transpose(np.tile(-2 * np.cos(np.arange(-90, 89) * 1 * np.pi / 180) + 2.1, (359, 1)))
                 weights_arr = np.zeros_like(px)
                 weights_arr[0, :, :] = weights
+                px *= weights_arr
+                py *= weights_arr
+            else:
+                px, py = None, None
+                data_sf = None
 
             if sig_v[v_count]:
-                data_sig = xr.open_dataset(sig_dir +  v.split('_')[0] +
-                                       '_' + c + '1950_2020_' + s + '.nc')
+                data_sig = xr.open_dataset(sig_dir + v.split('_')[0] +
+                                           '_' + c + '1950_2020_' + s + '.nc')
                 comp1_i = comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
                 sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
                 sig = sig.where(np.isnan(sig['var']), 1)
@@ -420,15 +428,15 @@ for v, v2 in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], ['sf', 'sf_750']):
                 data_sig = None
                 sig = 1
 
-            Plot(comp=comp1*sig, levels=[-300, -250, -200, -150, -100, -50, -25, 0, 25, 50, 100, 150, 200, 250, 300],
-                 cmap = cbar_t, step1=1,
+            Plot(comp=comp1 * sig, levels=[-300, -250, -200, -150, -100, -50, -25, 0, 25, 50, 100, 150, 200, 250, 300],
+                 cmap=cbar_t, step1=1,
                  contour1=True, two_variables=True, comp2=comp1, linewidht2=1,
                  levels2=[-300, -200, -100, -50, 0, 50, 100, 200, 300],
                  mapa='hs', significance=False,
-                 title=v.split('_')[0] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-                 name_fig=v.split('_')[0]  + s + '_' + cases[c_count] + '_mer_d_w_NSA_HS',
+                 title=v.split('_')[0] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+                 name_fig=v.split('_')[0] + s + '_' + cases[c_count] + '_mer_d_w_NSA_HS',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k', color_map='grey',
-                 waf=True, px=px*weights_arr, py=py*weights_arr, data_waf=data_sf, waf_scale=waf_scale[v_count])
+                 waf=waf, px=px, py=py, data_waf=data_sf, waf_scale=None)
 
             s_count += 1
         c_count += 1
