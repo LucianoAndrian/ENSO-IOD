@@ -1200,7 +1200,7 @@ def c_diff(arr, h, dim, cyclic=False):
 
     return d_arr
 
-def WAF(psiclm, psiaa, lon, lat,reshape=True, variable='var'):
+def WAF(psiclm, psiaa, lon, lat,reshape=True, variable='var', hpalevel=200):
     #agregar xr=True
 
     if reshape:
@@ -1232,8 +1232,13 @@ def WAF(psiclm, psiaa, lon, lat,reshape=True, variable='var'):
     termxv = dpsidlon * dpsidlat - ddpsidlatlon * psiaa
     termyv = dpsidlat * dpsidlat - psiaa * ddpsidlatlat
 
-    # 0.2101 is the scale of p VER!!!
-    coeff1 = np.transpose(np.tile(coslat, (nlons, 1))) * (0.2101) / (2 * magU)
+    # 0.2101 is the scale of p
+    if hpalevel==200:
+        coef = 0.2101
+    elif hpalevel==750:
+        coef = 0.74
+
+    coeff1 = np.transpose(np.tile(coslat, (nlons, 1))) * (coef) / (2 * magU)
     # x-component
     px = coeff1 / (a * a * np.transpose(np.tile(coslat, (nlons, 1)))) * (
             uclm * termxu / np.transpose(np.tile(coslat, (nlons, 1))) + (vclm * termxv))
