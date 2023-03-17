@@ -56,7 +56,7 @@ if preproc:
         # ---------------------------------------------------------------------------#
         print('to_netcdf...')
 
-        data.to_netcdf(out_dir + n_v + '_mer_d_w_world.nc')
+        data.to_netcdf(out_dir + n_v + '_mer_d_w_world_dtr.nc')
 
 
         v_count += 1
@@ -167,10 +167,10 @@ if SF:
         data = data.rename({'latitude': 'lat'})
 
         data = Weights(data)
-        # data = data.sel(lon=slice(30, 340), lat=slice(20, -80))
+        data = data.sel(lon=slice(30, 340), lat=slice(20, -80))
         data = Detrend(data, 'time')
 
-        data.to_netcdf(out_dir + n_v + '_mer_d_w_world_dtr.nc')
+        data.to_netcdf(out_dir + n_v + '_mer_d_w_world.nc')
         v_count +=1
     from windspharm.examples import example_data_path
     ds = xr.open_dataset(example_data_path('uwnd_mean.nc'))
@@ -187,8 +187,9 @@ if SF:
     uwnd = uwnd.to_array()
     vwnd = vwnd.to_array()
     w = VectorWind(uwnd, vwnd)
-    sf, vp = w.sfvp()
-    sf.to_netcdf(data_dir + 'sf_750.nc')
+    #sf, vp = w.sfvp()
+    sf = w.streamfunction()
+    sf.to_netcdf(data_dir + 'sf_750_test.nc')
     #vp.to_netcdf(data_dir + 'vp_from_w.nc')
     ########################################################################################################################
 
