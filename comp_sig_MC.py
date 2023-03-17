@@ -7,8 +7,8 @@ import math
 from datetime import datetime
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
-dmi_true_dipole = True
-v = 'hgt200'
+dmi_true_dipole = False
+v = 'div200'
 # Functions ############################################################################################################
 def CompositeSimple(original_data, index, mmin, mmax):
     def is_months(month, mmin, mmax):
@@ -88,6 +88,7 @@ cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos', 'DMI_un_neg', 'N34_un_pos',
 
 print('Variable: ' + v)
 
+#control variables!!! (algunas ya no estan disponibles)
 if v == 'hgt200':
     ruta = data_dir
     data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
@@ -95,6 +96,12 @@ if v == 'hgt200':
 elif v == 'hgt750':
     ruta = data_dir
     data = xr.open_dataset(ruta + v + '_mer_d_w.nc')
+elif v == 'vp':
+    ruta = data_dir
+    data = xr.open_dataset(ruta + v + '_from_w.nc')
+elif v == 'div200':
+    ruta = data_dir
+    data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
 else:
      print('que es esto <<' + v + '>> ?!!!')
      from sys import exit
@@ -238,17 +245,3 @@ print('done!')
 #         data = xr.open_dataset(ruta + v + '_d_w_c_1950-2020_2.5.nc')
 #     else:
 #         data = xr.open_dataset(ruta + v + '_d_w_c_1950-2020_1.nc')
-
-# 
-# if v == 'psl':
-#     print('to hPa')
-#     data = data.__mul__(1 / 100)
-
-    # if v == 'hgt200':
-    #     print('drop level')
-    #     data = data.drop('level')
-
-    # elif (v == 'pp_gpcc') | (v == 't_cru') | (v == 't_BEIC'):
-    #     print('Detrend...')
-    #     data = xrFieldTimeDetrend(data, 'time')
-    #     print('done')
