@@ -8,7 +8,7 @@ from datetime import datetime
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
 dmi_true_dipole = False
-v = 'div200'
+v = 'hgt200'
 # Functions ############################################################################################################
 def CompositeSimple(original_data, index, mmin, mmax):
     def is_months(month, mmin, mmax):
@@ -108,9 +108,6 @@ else:
      exit(1)
 
 
-
-data = data.interp(lat=np.arange(-80, 20)[::-1])
-
 for c in cases:  
     print(c)
     count = 0
@@ -181,9 +178,9 @@ for c in cases:
             neutro_concat = np.concatenate([neutro, data_to_concat])
 
             hour = datetime.now().hour
-            if (hour > 21) | (hour < 7):
-                n_thread = 25
-                pool = ThreadPool(25)
+            if (hour > 17) | (hour < 8):
+                n_thread = 30
+                pool = ThreadPool(30)
             else:
                 n_thread = 15
                 pool = ThreadPool(15)
