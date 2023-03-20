@@ -352,7 +352,7 @@ tw=[False, False] # por ahora sin vp
 sig2 = [True, False]
 steps = [1, 1]
 contours1 = [True, False]
-sig_v = [True, False]
+sig_v = [True, True]
 v_count = 0
 for v in ['hgt200_HS_mer_d_w', 'hgt750_mer_d_w']:
     # if v_count != 2:
@@ -369,8 +369,7 @@ for v in ['hgt200_HS_mer_d_w', 'hgt750_mer_d_w']:
             if sig_v[v_count]:
                 data_sig = xr.open_dataset(sig_dir +  v.split('_')[0] +
                                        '_' + c + '1950_2020_' + s + '.nc')
-                comp1_i = comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
-                sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+                sig = comp1.where((comp1 < data_sig['var'][0]) | (comp1 > data_sig['var'][1]))
                 sig = sig.where(np.isnan(sig['var']), 1)
 
             else:
@@ -382,7 +381,7 @@ for v in ['hgt200_HS_mer_d_w', 'hgt750_mer_d_w']:
                  cmap = cbar_t, step1=1,
                  contour1=True, two_variables=True, comp2=comp1, linewidht2=1,
                  levels2=[-300, -200, -100, -50, 0, 50, 100, 200, 300],
-                 mapa='hs', significance=False,
+                 mapa='hs', significance=False, color_map='grey',
                  title=v.split('_')[0] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
                  name_fig=v.split('_')[0]  + s + '_' + cases[c_count] + '_mer_d_w_HS',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')

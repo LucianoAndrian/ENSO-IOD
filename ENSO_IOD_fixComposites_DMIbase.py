@@ -420,8 +420,8 @@ for v, v2, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], ['sf', 'sf_7
             if sig_v[v_count]:
                 data_sig = xr.open_dataset(sig_dir + v.split('_')[0] +
                                            '_' + c + '1950_2020_' + s + '.nc')
-                comp1_i = comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
-                sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+                #comp1_i = comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+                sig = comp1.where((comp1 < data_sig['var'][0]) | (comp1 > data_sig['var'][1]))
                 sig = sig.where(np.isnan(sig['var']), 1)
 
             else:
