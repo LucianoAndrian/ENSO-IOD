@@ -7,8 +7,8 @@ import math
 from datetime import datetime
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
-dmi_true_dipole = False
-v = 'hgt200'
+dmi_true_dipole = True
+v = 'hgt750'
 # Functions ############################################################################################################
 def CompositeSimple(original_data, index, mmin, mmax):
     def is_months(month, mmin, mmax):
