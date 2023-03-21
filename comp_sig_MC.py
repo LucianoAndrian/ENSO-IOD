@@ -107,6 +107,7 @@ else:
      from sys import exit
      exit(1)
 
+data = data.interp(lat=np.arange(-80, 20,0.5)[::-1], lon=np.arange(0,360,0.5))
 
 for c in cases:  
     print(c)
