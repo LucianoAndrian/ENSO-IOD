@@ -96,15 +96,13 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, return_neutro_
             return comp, case_num
             
 
-
-
 def Plot(comp, levels, cmap, step1, contour1=True,
          two_variables=False, comp2=None, levels2=np.linspace(-1,1,13), step2=4,
          mapa='sa', title='title', name_fig='name_fig', dpi=100, save=save,
          comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#d9d9d9',
          out_dir=out_dir_w_sig, proj='eq',
          third_variable=False, comp3=None, levels_contour3=np.linspace(-1,1,13),
-         waf=False, data_waf=None, px=None, py=False, waf_scale=1/1000):
+         waf=False, data_waf=None, px=None, py=False, waf_scale=1/1000, step_waf=10):
 
     import matplotlib.pyplot as plt
 
@@ -160,8 +158,6 @@ def Plot(comp, levels, cmap, step1, contour1=True,
         ax.set_extent([30, 340, -90, 0],
                           ccrs.PlateCarree(central_longitude=200))
 
-
-
     if two_variables:
         ax.contour(comp2.lon[::step2], comp2.lat[::step2], comp_var2[::step2, ::step2],
                    linewidths=linewidht2, levels=levels_contour2, transform=crs_latlon, colors='k')
@@ -194,20 +190,24 @@ def Plot(comp, levels, cmap, step1, contour1=True,
     
     if waf:
         from numpy import ma
-        Q60 = np.percentile(np.sqrt(np.add(np.power(px, 2), np.power(py, 2))), 0)
+        Q60 = np.nanpercentile(np.sqrt(np.add(np.power(px, 2), np.power(py, 2))), 60)
         M = np.sqrt(np.add(np.power(px, 2), np.power(py, 2))) < Q60
         # mask array
         px_mask = ma.array(px, mask=M)
         py_mask = ma.array(py, mask=M)
+
+        Q99 = np.nanpercentile(np.sqrt(np.add(np.power(px, 2), np.power(py, 2))), 99)
+        M = np.sqrt(np.add(np.power(px, 2), np.power(py, 2))) > Q99
+        # mask array
+        px_mask = ma.array(px_mask, mask=M)
+        py_mask = ma.array(py_mask, mask=M)
+
         # plot vectors
         lons, lats = np.meshgrid(data_waf.lon.values, data_waf.lat.values)
-        ax.quiver(lons[::5, ::5],
-                  lats[::5, ::5],
-                  px_mask[0, ::5, ::5],
-                  py_mask[0, ::5, ::5], transform=crs_latlon,pivot='tail',
-                  width=0.0020, headwidth=4.1, alpha=1, color='k', scale=waf_scale, scale_units=None)
-                  #, scale=1/10)#, width=1.5e-3, headwidth=3.1,  # headwidht (default3)
-                  #headlength=2.2)  # (default5))
+        ax.quiver(lons[::step_waf, ::step_waf], lats[::step_waf, ::step_waf],
+                  px_mask[0, ::step_waf, ::step_waf], py_mask[0, ::step_waf, ::step_waf],
+                  transform=crs_latlon, pivot='tail', width=1.5e-3, headwidth=3, alpha=1,
+                  headlength=2.5, color='k', scale=waf_scale)
 
     cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
     cb.ax.tick_params(labelsize=8)
@@ -323,46 +323,6 @@ cbar_sst.set_bad(color='white')
 cmap_t_pp = [cbar_t, cbar_pp, cbar_pp]
 cmap_era5 = [cbar_t, cbar_t_r]
 ########################################################################################################################
-# #T y PP con contornos de HGT200
-# v_count = 0
-# plt.rcParams['hatch.linewidth'] = 2
-# for v in variables_t_p:
-#     data = xr.open_dataset(data_dir_t_pp + v)
-#     data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
-#     data2 = data2.sel(lon=slice(270, 330), lat=slice(15, -60))
-#     #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
-#
-#     c_count = 0
-#     for c in cases:
-#         s_count = 0
-#         for s in seasons:
-#             comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-#                                               two_variables=True, data2=data2)
-#
-#             data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
-#                                        '_' + c + '1950_2020_' + s + '_DMIbase.nc')
-#
-#             comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
-#             sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
-#             sig = sig.where(np.isnan(sig['var']), 0)
-#
-#             if v_count != 0:
-#                 v_count_sc = 2
-#             else:
-#                 v_count_sc = 0
-#
-#             #MakeMask(pp, dataname='cluster')
-#             Plot(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
-#                  two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
-#                  mapa='sa', significance=True,
-#                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-#                  name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w_NSA',
-#                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
-#
-#             s_count += 1
-#         c_count += 1
-#     v_count += 1
-
 # HGT -----------------------------------------------------------------------------------------------------------------#
 plt.rcParams['hatch.linewidth'] = 1.5
 tw=[False, False] # por ahora sin vp
@@ -381,34 +341,32 @@ title_case = ['DMI-ENSO simultaneous positive phase ',
               'ENSO pure negative phase ']
 seasons = ['SON']
 min_max_months = [[9,11]]
-waf_scale=[1/1000, 1/1000]
 v_count = 0
-for v, v2, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], ['sf', 'sf_750_test'], [200,750]):
-    # if v_count != 2:
-    #     break #provisorio
+for v, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], [200,750]):
+
     data = xr.open_dataset(data_dir_era5 + v + '.nc')
 
     if waf:
-        data_sf = xr.open_dataset(data_dir_era5 + v2 + '.nc')
+        data_sf = xr.open_dataset(data_dir_era5 + 'sf_from_UV' + str(hpalevel) + '_w.nc')
         data_sf = data_sf.rename({'streamfunction': 'var'})
 
     c_count = 0
     for c in cases:
         s_count = 0
         for s in seasons:
-            comp1, num_case = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-                                       two_variables=False, data2=None)
+            comp1, num_case, neutro_comp = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+                                       two_variables=False, data2=None, return_neutro_comp=True)
 
             if waf:
                 print(v)
-                print(v2)
                 print(hpalevel)
                 comp_sf, aux, neutro_comp = CaseComp(data_sf, s, mmonth=min_max_months[s_count], c=c,
                                                      two_variables=False, data2=None,
                                                      return_neutro_comp=True)
 
-                px, py = WAF(neutro_comp, comp_sf, data_sf.lon, data_sf.lat, reshape=True, variable='var', hpalevel=hpalevel)
-                weights = np.transpose(np.tile(-2 * np.cos(np.arange(-90, 89) * 1 * np.pi / 180) + 2.1, (359, 1)))
+
+                px, py = WAF(neutro_comp, comp_sf, comp_sf.lon, comp_sf.lat, reshape=True, variable='var', hpalevel=hpalevel)
+                weights = np.transpose(np.tile(-2 * np.cos(comp_sf.lat.values * 1 * np.pi / 180) + 2.1, (359, 1)))
                 weights_arr = np.zeros_like(px)
                 weights_arr[0, :, :] = weights
                 px *= weights_arr
@@ -416,6 +374,7 @@ for v, v2, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], ['sf', 'sf_7
             else:
                 px, py = None, None
                 data_sf = None
+                comp_sf = None
 
             if sig_v[v_count]:
                 data_sig = xr.open_dataset(sig_dir + v.split('_')[0] +
@@ -433,10 +392,10 @@ for v, v2, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], ['sf', 'sf_7
                  contour1=True, two_variables=True, comp2=comp1, linewidht2=1,
                  levels2=[-300, -200, -100, -50, 0, 50, 100, 200, 300],
                  mapa='hs', significance=False,
-                 title=v.split('_')[0] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+                 title=v.split('_')[0] + ' - ' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
                  name_fig=v.split('_')[0] + s + '_' + cases[c_count] + '_mer_d_w_NSA_HS',
                  dpi=dpi, save=save, comp_sig=sig, color_sig='k', color_map='grey',
-                 waf=waf, px=px, py=py, data_waf=data_sf, waf_scale=None)
+                 waf=waf, px=px, py=py, data_waf=comp_sf, waf_scale=None, step_waf=4)
 
             s_count += 1
         c_count += 1
@@ -587,3 +546,46 @@ for v in variables_t_p:
             s_count += 1
         c_count += 1
     v_count += 1
+
+
+
+########################################################################################################################
+# #T y PP con contornos de HGT200
+# v_count = 0
+# plt.rcParams['hatch.linewidth'] = 2
+# for v in variables_t_p:
+#     data = xr.open_dataset(data_dir_t_pp + v)
+#     data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
+#     data2 = data2.sel(lon=slice(270, 330), lat=slice(15, -60))
+#     #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
+#
+#     c_count = 0
+#     for c in cases:
+#         s_count = 0
+#         for s in seasons:
+#             comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+#                                               two_variables=True, data2=data2)
+#
+#             data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
+#                                        '_' + c + '1950_2020_' + s + '_DMIbase.nc')
+#
+#             comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+#             sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+#             sig = sig.where(np.isnan(sig['var']), 0)
+#
+#             if v_count != 0:
+#                 v_count_sc = 2
+#             else:
+#                 v_count_sc = 0
+#
+#             #MakeMask(pp, dataname='cluster')
+#             Plot(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
+#                  two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
+#                  mapa='sa', significance=True,
+#                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+#                  name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w_NSA',
+#                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
+#
+#             s_count += 1
+#         c_count += 1
+#     v_count += 1

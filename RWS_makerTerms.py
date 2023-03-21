@@ -131,17 +131,21 @@ if RWS:
 # Create a VectorWind instance to handle the computation of streamfunction and
 # velocity potential.
 if SF:
+    from windspharm.examples import example_data_path
     dir_files = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/merged/'
     out_dir = data_dir
     # Funciones ################################################################
-    def Detrend(xrda, dim):
+    def Detrend(xrda, dim, return_trend=False):
         aux = xrda.polyfit(dim=dim, deg=1)
         try:
             trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients)
         except:
             trend = xr.polyval(xrda[dim], aux.polyfit_coefficients)
         dt = xrda - trend
-        return dt
+        if return_trend:
+            return dt, trend
+        else:
+            return dt
 
     def Weights(data):
         weights = np.transpose(np.tile(np.cos(data.lat * np.pi / 180), (len(data.lon), 1)))
@@ -150,48 +154,46 @@ if SF:
     # ---------------------------------------------------------------------------#
     name_variables = ['u', 'v']
     v_count = 0
+    for v in ['UV200', 'UV750']:
+        for n_v in name_variables:
+            data = xr.open_dataset(dir_files + 'ERA5_' + v + '_50-20_mer.nc')
+            #n_v = name_variables[v_count]
+            if n_v == 'u':
+                print('Drop v')
+                data = data.drop('v')
+            elif n_v == 'v':
+                print('Drop u')
+                data = data.drop('u')
 
-    for v in ['UV750', 'UV750']:
-        n_v = name_variables[v_count]
-        data = xr.open_dataset(dir_files + 'ERA5_' + v + '_50-20_mer.nc')
+            data = data.rename({n_v: 'var'})
+            data = data.rename({'longitude': 'lon'})
+            data = data.rename({'latitude': 'lat'})
 
-        if n_v == 'u':
-            print('Drop v')
-            data = data.drop('v')
-        elif n_v == 'v':
-            print('Drop u')
-            data = data.drop('u')
+            ds = xr.open_dataset(example_data_path('uwnd_mean.nc'))
+            uwnd_aux = ds['uwnd']
 
-        data = data.rename({n_v: 'var'})
-        data = data.rename({'longitude': 'lon'})
-        data = data.rename({'latitude': 'lat'})
+            data = data.interp(lat=np.linspace(uwnd_aux.latitude.values[0], uwnd_aux.latitude.values[-1], 179),
+                               lon=np.linspace(uwnd_aux.longitude.values[0], uwnd_aux.longitude.values[-1], 359))
 
-        data = Weights(data)
-        data = data.sel(lon=slice(30, 340), lat=slice(20, -80))
-        data = Detrend(data, 'time')
+            data = Weights(data)
+            # data = Detrend(data, 'time')
 
-        data.to_netcdf(out_dir + n_v + '_mer_d_w_world.nc')
-        v_count +=1
-    from windspharm.examples import example_data_path
-    ds = xr.open_dataset(example_data_path('uwnd_mean.nc'))
-    uwnd_aux = ds['uwnd']
+            data.to_netcdf(out_dir + n_v + '_mer_d_w_world.nc')
+            v_count += 1
+        del data
 
-    uwnd = xr.open_dataset(data_dir + 'u_mer_d_w_world.nc')
-    vwnd = xr.open_dataset(data_dir + 'v_mer_d_w_world.nc')
+        uwnd = xr.open_dataset(data_dir + 'u_mer_d_w_world.nc')
+        vwnd = xr.open_dataset(data_dir + 'v_mer_d_w_world.nc')
 
-    uwnd = uwnd.interp(lat=np.linspace(uwnd_aux.latitude.values[0], uwnd_aux.latitude.values[-1], 179),
-                       lon=np.linspace(uwnd_aux.longitude.values[0], uwnd_aux.longitude.values[-1], 359))
-    vwnd = vwnd.interp(lat=np.linspace(uwnd_aux.latitude.values[0], uwnd_aux.latitude.values[-1], 179),
-                       lon=np.linspace(uwnd_aux.longitude.values[0], uwnd_aux.longitude.values[-1], 359))
+        uwnd = uwnd.to_array()
+        vwnd = vwnd.to_array()
 
-    uwnd = uwnd.to_array()
-    vwnd = vwnd.to_array()
-    w = VectorWind(uwnd, vwnd)
-    #sf, vp = w.sfvp()
-    sf = w.streamfunction()
-    sf.to_netcdf(data_dir + 'sf_750_test.nc')
-    #vp.to_netcdf(data_dir + 'vp_from_w.nc')
-    ########################################################################################################################
+        w = VectorWind(uwnd, vwnd)
+        #sf, vp = w.sfvp()
+        sf = w.streamfunction()
+        sf.to_netcdf(data_dir + 'sf_from_' + v + '_w.nc')
+        #vp.to_netcdf(data_dir + 'vp_from_w.nc')
+########################################################################################################################
 
 
 
