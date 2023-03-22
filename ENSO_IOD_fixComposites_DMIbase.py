@@ -1,260 +1,36 @@
 """
-Composites observado con filtro de tendencia corregida en las variables T, PP y las de ERA5
-T, PP y HGT con sig. MC
-SST, VP y dig sin sig.
+Composites OBSERVADOS
+DMI standard
 """
 ########################################################################################################################
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors
-import cartopy.feature
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-import cartopy.crs as ccrs
 import os
 #from ENSO_IOD_Funciones import OpenDatasets
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
-import matplotlib.path as mpath
 import warnings
 warnings.filterwarnings("ignore")
-from ENSO_IOD_Funciones import WAF
+
+from ENSO_IOD_Funciones import WAF, CaseComp, PlotComposite_wWAF
 ########################################################################################################################
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/' #fechas
 data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' #T y PP ya procesados
 data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/' # ERA5 ya procesados
-out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/DMIbase/HS/'
-out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/DMIbase/HS/'
+# out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/DMIbase/HS/'
+# out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/DMIbase/HS/'
+out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/composite/dmi_standard/'
 
 #Plot
 save = True
 dpi = 300
 sig = True
-waf = False # REVISAR!
+waf = True
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/' # resultados de MC
-# Functions ############################################################################################################
-def CompositeSimple(original_data, index, mmin, mmax):
-    def is_months(month, mmin, mmax):
-        return (month >= mmin) & (month <= mmax)
-
-    if len(index) != 0:
-        comp_field = original_data.sel(time=original_data.time.dt.year.isin([index]))
-        comp_field = comp_field.sel(
-            time=is_months(month=comp_field['time.month'], mmin=mmin, mmax=mmax))
-        if len(comp_field.time) != 0:
-            comp_field = comp_field.mean(['time'], skipna=True)
-        else:  # si sólo hay un año
-            comp_field = comp_field.drop_dims(['time'])
-
-        return comp_field
-    else:
-        print(' len index = 0')
-
-
-def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, return_neutro_comp=False):
-    """
-    Las fechas se toman del periodo 1920-2020 basados en el DMI y N34 con ERSSTv5
-    Cuando se toman los periodos 1920-1949 y 1950_2020 las fechas que no pertencen
-    se excluyen de los composites en CompositeSimple()
-    """
-    mmin = mmonth[0]
-    mmax = mmonth[-1]
-
-    aux = xr.open_dataset(nc_date_dir + '1920_2020' + '_' + s + '.nc')
-    neutro = aux.Neutral
-
-    try:
-        case = aux[c]
-        case = case.where(case >= 1950)
-        aux.close()
-
-        case_num = len(case.values[np.where(~np.isnan(case.values))])
-
-        neutro_comp = CompositeSimple(original_data=data, index=neutro, mmin=mmin, mmax=mmax)
-        data_comp = CompositeSimple(original_data=data, index=case, mmin=mmin, mmax=mmax)
-
-        comp = data_comp - neutro_comp
-
-        if two_variables:
-            neutro_comp2 = CompositeSimple(original_data=data2, index=neutro, mmin=mmin, mmax=mmax)
-            data_comp2 = CompositeSimple(original_data=data2, index=case, mmin=mmin, mmax=mmax)
-
-            comp2 = data_comp2 - neutro_comp2
-        else:
-            comp2 = None
-    except:
-        print('Error en ' + s + c)
-
-    if two_variables:
-        if return_neutro_comp:
-            return comp, case_num, comp2, neutro_comp, neutro_comp2
-        else:
-            return comp, case_num, comp2
-    else:
-        if return_neutro_comp:
-            return comp, case_num, neutro_comp
-        else:
-            return comp, case_num
-            
-
-def Plot(comp, levels, cmap, step1, contour1=True,
-         two_variables=False, comp2=None, levels2=np.linspace(-1,1,13), step2=4,
-         mapa='sa', title='title', name_fig='name_fig', dpi=100, save=save,
-         comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#d9d9d9',
-         out_dir=out_dir_w_sig, proj='eq',
-         third_variable=False, comp3=None, levels_contour3=np.linspace(-1,1,13),
-         waf=False, data_waf=None, px=None, py=False, waf_scale=1/1000, step_waf=10):
-
-    import matplotlib.pyplot as plt
-
-    if mapa.lower()=='sa':
-        fig_size = (5, 6)
-        extent= [270, 330, -60, 20]
-        xticks = np.arange(270, 330, 10)
-        yticks = np.arange(-60, 40, 20)
-
-    elif mapa.lower()=='tropical':
-        fig_size = (7, 2)
-        extent = [40, 280, -20, 20]
-        xticks = np.arange(40, 280, 60)
-        yticks = np.arange(-20, 20, 20)
-
-    elif mapa.lower()=='hs':
-        fig_size = (9, 3.5)
-        extent = [0, 359, -80, 20]
-        xticks = np.arange(0, 360, 30)
-        yticks = np.arange(-80, 20, 10)
-        if proj != 'eq':
-            fig_size = (5, 5)
-    else:
-        fig_size = (8, 3)
-        extent = [30, 330, -80, 20]
-        xticks = np.arange(30, 330, 30)
-        yticks = np.arange(-80, 20, 10)
-        if proj != 'eq':
-            fig_size = (5, 5)
-
-    levels_contour = levels.copy()
-    comp_var = comp['var']
-    if isinstance(levels, np.ndarray):
-        levels_contour = levels[levels != 0]
-    else:
-        levels_contour.remove(0)
-
-    if two_variables:
-        levels_contour2 = levels2.copy()
-        comp_var2=comp2['var']
-        if isinstance(levels2, np.ndarray):
-            levels_contour2 = levels2[levels2 != 0]
-        else:
-            levels_contour2.remove(0)
-
-    crs_latlon = ccrs.PlateCarree()
-    fig = plt.figure(figsize=fig_size, dpi=dpi)
-    if proj=='eq':
-        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
-        ax.set_extent(extent, crs=crs_latlon)
-    else:
-        ax = plt.axes(projection=ccrs.SouthPolarStereo(central_longitude=200))
-        ax.set_extent([30, 340, -90, 0],
-                          ccrs.PlateCarree(central_longitude=200))
-
-    if two_variables:
-        ax.contour(comp2.lon[::step2], comp2.lat[::step2], comp_var2[::step2, ::step2],
-                   linewidths=linewidht2, levels=levels_contour2, transform=crs_latlon, colors='k')
-    else:
-        if contour1:
-            ax.contour(comp.lon[::step1], comp.lat[::step1], comp_var[::step1, ::step1],
-                       linewidths=.8, levels=levels_contour, transform=crs_latlon, colors='black')
-
-    im = ax.contourf(comp.lon[::step1], comp.lat[::step1], comp_var[::step1, ::step1],
-                     levels=levels, transform=crs_latlon, cmap=cmap, extend='both')
-
-    if third_variable:
-        comp_var3 = comp3['var']
-        tv=ax.contour(comp3.lon[::2], comp3.lat[::2], comp_var3[::2,::2],levels=levels_contour3,
-                   colors=['#D300FF','#00FF5D'], transform=crs_latlon, linewidths=1.5)
-        # tv.monochrome = True
-        # for col, ls in zip(tv.collections, tv._process_linestyles()):
-        #     col.set_linestyle(ls)
-
-    if significance:
-        colors_l = [color_sig, color_sig]
-        comp_sig_var = comp_sig['var']
-        cs = ax.contourf(comp_sig.lon, comp_sig.lat, comp_sig_var,
-                         transform=crs_latlon, colors='none', hatches=["..", ".."], extend='lower')
-        for i, collection in enumerate(cs.collections):
-            collection.set_edgecolor(colors_l[i % len(colors_l)])
-
-        for collection in cs.collections:
-            collection.set_linewidth(0.)
-    
-    if waf:
-        from numpy import ma
-        Q60 = np.nanpercentile(np.sqrt(np.add(np.power(px, 2), np.power(py, 2))), 60)
-        M = np.sqrt(np.add(np.power(px, 2), np.power(py, 2))) < Q60
-        # mask array
-        px_mask = ma.array(px, mask=M)
-        py_mask = ma.array(py, mask=M)
-
-        Q99 = np.nanpercentile(np.sqrt(np.add(np.power(px, 2), np.power(py, 2))), 99)
-        M = np.sqrt(np.add(np.power(px, 2), np.power(py, 2))) > Q99
-        # mask array
-        px_mask = ma.array(px_mask, mask=M)
-        py_mask = ma.array(py_mask, mask=M)
-
-        # plot vectors
-        lons, lats = np.meshgrid(data_waf.lon.values, data_waf.lat.values)
-        ax.quiver(lons[::step_waf, ::step_waf], lats[::step_waf, ::step_waf],
-                  px_mask[0, ::step_waf, ::step_waf], py_mask[0, ::step_waf, ::step_waf],
-                  transform=crs_latlon, pivot='tail', width=1.5e-3, headwidth=3, alpha=1,
-                  headlength=2.5, color='k', scale=waf_scale)
-
-    cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
-    cb.ax.tick_params(labelsize=8)
-    ax.add_feature(cartopy.feature.LAND, facecolor='white', edgecolor=color_map)
-    #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-    ax.coastlines(color=color_map, linestyle='-', alpha=1)
-
-    if proj=='eq':
-        ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
-        ax.set_xticks(xticks, crs=crs_latlon)
-        ax.set_yticks(yticks, crs=crs_latlon)
-        lon_formatter = LongitudeFormatter(zero_direction_label=True)
-        lat_formatter = LatitudeFormatter()
-        ax.xaxis.set_major_formatter(lon_formatter)
-        ax.yaxis.set_major_formatter(lat_formatter)
-    else:
-        gls = ax.gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
-                               y_inline=True, xlocs=range(-180, 180, 30), ylocs=np.arange(-80, 0, 20))
-
-        r_extent = 1.2e7
-        ax.set_xlim(-r_extent, r_extent)
-        ax.set_ylim(-r_extent, r_extent)
-        circle_path = mpath.Path.unit_circle()
-        circle_path = mpath.Path(circle_path.vertices.copy() * r_extent,
-                                 circle_path.codes.copy())
-        ax.set_boundary(circle_path)
-        ax.set_frame_on(False)
-        plt.draw()
-        for ea in gls._labels:
-            pos = ea[2].get_position()
-            if (pos[0] == 150):
-                ea[2].set_position([0, pos[1]])
-
-    ax.tick_params(labelsize=7)
-    plt.title(title, fontsize=10)
-    plt.tight_layout()
-
-    if save:
-        plt.savefig(out_dir + name_fig + '.jpg')
-        plt.close()
-    else:
-        plt.show()
-
 ########################################################################################################################
 # seasons = ('JJA', 'JAS', 'ASO', 'SON')
 # min_max_months = [[6,8],[7,9],[8,10],[9,11]]
-
 # seasons = ('SON')
 # min_max_months = [[9,11]]
 
@@ -323,7 +99,7 @@ cbar_sst.set_bad(color='white')
 cmap_t_pp = [cbar_t, cbar_pp, cbar_pp]
 cmap_era5 = [cbar_t, cbar_t_r]
 ########################################################################################################################
-# HGT -----------------------------------------------------------------------------------------------------------------#
+# HGT + WAF -----------------------------------------------------------------------------------------------------------#
 plt.rcParams['hatch.linewidth'] = 1.5
 tw=[False, False] # por ahora sin vp
 sig2 = [True, False]
@@ -341,6 +117,7 @@ title_case = ['DMI-ENSO simultaneous positive phase ',
               'ENSO pure negative phase ']
 seasons = ['SON']
 min_max_months = [[9,11]]
+
 v_count = 0
 for v, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], [200,750]):
 
@@ -355,14 +132,17 @@ for v, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], [200,750]):
         s_count = 0
         for s in seasons:
             comp1, num_case, neutro_comp = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-                                       two_variables=False, data2=None, return_neutro_comp=True)
+                                                    two_variables=False, data2=None,
+                                                    return_neutro_comp=True,
+                                                    nc_date_dir=nc_date_dir)
 
             if waf:
                 print(v)
                 print(hpalevel)
                 comp_sf, aux, neutro_comp = CaseComp(data_sf, s, mmonth=min_max_months[s_count], c=c,
                                                      two_variables=False, data2=None,
-                                                     return_neutro_comp=True)
+                                                     return_neutro_comp=True,
+                                                    nc_date_dir=nc_date_dir)
 
 
                 px, py = WAF(neutro_comp, comp_sf, comp_sf.lon, comp_sf.lat, reshape=True, variable='var', hpalevel=hpalevel)
@@ -387,56 +167,22 @@ for v, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], [200,750]):
                 data_sig = None
                 sig = 1
 
-            Plot(comp=comp1 * sig, levels=[-300, -250, -200, -150, -100, -50, -25, 0, 25, 50, 100, 150, 200, 250, 300],
-                 cmap=cbar_t, step1=1,
-                 contour1=True, two_variables=True, comp2=comp1, linewidht2=1,
-                 levels2=[-300, -200, -100, -50, 0, 50, 100, 200, 300],
-                 mapa='hs', significance=False,
-                 title=v.split('_')[0] + ' - ' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-                 name_fig=v.split('_')[0] + s + '_' + cases[c_count] + '_mer_d_w_NSA_HS',
-                 dpi=dpi, save=save, comp_sig=sig, color_sig='k', color_map='grey',
-                 waf=waf, px=px, py=py, data_waf=comp_sf, waf_scale=None, step_waf=4)
+            PlotComposite_wWAF(comp=comp1 * sig, cmap=cbar_t, step1=1,
+                               levels=[-300, -250, -200, -150, -100, -50, -25, 0, 25, 50, 100, 150, 200, 250, 300],
+                               contour1=True, two_variables=True, comp2=comp1, linewidht2=1,
+                               levels2=[-300, -200, -100, -50, 0, 50, 100, 200, 300], #Levels del contour
+                               mapa='hs', significance=False, # No usa los puntos para marcar significancia
+                               title=v.split('_')[0] + ' - ' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+                               name_fig=v.split('_')[0] + s + '_' + cases[c_count] + '_mer_d_w_DMIST',
+                               out_dir=out_dir,
+                               dpi=dpi, save=save, comp_sig=sig, color_sig='k', color_map='grey',
+                               waf=waf, px=px, py=py, data_waf=comp_sf, waf_scale=None, step_waf=4) #WAF
 
             s_count += 1
         c_count += 1
     v_count += 1
 
-# SST -----------------------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------------------------#
-# def Detrend(xrda, dim):
-#     aux = xrda.polyfit(dim=dim, deg=1)
-#     try:
-#         trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients)
-#     except:
-#         trend = xr.polyval(xrda[dim], aux.polyfit_coefficients)
-#     dt = xrda - trend
-#     return dt
-#
-#     # ax.set_xticks(np.arange(50, 270, 30), crs=crs_latlon)
-#     # ax.set_yticks(np.arange(-20, 20, 10), crs=crs_latlon)
-# v_count = 0
-# v = 'sst'
-# data = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
-# data = data.rename({'sst':'var'})
-# data = Detrend(data, 'time')
-# data = data.sel(lon=slice(40, 280), lat=slice(20, -20))
-#
-# c_count = 0
-# for c in cases:
-#     s_count = 0
-#     for s in seasons:
-#         comp1, num_case = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-#                                           two_variables=False)
-#
-#         Plot(comp=comp1, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=False,
-#              two_variables=False, mapa='tropical', significance=False,
-#              title='SST' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-#              name_fig='SST_' + s + '_' + cases[c_count] + '_d_NSA_HS',
-#              dpi=dpi, save=save, out_dir=out_dir_no_sig)
-#
-#         s_count += 1
-#     c_count += 1
-#----------------------------------------------------------------------------------------------------------------------#
+########################################################################################################################
 # Vp y Div ------------------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------------#
 v_from_w = ['div_from_w', 'vp_from_w'] # creadas a partir de windphsere
@@ -450,11 +196,9 @@ def Detrend(xrda, dim):
     return dt
 
 def OrdenarNC_wTime_fromW(data):
-
     newdata = xr.Dataset(
         data_vars=dict(
             var=(['time', 'lat', 'lon'], data['var'][0, :, :, :].values)
-
         ),
         coords=dict(
             lon=(['lon'], data.lon),
@@ -462,11 +206,11 @@ def OrdenarNC_wTime_fromW(data):
             time=(['time'], data.time)
         )
     )
-
     return newdata
 
 data1 = xr.open_dataset(data_dir_era5 + v_from_w[0] + '.nc')
 data1 = Detrend(OrdenarNC_wTime_fromW(data1.rename({'divergence':'var'})), 'time')
+
 data2 = xr.open_dataset(data_dir_era5 + v_from_w[1] + '.nc')
 data2 = Detrend(OrdenarNC_wTime_fromW(data2.rename({'velocity_potential':'var'})), 'time')
 
@@ -480,24 +224,26 @@ for c in cases:
     s_count = 0
     for s in seasons:
         comp1, num_case = CaseComp(data1, s, mmonth=min_max_months[s_count], c=c,
-                                   two_variables=False, data2=None)
+                                   two_variables=False, data2=None,
+                                   nc_date_dir=nc_date_dir)
 
         comp2, num_case = CaseComp(data2, s, mmonth=min_max_months[s_count], c=c,
-                                   two_variables=False, data2=None)
+                                   two_variables=False, data2=None,
+                                   nc_date_dir=nc_date_dir)
 
         comp3, num_case = CaseComp(data3, s, mmonth=min_max_months[s_count], c=c,
-                                   two_variables=False, data2=None)
+                                   two_variables=False, data2=None,
+                                   nc_date_dir=nc_date_dir)
 
-        Plot(comp=comp3, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=True,
-             two_variables=True, comp2=comp2, levels2=np.linspace(-4.5e6, 4.5e6, 13), significance=False,
-             mapa='HS',
-             title='Div200hpa [shade] - VP [cont.]' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
-             name_fig='divp_' + s + '_' + cases[c_count] + '_d_NSA_HS', color_map='grey',
-             dpi=dpi, save=save, linewidht2=.8, out_dir=out_dir_no_sig,
-             third_variable=True, comp3=comp1, levels_contour3=[-1.6e-06, 1.6e-06])
-
-
-
+        PlotComposite_wWAF(comp=comp3, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5],
+                           cmap=cbar_sst, step1=1, contour1=True,
+                           two_variables=True, comp2=comp2, levels2=np.linspace(-4.5e6, 4.5e6, 13),
+                           significance=False,
+                           mapa='HS',
+                           title='SST, Divergence and potential velocity - 200hPa' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+                           name_fig='SSTDivVP_' + s + '_' + cases[c_count] + '_d_DMIST', color_map='grey',
+                           dpi=dpi, save=save, linewidht2=.8, out_dir=out_dir,
+                           third_variable=True, comp3=comp1, levels_contour3=[-1.6e-06, 1.6e-06])
         s_count += 1
     c_count += 1
 
@@ -505,50 +251,47 @@ for c in cases:
 ########################################################################################################################
 # prueba hemisferio
 ########################################################################################################################
-#T y PP con contornos de HGT200
-variables_t_p = ['t_cru_HS_d_w_c_1950-2020_0.25.nc', 'pp_gpcc_HS_d_w_c_1950-2020_0.25.nc']
-variables_ERA5 = ['hgt200_HS_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
-v_count = 0
-plt.rcParams['hatch.linewidth'] = 2
-for v in variables_t_p:
-    data = xr.open_dataset(data_dir_t_pp + v)
-    data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
-    data2 = data2.sel(lat=slice(20, -90))
-    #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
-
-    c_count = 0
-    for c in cases:
-        s_count = 0
-        for s in seasons:
-            comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-                                              two_variables=True, data2=data2)
-
-            data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
-                                       '_' + c + '1950_2020_' + s + '.nc')
-
-            comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
-            sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
-            sig = sig.where(np.isnan(sig['var']), 0)
-
-            if v_count != 0:
-                v_count_sc = 2
-            else:
-                v_count_sc = 0
-
-            #MakeMask(pp, dataname='cluster')
-            Plot(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
-                 two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
-                 mapa='hs', significance=False,
-                 title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-                 name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_HS_mer_d_w',
-                 dpi=dpi, save=save, comp_sig=sig, color_sig='k')
-
-            s_count += 1
-        c_count += 1
-    v_count += 1
-
-
-
+# #T y PP con contornos de HGT200
+# variables_t_p = ['t_cru_HS_d_w_c_1950-2020_0.25.nc', 'pp_gpcc_HS_d_w_c_1950-2020_0.25.nc']
+# variables_ERA5 = ['hgt200_HS_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
+# v_count = 0
+# plt.rcParams['hatch.linewidth'] = 2
+# for v in variables_t_p:
+#     data = xr.open_dataset(data_dir_t_pp + v)
+#     data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
+#     data2 = data2.sel(lat=slice(20, -90))
+#     #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
+#
+#     c_count = 0
+#     for c in cases:
+#         s_count = 0
+#         for s in seasons:
+#             comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+#                                               two_variables=True, data2=data2)
+#
+#             data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
+#                                        '_' + c + '1950_2020_' + s + '.nc')
+#
+#             comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+#             sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+#             sig = sig.where(np.isnan(sig['var']), 0)
+#
+#             if v_count != 0:
+#                 v_count_sc = 2
+#             else:
+#                 v_count_sc = 0
+#
+#             #MakeMask(pp, dataname='cluster')
+#             PlotComposite_wWAF(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
+#                  two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
+#                  mapa='hs', significance=False,
+#                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+#                  name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_HS_mer_d_w',
+#                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
+#
+#             s_count += 1
+#         c_count += 1
+#     v_count += 1
 ########################################################################################################################
 # #T y PP con contornos de HGT200
 # v_count = 0
@@ -589,3 +332,39 @@ for v in variables_t_p:
 #             s_count += 1
 #         c_count += 1
 #     v_count += 1
+# SST -----------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+# def Detrend(xrda, dim):
+#     aux = xrda.polyfit(dim=dim, deg=1)
+#     try:
+#         trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients)
+#     except:
+#         trend = xr.polyval(xrda[dim], aux.polyfit_coefficients)
+#     dt = xrda - trend
+#     return dt
+#
+#     # ax.set_xticks(np.arange(50, 270, 30), crs=crs_latlon)
+#     # ax.set_yticks(np.arange(-20, 20, 10), crs=crs_latlon)
+# v_count = 0
+# v = 'sst'
+# data = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
+# data = data.rename({'sst':'var'})
+# data = Detrend(data, 'time')
+# data = data.sel(lon=slice(40, 280), lat=slice(20, -20))
+#
+# c_count = 0
+# for c in cases:
+#     s_count = 0
+#     for s in seasons:
+#         comp1, num_case = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+#                                           two_variables=False)
+#
+#         Plot(comp=comp1, levels=[-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5], cmap=cbar_sst, step1=1, contour1=False,
+#              two_variables=False, mapa='tropical', significance=False,
+#              title='SST' + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case),
+#              name_fig='SST_' + s + '_' + cases[c_count] + '_d_NSA_HS',
+#              dpi=dpi, save=save, out_dir=out_dir_no_sig)
+#
+#         s_count += 1
+#     c_count += 1
+#----------------------------------------------------------------------------------------------------------------------#
