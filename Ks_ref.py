@@ -15,12 +15,21 @@ import warnings
 warnings.filterwarnings( "ignore", module = "matplotlib\..*" )
 ########################################################################################################################
 data_dir2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
-nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
-out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/KS/'
 
-save = True
+true_dipole = False
+save = False
+dpi=100
 step = 1
 v = 'Ks'; print('\U0001F60D')
+
+if true_dipole:
+    out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/composite/dmi_true_dipole/'
+    nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
+    dmi_index='DMITD'
+else:
+    out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/composite/dmi_standard/'
+    nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
+    dmi_index = 'DMIST'
 # Functions ############################################################################################################
 def CompComp(eta_grad_y, u, index, mmin, mmax):
     data_y_eta = CompositeSimple(original_data=eta_grad_y, index=index,
@@ -41,7 +50,7 @@ def CompComp(eta_grad_y, u, index, mmin, mmax):
 
 def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
          SA=False, dpi=100, save=True, step=1,contourf=True,
-         name_fig='fig', title='title', contour0=True, color_map='k'):
+         name_fig='fig', title='title', contour0=True, color_map='k', out_dir=out_dir):
 
     from numpy import ma
     import matplotlib.pyplot as plt
@@ -64,11 +73,11 @@ def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
                    transform=crs_latlon, colors='green', linewidths=1)
 
     cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
-    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey')
+    #ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey')
     ax.add_feature(cartopy.feature.COASTLINE)
     ax.coastlines(color=color_map, linestyle='-', alpha=1)
     ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
-    ax.set_xticks(np.arange(30, 340, 25), crs=crs_latlon)
+    ax.set_xticks(np.arange(0, 360, 30), crs=crs_latlon)
     ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
@@ -103,59 +112,56 @@ cbar.set_bad(color='white')
 ########################################################################################################################
 # seasons = ("Full_Season",'SON', 'ASO', 'JAS', 'JJA')
 # min_max_months = [[7,11],[9,11], [8,10], [7,9], [6,8]]
-seasons = ['JJA', 'SON']
-min_max_months = [[6, 8], [9, 11]]
+seasons = ['SON']
+min_max_months = [[9, 11]]
 
-cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_neg', 'DMI_pos', 'DMI_un_pos', 'DMI_un_neg',
-         'N34_pos', 'N34_neg', 'N34_un_pos', 'N34_un_neg']
+cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos', 'DMI_un_neg',
+         'N34_un_pos', 'N34_un_neg']
 
 title_case = ['DMI-ENSO simultaneous positive phase ','DMI-ENSO simultaneous negative phase ',
-              'DMI negative phase ', 'DMI positive phase ',
               'DMI pure positive phase ', 'DMI pure negative phase ',
-              'ENSO positive phase ', 'ENSO negative phase ',
               'ENSO pure positive phase ', 'ENSO pure negative phase ']
 
-# Open Data ############################################################################################################
 
-u = xr.open_dataset(data_dir2 + 'u_mer_d_w_world.nc')
+for v in ['UV200', 'UV750']:
+    #open data
+    u = xr.open_dataset(data_dir2 + 'u_' + v + '_w_.nc')
+    eta_grad_y = xr.open_dataset(data_dir2 + 'etay_'+ v +'.nc')
+    eta_grad_y = eta_grad_y.rename({'meridional_gradient_of_absolute_vorticity':'var'})
 
-eta_grad_y = xr.open_dataset(data_dir2 + 'etay.nc')
-eta_grad_y = eta_grad_y.rename({'meridional_gradient_of_absolute_vorticity':'var'})
+    u = u.interp(lon=eta_grad_y.lon.values, lat=eta_grad_y.lat.values)
+    ntime, nlats, nlons = u['var'].shape
+    ########################################################################################################################
+    # Compute, plot and save ###############################################################################################
+    c_cases = 0
+    for c in cases:
+        print(c)
+        count = 0
+        for s in seasons:
+            print(s)
 
-u = u.interp(lon=eta_grad_y.lon.values, lat=eta_grad_y.lat.values)
-ntime, nlats, nlons = u['var'].shape
+            aux = xr.open_dataset(nc_date_dir + '1920_2020_' + s + '.nc')
 
-########################################################################################################################
-# Compute, plot and save ###############################################################################################
-c_cases = 0
-for c in cases:
-    print(c)
+            case = aux[c]
+            aux.close()
+            mmonth = min_max_months[count]
+            mmin = mmonth[0]
+            mmax = mmonth[-1]
 
-    count = 0
-    for s in seasons:
-        print(s)
+            # Ks del composite
+            # usando estado basico de cada "case"
+            comp = CompComp(eta_grad_y=eta_grad_y, u=u,
+                            index=case, mmin=mmin, mmax=mmax)
 
-        aux = xr.open_dataset(nc_date_dir + '1920_2020_' + s + '.nc')
+            if len(comp) != 0:
+                Plot(comp=comp, levels=[2, 3, 4], cmap=cbar,
+                     dpi=dpi, save=save, step=step,
+                     name_fig=v + '_' + c + '_' + s + '_' + '1950_2020_'+ dmi_index,
+                     title=v + ' - ' + title_case[c_cases] + '- ' + '\n' + s + ' ' +
+                           '1950-2020' + '\n' + 'Ks of Composite - ' + dmi_index,
+                     contour0=False, contourf=True, color_map='grey', out_dir=out_dir)
 
-        case = aux[c]
-        aux.close()
-        mmonth = min_max_months[count]
-        mmin = mmonth[0]
-        mmax = mmonth[-1]
+            count += 1
+        c_cases += 1
 
-        #Ks del composite
-        # usando estado basico de cada "case"
-        comp = CompComp(eta_grad_y=eta_grad_y, u=u,
-                        index=case, mmin=mmin, mmax=mmax)
-
-        if len(comp) != 0:
-            Plot(comp=comp, levels=[2,3,4], cmap=cbar,
-                 dpi=200, save=save, step=step,
-                 name_fig=v + '_' + c + '_' + s + '_' + '1950_2020',
-                 title=v + ' - ' +  title_case[c_cases] + '- ' + '\n' + s + ' ' +
-                       '1950-2020' + '\n' + 'Ks of Composite',
-                 contour0=False, contourf=True, color_map='k')
-
-        count += 1
-    c_cases += 1
 ########################################################################################################################

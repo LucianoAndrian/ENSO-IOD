@@ -7,11 +7,10 @@ data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 preproc = False
 compute = False
 RWS = False
-SF = True
+SF = False
 # Requiere de todo el dominio...
 ########################################################################################################################
 if preproc:
-
     dir_files = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/merged/'
     out_dir = data_dir
     # Funciones ################################################################
@@ -32,76 +31,75 @@ if preproc:
 
     #---------------------------------------------------------------------------#
     name_variables = ['u', 'v']
-    v_count=0
 
-    for v in ['UV750', 'UV750']:
-        n_v = name_variables[v_count]
-        data = xr.open_dataset(dir_files + 'ERA5_' + v + '_50-20_mer.nc')
+    for v in ['UV200', 'UV750']:
+        for n_v in name_variables:
+            data = xr.open_dataset(dir_files + 'ERA5_' + v + '_50-20_mer.nc')
+            if n_v == 'u':
+                print('Drop v')
+                data = data.drop('v')
+            elif n_v == 'v':
+                print('Drop u')
+                data = data.drop('u')
 
-        if n_v == 'u':
-            print('Drop v')
-            data = data.drop('v')
-        elif n_v == 'v':
-            print('Drop u')
-            data = data.drop('u')
+            data = data.rename({n_v: 'var'})
+            data = data.rename({'longitude': 'lon'})
+            data = data.rename({'latitude': 'lat'})
 
-        data = data.rename({n_v: 'var'})
-        data = data.rename({'longitude': 'lon'})
-        data = data.rename({'latitude': 'lat'})
-
-        data = Weights(data)
+            data = Weights(data)
         #data = data.sel(lon=slice(30, 340), lat=slice(20, -80))
         #data = Detrend(data, 'time')
 
         # ---------------------------------------------------------------------------#
-        print('to_netcdf...')
+            print('to_netcdf...')
 
-        data.to_netcdf(out_dir + n_v + '_mer_d_w_world_dtr.nc')
-
-
-        v_count += 1
+            data.to_netcdf(out_dir + n_v + '_' + v + '_w_.nc')
 
 ########################################################################################################################
 if compute:
     from windspharm.examples import example_data_path
 
-    ds = xr.open_dataset(example_data_path('uwnd_mean.nc'))
-    uwnd_aux = ds['uwnd']
+    for v in ['UV200', 'UV750']:
+        ds = xr.open_dataset(example_data_path('uwnd_mean.nc'))
+        uwnd_aux = ds['uwnd']
 
-    uwnd = xr.open_dataset(data_dir + 'u_mer_d_w_world.nc')
-    vwnd = xr.open_dataset(data_dir + 'v_mer_d_w_world.nc')
+        uwnd = xr.open_dataset(data_dir + 'u_' + v + '_w_.nc')
+        vwnd = xr.open_dataset(data_dir + 'v_' + v + '_w_.nc')
 
-    uwnd = uwnd.interp(lat=np.linspace(uwnd_aux.latitude.values[0], uwnd_aux.latitude.values[-1], 179),
-                       lon=np.linspace(uwnd_aux.longitude.values[0], uwnd_aux.longitude.values[-1], 359))
-    vwnd = vwnd.interp(lat=np.linspace(uwnd_aux.latitude.values[0], uwnd_aux.latitude.values[-1], 179),
-                       lon=np.linspace(uwnd_aux.longitude.values[0], uwnd_aux.longitude.values[-1], 359))
+        uwnd = uwnd.interp(lat=np.linspace(uwnd_aux.latitude.values[0], uwnd_aux.latitude.values[-1], 179),
+                           lon=np.linspace(uwnd_aux.longitude.values[0], uwnd_aux.longitude.values[-1], 359))
+        vwnd = vwnd.interp(lat=np.linspace(uwnd_aux.latitude.values[0], uwnd_aux.latitude.values[-1], 179),
+                           lon=np.linspace(uwnd_aux.longitude.values[0], uwnd_aux.longitude.values[-1], 359))
 
-    uwnd = uwnd.to_array()
-    vwnd = vwnd.to_array()
+        uwnd = Weights(uwnd)
+        vwnd = Weights(vwnd)
 
-    # Create a VectorWind instance to handle the computations.
-    w = VectorWind(uwnd, vwnd)
+        uwnd = uwnd.to_array()
+        vwnd = vwnd.to_array()
 
-    #### DE A UNO!!! #####
-    # Compute components of rossby wave source: absolute vorticity, divergence,
-    # irrotational (divergent) wind components, gradients of absolute vorticity.
-    eta = w.absolutevorticity()
-    eta.to_netcdf(data_dir + 'eta.nc')
+        # Create a VectorWind instance to handle the computations.
+        w = VectorWind(uwnd, vwnd)
 
-    div = w.divergence()
-    div.to_netcdf(data_dir + 'div_from_w.nc')
+        #### DE A UNO!!! #####
+        # Compute components of rossby wave source: absolute vorticity, divergence,
+        # irrotational (divergent) wind components, gradients of absolute vorticity.
+        eta = w.absolutevorticity()
+        # eta.to_netcdf(data_dir + 'eta.nc')
+        #
+        # div = w.divergence()
+        # div.to_netcdf(data_dir + 'div.nc')
+        #
+        # uchi, vchi = w.irrotationalcomponent()
+        # uchi.to_netcdf(data_dir + 'uchi.nc')
+        # vchi.to_netcdf(data_dir + 'vchi.nc')
 
-    uchi, vchi = w.irrotationalcomponent()
-    uchi.to_netcdf(data_dir + 'uchi.nc')
-    vchi.to_netcdf(data_dir + 'vchi.nc')
+        etax, etay = w.gradient(eta)
+        #etax.to_netcdf(data_dir + 'etax.nc')
+        etay.to_netcdf(data_dir + 'etay_' + v + '.nc')
 
-    etax, etay = w.gradient(eta)
-    etax.to_netcdf(data_dir + 'etax.nc')
-    etay.to_netcdf(data_dir + 'etay.nc')
-
-    sf, vp = w.sfvp()
-    sf.to_netcdf(data_dir + 'sf.nc')
-    vp.to_netcdf(data_dir + 'vp_from_w.nc')
+        # sf, vp = w.sfvp()
+        # sf.to_netcdf(data_dir + 'sf.nc')
+        # vp.to_netcdf(data_dir + 'vp.nc')
 ########################################################################################################################
 
 if RWS:
