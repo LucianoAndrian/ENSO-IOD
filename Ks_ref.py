@@ -16,9 +16,9 @@ warnings.filterwarnings( "ignore", module = "matplotlib\..*" )
 ########################################################################################################################
 data_dir2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 
-true_dipole = False
-save = False
-dpi=100
+true_dipole = True
+save = True
+dpi = 300
 step = 1
 v = 'Ks'; print('\U0001F60D')
 
@@ -156,7 +156,7 @@ for v in ['UV200', 'UV750']:
             if len(comp) != 0:
                 Plot(comp=comp, levels=[2, 3, 4], cmap=cbar,
                      dpi=dpi, save=save, step=step,
-                     name_fig=v + '_' + c + '_' + s + '_' + '1950_2020_'+ dmi_index,
+                     name_fig='KS' + v + '_' + c + '_' + s + '_' + '1950_2020_'+ dmi_index,
                      title=v + ' - ' + title_case[c_cases] + '- ' + '\n' + s + ' ' +
                            '1950-2020' + '\n' + 'Ks of Composite - ' + dmi_index,
                      contour0=False, contourf=True, color_map='grey', out_dir=out_dir)
