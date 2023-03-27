@@ -56,8 +56,9 @@ if fs:
     s = 666
     print('Full Season')
     Neutral, DMI_sim_pos, DMI_sim_neg, DMI_un_pos, DMI_un_neg, N34_un_pos, N34_un_neg, DMI_pos, \
-    DMI_neg, N34_pos, N34_neg = MultipleComposite(var=dmi_aux, n34=n34, dmi=dmi, season=s, start=i,
-                                                  full_season=full_season, compute_composite=False)
+    DMI_neg, N34_pos, N34_neg, DMI_pos_N34_neg, DMI_neg_N34_pos = \
+        MultipleComposite(var=dmi_aux, n34=n34, dmi=dmi, season=s, start=i, full_season=full_season,
+                          compute_composite=False)
 
     ds = xr.Dataset(
         data_vars={
@@ -83,8 +84,9 @@ else:
     for s in seasons:
         print(seasons_name[s_count])
         Neutral, DMI_sim_pos, DMI_sim_neg, DMI_un_pos, DMI_un_neg, N34_un_pos, N34_un_neg, DMI_pos, \
-        DMI_neg, N34_pos, N34_neg = MultipleComposite(var=dmi_aux, n34=n34, dmi=dmi, season=s - 1, start=i,
-                                                      full_season=full_season, compute_composite=False)
+        DMI_neg, N34_pos, N34_neg, DMI_pos_N34_neg, DMI_neg_N34_pos =\
+            MultipleComposite(var=dmi_aux, n34=n34, dmi=dmi, season=s - 1, start=i, full_season=full_season,
+                              compute_composite=False)
 
         ds = xr.Dataset(
             data_vars={
@@ -124,8 +126,9 @@ if fs:
     s = 666
     print('Full Season')
     Neutral, DMI_sim_pos, DMI_sim_neg, DMI_un_pos, DMI_un_neg, N34_un_pos, N34_un_neg, DMI_pos, \
-    DMI_neg, N34_pos, N34_neg = MultipleComposite(var=dmi_aux, n34=n34, dmi=dmi, season=s, start=i,
-                                                  full_season=full_season, compute_composite=False)
+    DMI_neg, N34_pos, N34_neg, DMI_pos_N34_neg, DMI_neg_N34_pos =\
+        MultipleComposite(var=dmi_aux, n34=n34, dmi=dmi, season=s, start=i, full_season=full_season,
+                          compute_composite=False)
 
     ds = xr.Dataset(
         data_vars={
@@ -151,8 +154,9 @@ else:
     for s in seasons:
         print(seasons_name[s_count])
         Neutral, DMI_sim_pos, DMI_sim_neg, DMI_un_pos, DMI_un_neg, N34_un_pos, N34_un_neg, DMI_pos, \
-        DMI_neg, N34_pos, N34_neg = MultipleComposite(var=dmi_aux, n34=n34, dmi=dmi, season=s - 1, start=i,
-                                                      full_season=full_season, compute_composite=False)
+        DMI_neg, N34_pos, N34_neg, DMI_pos_N34_neg, DMI_neg_N34_pos = \
+            MultipleComposite(var=dmi_aux, n34=n34, dmi=dmi, season=s - 1, start=i, full_season=full_season,
+                              compute_composite=False)
 
         ds = xr.Dataset(
             data_vars={

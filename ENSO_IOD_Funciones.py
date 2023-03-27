@@ -814,9 +814,28 @@ def MultipleComposite(var, n34, dmi, season,start = 1920, full_season=False, com
         try:
             # Simultaneos events
             DMI_sim = DMI.where(DMI.Años.isin(sim_events)).dropna()
-            #N34_sim = N34.where(N34.Años.isin(sim_events)).dropna()
-            DMI_sim_pos, DMI_sim_neg = ClassifierEvents(DMI_sim)
-            #N34_sim_pos, N34_sim_neg = ClassifierEvents(N34_sim)
+            N34_sim = N34.where(N34.Años.isin(sim_events)).dropna()
+            DMI_sim_pos_aux, DMI_sim_neg_aux = ClassifierEvents(DMI_sim)
+            N34_sim_pos_aux, N34_sim_neg_aux = ClassifierEvents(N34_sim)
+
+
+            # Existen eventos simultaneos de signo opuesto?
+            # cuales?
+            sim_pos = np.intersect1d(DMI_sim_pos_aux, N34_sim_pos_aux)
+            sim_pos2 = np.intersect1d(sim_pos, DMI_sim_pos_aux)
+            DMI_sim_pos = sim_pos2
+
+            sim_neg = np.intersect1d(DMI_sim_neg_aux, N34_sim_neg_aux)
+            sim_neg2 = np.intersect1d(DMI_sim_neg_aux, sim_neg)
+            DMI_sim_neg = sim_neg2
+
+
+            if (len(sim_events) != (len(sim_pos) + len(sim_neg))):
+                dmi_pos_n34_neg = np.intersect1d(DMI_sim_pos_aux, N34_sim_neg_aux)
+                dmi_neg_n34_pos = np.intersect1d(DMI_sim_neg_aux, N34_sim_pos_aux)
+            else:
+                dmi_pos_n34_neg = None
+                dmi_neg_n34_pos = None
 
             # Unique events
             DMI_un = DMI.where(-DMI.Años.isin(sim_events)).dropna()
@@ -877,6 +896,9 @@ def MultipleComposite(var, n34, dmi, season,start = 1920, full_season=False, com
     N34_pos = check(N34_pos)
     N34_neg = check(N34_neg)
 
+    DMI_pos_N34_neg = check(dmi_pos_n34_neg)
+    DMI_neg_N34_pos = check(dmi_neg_n34_pos)
+
     All_neutral = check(All_neutral)
 
 
@@ -890,7 +912,8 @@ def MultipleComposite(var, n34, dmi, season,start = 1920, full_season=False, com
                list(set(DMI_un_pos)), list(set(DMI_un_neg)),\
                list(set(N34_un_pos)), list(set(N34_un_neg)),\
                list(DMI_pos), list(DMI_neg), \
-               list(N34_pos), list(N34_neg)
+               list(N34_pos), list(N34_neg), \
+               list(DMI_pos_N34_neg), list(DMI_neg_N34_pos)
 
 def xrFieldTimeDetrend(xrda, dim, deg=1):
     # detrend along a single dimension
@@ -939,6 +962,7 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, return_neutro_
         aux.close()
 
         case_num = len(case.values[np.where(~np.isnan(case.values))])
+        case_num2 = case.values[np.where(~np.isnan(case.values))]
 
         neutro_comp = CompositeSimple(original_data=data, index=neutro, mmin=mmin, mmax=mmax)
         data_comp = CompositeSimple(original_data=data, index=case, mmin=mmin, mmax=mmax)
