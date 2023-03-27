@@ -6,9 +6,6 @@ import glob
 import math
 from datetime import datetime
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
-########################################################################################################################
-dmi_true_dipole = True
-v = 'hgt750'
 # Functions ############################################################################################################
 def CompositeSimple(original_data, index, mmin, mmax):
     def is_months(month, mmin, mmax):
@@ -64,162 +61,155 @@ def NumberPerts(data_to_concat, neutro, num = 0):
     return M
 ########################################################################################################################
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
-
-if dmi_true_dipole:
-    nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
-    out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMI_true_dipole/'
-else:
-    nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
-    out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/'
-
-#----------------------------------------------------------------------------------------------------------------------#
+########################################################################################################################
 seasons = ['SON']
-periodos = [['50','20']]
-
-min_max_months = [[9,11]]
-#----------------------------------------------------------------------------------------------------------------------#
-
-# cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_neg',
-#          'DMI_pos', 'DMI_un_pos', 'DMI_un_neg',
-#         'N34_pos', 'N34_neg', 'N34_un_pos', 'N34_un_neg']
-
+periodos = [['50', '20']]
+min_max_months = [[9, 11]]
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
 ########################################################################################################################
+for dmi_true_dipole in ['True', 'False']:
+    if dmi_true_dipole:
+        nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
+        out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMI_true_dipole/'
+    else:
+        nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
+        out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/'
 
-print('Variable: ' + v)
+    for v in ['hgt200', 'hgt750']:
 
-#control variables!!! (algunas ya no estan disponibles)
-if v == 'hgt200':
-    ruta = data_dir
-    data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
+        print('Variable: ' + v + ', dmi_true_dipole=' + str(dmi_true_dipole))
 
-elif v == 'hgt750':
-    ruta = data_dir
-    data = xr.open_dataset(ruta + v + '_mer_d_w.nc')
-elif v == 'vp':
-    ruta = data_dir
-    data = xr.open_dataset(ruta + v + '_from_w.nc')
-elif v == 'div200':
-    ruta = data_dir
-    data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
-else:
-     print('que es esto <<' + v + '>> ?!!!')
-     from sys import exit
-     exit(1)
-
-data = data.interp(lat=np.arange(-80, 20,0.5)[::-1], lon=np.arange(0,360,0.5))
-
-for c in cases:  
-    print(c)
-    count = 0
-    for s in seasons:
-        print(s)
-
-        # si la proxima tenga menos de 10000 permutaciones
-        # no se sobreescribirian todas
-        files = glob.glob('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_comps/' + '*.nc')
-        if len(files) != 0:
-            for f in files:
-                try:
-                    os.remove(f)
-                except:
-                    print('Error: ' + f)
-
-        mmonth = min_max_months[count]
-
-
-        def PermuDatesComposite(n, data=data, mmonth=mmonth):
-            mmin = mmonth[0]
-            mmax = mmonth[-1]
-            rn = np.random.RandomState(616)
-
-            for a in n:
-                dates_rn = rn.permutation(neutro_concat)
-                neutro_new = dates_rn[0:len(neutro)]
-                data_new = dates_rn[len(neutro):]
-
-                neutro_comp = CompositeSimple(original_data=data, index=neutro_new,
-                                              mmin=mmin, mmax=mmax)
-                data_comp = CompositeSimple(original_data=data, index=data_new,
-                                            mmin=mmin, mmax=mmax)
-
-                if (len(data_comp) != 0):
-                    if a == n[0]:
-                        comp = data_comp - neutro_comp
-                        comp = comp.expand_dims(time=[a])
-                        comp_concat = comp
-                    else:
-                        comp = data_comp - neutro_comp
-                        comp = comp.expand_dims(time=[a])
-                        try:
-                            comp_concat = xr.concat([comp_concat, comp], dim='time')
-                        except:
-                            if a != n[0]:
-                                comp_concat = comp
-                else:
-                    next
-
-            comp_concat.to_netcdf('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_comps/' + 'Comps_' +
-                                  str(int(a)) + '.nc')
-            del comp
-            del data_comp
-            del neutro_new
-            del comp_concat
-
-        # Fechas de los eventos IODS y Ninios detectados a partir de ERSSTv5 en 1920-2020
-        aux = xr.open_dataset(nc_date_dir + '1920_2020_' + s + '.nc')
-
-        neutro = aux.Neutral
-        data_to_concat = aux[c]
-        aux.close()
-
-        M = NumberPerts(data_to_concat, neutro, 0)
-
-        if (data_to_concat[0] != 0):
-            neutro_concat = np.concatenate([neutro, data_to_concat])
-
-            hour = datetime.now().hour
-            if (hour > 17) | (hour < 8):
-                n_thread = 30
-                pool = ThreadPool(30)
-            else:
-                n_thread = 15
-                pool = ThreadPool(15)
-
-            print('Threads: ', n_thread)
-
-            pool.map(PermuDatesComposite, [n for n in M])
-            pool.close()
-
-            # NO chunks! acumula RAM en cada ciclo. ~14gb en 3 ciclos...
-            aux = xr.open_mfdataset('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_comps/Comps_*.nc',
-                                    parallel=True
-                                    ,  # chunks={'time': -1},  # 'lat':147,'lon':240},
-                                    combine='nested', concat_dim="time", coords="different",
-                                    compat="broadcast_equals")
-            # aux = aux['var'].astype(np.float32)
-            print('quantiles')
-            aux = aux.chunk({'time': -1})
-            qt = aux.quantile([.05, .95], dim='time', interpolation='linear')
-            qt.to_netcdf(out_dir + v + '_' + c + '1950_2020_' + s + '.nc', compute=True)
-
-            # if name == 'ERA20':
-            #     qt.to_netcdf('/datos/luciano.andrian/ncfiles/nc_quantiles/' + v + '_' + c + '_19' + i[0] +
-            #                  '_19' + i[1] + '_' + s + '.nc', compute=True)
-            # else:
-            #     qt.to_netcdf('/datos/luciano.andrian/ncfiles/nc_quantiles/' + v + '_' + c + '_19' + i[0] +
-            #                  '_20' + i[1] + '_' + s + '.nc', compute=True)
-
-            aux.close()
-            del qt
+        # control variables!!! (algunas ya no estan disponibles)
+        if v == 'hgt200':
+            ruta = data_dir
+            data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
+        elif v == 'hgt750':
+            ruta = data_dir
+            data = xr.open_dataset(ruta + v + '_mer_d_w.nc')
+        elif v == 'vp':
+            ruta = data_dir
+            data = xr.open_dataset(ruta + v + '_from_w.nc')
+        elif v == 'div200':
+            ruta = data_dir
+            data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
         else:
-            print('no ' + c)
+            print('que es esto <<' + v + '>> ?!!!')
+            from sys import exit
+            exit(1)
 
-    count += 1
+        data = data.interp(lat=np.arange(-80, 20, 0.5)[::-1], lon=np.arange(0, 360, 0.5))
+
+        for c in cases:
+            print(c)
+            count = 0
+            for s in seasons:
+                print(s)
+
+                # si la proxima tenga menos de 10000 permutaciones
+                # no se sobreescribirian todas
+                files = glob.glob('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_comps/' + '*.nc')
+                if len(files) != 0:
+                    for f in files:
+                        try:
+                            os.remove(f)
+                        except:
+                            print('Error: ' + f)
+
+                mmonth = min_max_months[count]
+
+
+                def PermuDatesComposite(n, data=data, mmonth=mmonth):
+                    mmin = mmonth[0]
+                    mmax = mmonth[-1]
+                    rn = np.random.RandomState(616)
+
+                    for a in n:
+                        dates_rn = rn.permutation(neutro_concat)
+                        neutro_new = dates_rn[0:len(neutro)]
+                        data_new = dates_rn[len(neutro):]
+
+                        neutro_comp = CompositeSimple(original_data=data, index=neutro_new,
+                                                      mmin=mmin, mmax=mmax)
+                        data_comp = CompositeSimple(original_data=data, index=data_new,
+                                                    mmin=mmin, mmax=mmax)
+
+                        if (len(data_comp) != 0):
+                            if a == n[0]:
+                                comp = data_comp - neutro_comp
+                                comp = comp.expand_dims(time=[a])
+                                comp_concat = comp
+                            else:
+                                comp = data_comp - neutro_comp
+                                comp = comp.expand_dims(time=[a])
+                                try:
+                                    comp_concat = xr.concat([comp_concat, comp], dim='time')
+                                except:
+                                    if a != n[0]:
+                                        comp_concat = comp
+                        else:
+                            next
+
+                    comp_concat.to_netcdf('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_comps/' + 'Comps_' +
+                                          str(int(a)) + '.nc')
+                    del comp
+                    del data_comp
+                    del neutro_new
+                    del comp_concat
+
+
+                # Fechas de los eventos IODS y Ninios detectados a partir de ERSSTv5 en 1920-2020
+                aux = xr.open_dataset(nc_date_dir + '1920_2020_' + s + '.nc')
+
+                neutro = aux.Neutral
+                data_to_concat = aux[c]
+                aux.close()
+
+                M = NumberPerts(data_to_concat, neutro, 0)
+
+                if (data_to_concat[0] != 0):
+                    neutro_concat = np.concatenate([neutro, data_to_concat])
+
+                    hour = datetime.now().hour
+                    if (hour > 19) | (hour < 8):
+                        n_thread = 30
+                        pool = ThreadPool(30)
+                    else:
+                        n_thread = 15
+                        pool = ThreadPool(15)
+
+                    print('Threads: ', n_thread)
+
+                    pool.map(PermuDatesComposite, [n for n in M])
+                    pool.close()
+
+                    # NO chunks! acumula RAM en cada ciclo. ~14gb en 3 ciclos...
+                    aux = xr.open_mfdataset('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_comps/Comps_*.nc',
+                                            parallel=True
+                                            ,  # chunks={'time': -1},  # 'lat':147,'lon':240},
+                                            combine='nested', concat_dim="time", coords="different",
+                                            compat="broadcast_equals")
+                    # aux = aux['var'].astype(np.float32)
+                    print('quantiles')
+                    aux = aux.chunk({'time': -1})
+                    qt = aux.quantile([.05, .95], dim='time', interpolation='linear')
+                    qt.to_netcdf(out_dir + v + '_' + c + '1950_2020_' + s + '.nc', compute=True)
+
+                    # if name == 'ERA20':
+                    #     qt.to_netcdf('/datos/luciano.andrian/ncfiles/nc_quantiles/' + v + '_' + c + '_19' + i[0] +
+                    #                  '_19' + i[1] + '_' + s + '.nc', compute=True)
+                    # else:
+                    #     qt.to_netcdf('/datos/luciano.andrian/ncfiles/nc_quantiles/' + v + '_' + c + '_19' + i[0] +
+                    #                  '_20' + i[1] + '_' + s + '.nc', compute=True)
+
+                    aux.close()
+                    del qt
+                else:
+                    print('no ' + c)
+
+            count += 1
+    print('done dmi_true_dipole=' + str(dmi_true_dipole))
+print('done')
 ########################################################################################################################
-print('done!')
-
-
 ########################################################################################################################
 # Para setear otras variables y periodos
 ########################################################################################################################
