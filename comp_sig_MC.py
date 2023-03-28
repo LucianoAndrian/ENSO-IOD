@@ -67,7 +67,7 @@ periodos = [['50', '20']]
 min_max_months = [[9, 11]]
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
 ########################################################################################################################
-for dmi_true_dipole in ['True', 'False']:
+for dmi_true_dipole in [True, False]:
     if dmi_true_dipole:
         nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
         out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMI_true_dipole/'

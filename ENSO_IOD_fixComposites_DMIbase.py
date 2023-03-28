@@ -23,8 +23,8 @@ data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/composite/dmi_standard/'
 
 #Plot
-save = False
-dpi = 100
+save = True
+dpi = 300
 sig = True
 waf = True
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/' # resultados de MC
