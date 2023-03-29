@@ -111,7 +111,7 @@ data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
 data = data.sel(L=[0.5, 1.5, 2.5, 3.5]) # Solo leads 0 1 2 3
 data['L'] = [0,1,2,3]
 data = xr.decode_cf(fix_calendar(data)) # corrigiendo fechas
-data = data.sel(lon=slice(30, 340), lat=slice(-80, 20), P=200)
+data = data.sel(lat=slice(-80, 20), P=200)
 data = data.drop('P')
 #data = data.drop('Z')
 
@@ -173,7 +173,7 @@ data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
 data = data.sel(L=[0.5, 1.5, 2.5, 3.5]) # Solo leads 0 1 2 3
 data['L'] = [0,1,2,3]
 data = xr.decode_cf(fix_calendar(data)) # corrigiendo fechas
-data = data.sel(lon=slice(30, 340), lat=slice(-80, 20), P=200)
+data = data.sel(lat=slice(-80, 20), P=200)
 data = data.drop('P')
 data = data.drop('Z')
 

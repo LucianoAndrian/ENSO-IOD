@@ -122,7 +122,7 @@ data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
 data = data.sel(L=[0.5, 1.5, 2.5, 3.5]) # Solo leads 0 1 2 3
 data['L'] = [0,1,2,3]
 data = xr.decode_cf(fix_calendar(data)) # corrigiendo fechas
-data = data.sel(lon=slice(50, 300), lat=slice(-20, 20))
+data = data.sel(lat=slice(-80, 20))
 
 #media movil de 3 meses para separar en estaciones
 data = data.rolling(time=3, center=True).mean()
@@ -133,34 +133,34 @@ data_1999_2011 = data.sel(time=data.time.dt.year.isin(np.linspace(1999,2011,13))
 
 #---------------------- Climatologias, anomalias y detrend por ESTACIONES JJA, JAS, ASO y SON -------------------------#
 #--- JJA --------------------------------------------------------------------------------------------------------------#
-jja_clim_82_98, jja_clim_99_11, jja_anom_82_98, jja_anom_99_11 = \
-    TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 7)
-jja_anom_82_98_detrend, jja_anom_99_11_detrend = \
-    Detrend_Seasons(jja_anom_82_98, jja_anom_99_11, 7)
-
-jja_hindcast_detrend = xr.concat([jja_anom_82_98_detrend, jja_anom_99_11_detrend], dim='time')
-
-jja_clim_99_11 = jja_clim_99_11.load()
-
-#--- JAS --------------------------------------------------------------------------------------------------------------#
-jas_clim_82_98, jas_clim_99_11, jas_anom_82_98, jas_anom_99_11 = \
-    TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 8)
-jas_anom_82_98_detrend, jas_anom_99_11_detrend = \
-    Detrend_Seasons(jas_anom_82_98, jas_anom_99_11, 8)
-
-jas_hindcast_detrend = xr.concat([jas_anom_82_98_detrend, jas_anom_99_11_detrend], dim='time')
-
-jas_clim_99_11 = jas_clim_99_11.load()
-
-#--- ASO --------------------------------------------------------------------------------------------------------------#
-aso_clim_82_98, aso_clim_99_11, aso_anom_82_98, aso_anom_99_11 = \
-    TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 9)
-aso_anom_82_98_detrend, aso_anom_99_11_detrend = \
-    Detrend_Seasons(aso_anom_82_98, aso_anom_99_11, 9)
-
-aso_hindcast_detrend = xr.concat([aso_anom_82_98_detrend, aso_anom_99_11_detrend], dim='time')
-
-aso_clim_99_11 = aso_clim_99_11.load()
+# jja_clim_82_98, jja_clim_99_11, jja_anom_82_98, jja_anom_99_11 = \
+#     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 7)
+# jja_anom_82_98_detrend, jja_anom_99_11_detrend = \
+#     Detrend_Seasons(jja_anom_82_98, jja_anom_99_11, 7)
+#
+# jja_hindcast_detrend = xr.concat([jja_anom_82_98_detrend, jja_anom_99_11_detrend], dim='time')
+#
+# jja_clim_99_11 = jja_clim_99_11.load()
+#
+# #--- JAS --------------------------------------------------------------------------------------------------------------#
+# jas_clim_82_98, jas_clim_99_11, jas_anom_82_98, jas_anom_99_11 = \
+#     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 8)
+# jas_anom_82_98_detrend, jas_anom_99_11_detrend = \
+#     Detrend_Seasons(jas_anom_82_98, jas_anom_99_11, 8)
+#
+# jas_hindcast_detrend = xr.concat([jas_anom_82_98_detrend, jas_anom_99_11_detrend], dim='time')
+#
+# jas_clim_99_11 = jas_clim_99_11.load()
+#
+# #--- ASO --------------------------------------------------------------------------------------------------------------#
+# aso_clim_82_98, aso_clim_99_11, aso_anom_82_98, aso_anom_99_11 = \
+#     TwoClim_Anom_Seasons(data_1982_1998, data_1999_2011, 9)
+# aso_anom_82_98_detrend, aso_anom_99_11_detrend = \
+#     Detrend_Seasons(aso_anom_82_98, aso_anom_99_11, 9)
+#
+# aso_hindcast_detrend = xr.concat([aso_anom_82_98_detrend, aso_anom_99_11_detrend], dim='time')
+#
+# aso_clim_99_11 = aso_clim_99_11.load()
 
 #--- SON --------------------------------------------------------------------------------------------------------------#
 son_clim_82_98, son_clim_99_11, son_anom_82_98, son_anom_99_11 = \
@@ -189,54 +189,54 @@ data = data.sel(lon=slice(50, 300), lat=slice(-20, 20))
 #media movil de 3 meses para separar en estaciones
 data = data.rolling(time=3, center=True).mean()
 #------------------------------ Anomalias y detrend por ESTACIONES JJA, JAS, ASO y SON --------------------------------#
-jja_rt_detrend = Anom_Detrend_SeasonRealTime(data, jja_clim_99_11, 7)
-jas_rt_detrend = Anom_Detrend_SeasonRealTime(data, jas_clim_99_11, 8)
-aso_rt_detrend = Anom_Detrend_SeasonRealTime(data, aso_clim_99_11, 9)
+# jja_rt_detrend = Anom_Detrend_SeasonRealTime(data, jja_clim_99_11, 7)
+# jas_rt_detrend = Anom_Detrend_SeasonRealTime(data, jas_clim_99_11, 8)
+# aso_rt_detrend = Anom_Detrend_SeasonRealTime(data, aso_clim_99_11, 9)
 son_rt_detrend = Anom_Detrend_SeasonRealTime(data, son_clim_99_11, 10)
 
 # Indices para todos los r y L por estaciones ##########################################################################
-jja_total = xr.concat([jja_hindcast_detrend, jja_rt_detrend], dim='time')
-jas_total = xr.concat([jas_hindcast_detrend, jas_rt_detrend], dim='time')
-aso_total = xr.concat([aso_hindcast_detrend, aso_rt_detrend], dim='time')
+# jja_total = xr.concat([jja_hindcast_detrend, jja_rt_detrend], dim='time')
+# jas_total = xr.concat([jas_hindcast_detrend, jas_rt_detrend], dim='time')
+# aso_total = xr.concat([aso_hindcast_detrend, aso_rt_detrend], dim='time')
 son_total = xr.concat([son_hindcast_detrend, son_rt_detrend], dim='time')
 
 # save totals ---------------------------------------------------------------------------------------------------------#
 # Se usan en las composiciones.
-jja_total.to_netcdf('/pikachu/datos/luciano.andrian/cases_fields/sst_jja.nc')
-jas_total.to_netcdf('/pikachu/datos/luciano.andrian/cases_fields/sst_jas.nc')
-aso_total.to_netcdf('/pikachu/datos/luciano.andrian/cases_fields/sst_aso.nc')
+# jja_total.to_netcdf('/pikachu/datos/luciano.andrian/cases_fields/sst_jja.nc')
+# jas_total.to_netcdf('/pikachu/datos/luciano.andrian/cases_fields/sst_jas.nc')
+# aso_total.to_netcdf('/pikachu/datos/luciano.andrian/cases_fields/sst_aso.nc')
 son_total.to_netcdf('/pikachu/datos/luciano.andrian/cases_fields/sst_son.nc')
 #----------------------------------------------------------------------------------------------------------------------#
 # Niño 3.4
-n34_jja = jja_total.sel(lat=slice(-4, 4), lon=slice(190, 240)).mean(['lon', 'lat'])
-n34_jas = jas_total.sel(lat=slice(-4, 4), lon=slice(190, 240)).mean(['lon', 'lat'])
-n34_aso = aso_total.sel(lat=slice(-4, 4), lon=slice(190, 240)).mean(['lon', 'lat'])
+# n34_jja = jja_total.sel(lat=slice(-4, 4), lon=slice(190, 240)).mean(['lon', 'lat'])
+# n34_jas = jas_total.sel(lat=slice(-4, 4), lon=slice(190, 240)).mean(['lon', 'lat'])
+# n34_aso = aso_total.sel(lat=slice(-4, 4), lon=slice(190, 240)).mean(['lon', 'lat'])
 n34_son = son_total.sel(lat=slice(-4, 4), lon=slice(190, 240)).mean(['lon', 'lat'])
 
-n34_jja.to_netcdf(out_dir + 'N34_JJA_Leads_r_CFSv2.nc')
-n34_jas.to_netcdf(out_dir + 'N34_JAS_Leads_r_CFSv2.nc')
-n34_aso.to_netcdf(out_dir + 'N34_ASO_Leads_r_CFSv2.nc')
+# n34_jja.to_netcdf(out_dir + 'N34_JJA_Leads_r_CFSv2.nc')
+# n34_jas.to_netcdf(out_dir + 'N34_JAS_Leads_r_CFSv2.nc')
+# n34_aso.to_netcdf(out_dir + 'N34_ASO_Leads_r_CFSv2.nc')
 n34_son.to_netcdf(out_dir + 'N34_SON_Leads_r_CFSv2.nc')
 
 # IODW, IODE --> DMI
-iodw = jja_total.sel(lon=slice(50, 70), lat=slice(-10, 10)).mean(['lon', 'lat'])
-iode = jja_total.sel(lon=slice(90, 110), lat=slice(-10, 0)).mean(['lon', 'lat'])
-dmi_jja = iodw - iode
-
-iodw = jas_total.sel(lon=slice(50, 70), lat=slice(-10, 10)).mean(['lon', 'lat'])
-iode = jas_total.sel(lon=slice(90, 110), lat=slice(-10, 0)).mean(['lon', 'lat'])
-dmi_jas = iodw - iode
-
-iodw = aso_total.sel(lon=slice(50, 70), lat=slice(-10, 10)).mean(['lon', 'lat'])
-iode = aso_total.sel(lon=slice(90, 110), lat=slice(-10, 0)).mean(['lon', 'lat'])
-dmi_aso = iodw - iode
+# iodw = jja_total.sel(lon=slice(50, 70), lat=slice(-10, 10)).mean(['lon', 'lat'])
+# iode = jja_total.sel(lon=slice(90, 110), lat=slice(-10, 0)).mean(['lon', 'lat'])
+# dmi_jja = iodw - iode
+#
+# iodw = jas_total.sel(lon=slice(50, 70), lat=slice(-10, 10)).mean(['lon', 'lat'])
+# iode = jas_total.sel(lon=slice(90, 110), lat=slice(-10, 0)).mean(['lon', 'lat'])
+# dmi_jas = iodw - iode
+#
+# iodw = aso_total.sel(lon=slice(50, 70), lat=slice(-10, 10)).mean(['lon', 'lat'])
+# iode = aso_total.sel(lon=slice(90, 110), lat=slice(-10, 0)).mean(['lon', 'lat'])
+# dmi_aso = iodw - iode
 
 iodw = son_total.sel(lon=slice(50, 70), lat=slice(-10, 10)).mean(['lon', 'lat'])
 iode = son_total.sel(lon=slice(90, 110), lat=slice(-10, 0)).mean(['lon', 'lat'])
 dmi_son = iodw - iode
 
-dmi_jja.to_netcdf(out_dir + 'DMI_JJA_Leads_r_CFSv2.nc')
-dmi_jas.to_netcdf(out_dir + 'DMI_JAS_Leads_r_CFSv2.nc')
-dmi_aso.to_netcdf(out_dir + 'DMI_ASO_Leads_r_CFSv2.nc')
+# dmi_jja.to_netcdf(out_dir + 'DMI_JJA_Leads_r_CFSv2.nc')
+# dmi_jas.to_netcdf(out_dir + 'DMI_JAS_Leads_r_CFSv2.nc')
+# dmi_aso.to_netcdf(out_dir + 'DMI_ASO_Leads_r_CFSv2.nc')
 dmi_son.to_netcdf(out_dir + 'DMI_SON_Leads_r_CFSv2.nc')
 ########################################################################################################################
