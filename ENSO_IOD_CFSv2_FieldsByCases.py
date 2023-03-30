@@ -76,147 +76,11 @@ cbar_hgt.set_under('#012A52')
 cbar_hgt.set_bad(color='white')
 
 ########################################################################################################################
-# Prec #################################################################################################################
-# HINDCAST para climatología ------------------------------------------------------------------------------------------#
-try:
-    data = xr.open_dataset(out_data_dir + 'prec_data_full.nc')
-except:
-    files = SelectNMMEFiles(model_name='NCEP-CFSv2', variable='prec',
-                            dir='/pikachu/datos/osman/nmme/monthly/hindcast/', All=True)
-    files = sorted(files, key=lambda x: x.split()[0])
-
-    # abriendo todos los archivos
-    data = xr.open_mfdataset(files, decode_times=False)  # xr no entiende la codificacion de Leads, r y las fechas
-    data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
-    data = data.sel(L=[0.5, 1.5, 2.5, 3.5])  # Solo leads 0 1 2 3
-    data['L'] = [0, 1, 2, 3]
-    data = xr.decode_cf(fix_calendar(data))  # corrigiendo fechas
-    data = data.sel(lon=slice(275, 330), lat=slice(-60, 15))
-    data = data.sel(r=slice(1, 24))
-    data = data.rolling(time=3, center=True).mean()
-    #data.to_netcdf(out_data_dir + 'prec_data_full.nc')
-    data = data.compute()
-#----------------------------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------------------------#
+# HGT ##################################################################################################################
 # Composite
-levels = np.linspace(-30, 30, 13)
-levels_clim = np.linspace(0,150,11)
-
-ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=False,
-                     data=data,
-                     cases=cases, bin_limits=bin_limits,
-                     bins_by_cases_dmi=bins_by_cases_dmi,
-                     bins_by_cases_n34=bins_by_cases_n34,
-                     cases_dir=cases_dir, dates_dir=dates_dir,
-                     levels_main=levels, cbar_main=cbar_pp,
-                     levels_clim=levels_clim, cbar_clim='terrain_r',
-                     title_var='Prec', name_fig='prec', dpi=dpi, save=save,
-                     out_dir=out_dir)
-
-# Signal-to-Noise ratio
-levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
-
-ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=True,
-                     data=data,
-                     cases=cases, bin_limits=bin_limits,
-                     bins_by_cases_dmi=bins_by_cases_dmi,
-                     bins_by_cases_n34=bins_by_cases_n34,
-                     cases_dir=cases_dir, dates_dir=dates_dir,
-                     levels_main=levels, cbar_main=cbar_snr,
-                     levels_clim=levels_clim, cbar_clim='terrain_r',
-                     title_var='Prec', name_fig='prec', dpi=dpi, save=save,
-                     out_dir=out_dir)
-
-########################################################################################################################
-# Temp #################################################################################################################
-# HINDCAST para climatología ------------------------------------------------------------------------------------------#
-try:
-    data = xr.open_dataset(out_data_dir + 'temp_data_full.nc')
-except:
-    files = SelectNMMEFiles(model_name='NCEP-CFSv2', variable='tref',
-                            dir='/pikachu/datos/osman/nmme/monthly/hindcast/', All=True)
-    files = sorted(files, key=lambda x: x.split()[0])
-
-    # abriendo todos los archivos
-    data = xr.open_mfdataset(files, decode_times=False)  # xr no entiende la codificacion de Leads, r y las fechas
-    data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
-    data = data.sel(L=[0.5, 1.5, 2.5, 3.5])  # Solo leads 0 1 2 3
-    data['L'] = [0, 1, 2, 3]
-    data = xr.decode_cf(fix_calendar(data))  # corrigiendo fechas
-    data = data.sel(lon=slice(275, 330), lat=slice(-60, 15))
-    data = data.sel(r=slice(1, 24))
-
-    # media movil de 3 meses para separar en estaciones
-    data = data.rolling(time=3, center=True).mean()
-    #data = data.to_netcdf(out_data_dir + 'temp_data_full.nc')
-    data = data.compute()
-
-#----------------------------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------------------------#
-# Composite
-levels =  np.linspace(-1.2,1.2,13)
-levels_clim = np.linspace(0,25,11)
-
-ComputeFieldsByCases(v='tref', v_name='tref', fix_factor=1, snr=False,
-                     data=data-273,
-                     cases=cases, bin_limits=bin_limits,
-                     bins_by_cases_dmi=bins_by_cases_dmi,
-                     bins_by_cases_n34=bins_by_cases_n34,
-                     cases_dir=cases_dir, dates_dir=dates_dir,
-                     levels_main=levels, cbar_main=cbar_t,
-                     levels_clim=levels_clim, cbar_clim='Spectral_r',
-                     title_var='Temp', name_fig='temp', dpi=dpi, save=save,
-                     out_dir=out_dir)
-
-# Signal-to-Noise ratio
-levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
-
-ComputeFieldsByCases(v='tref', v_name='tref', fix_factor=1, snr=True,
-                     data=data-273,
-                     cases=cases, bin_limits=bin_limits,
-                     bins_by_cases_dmi=bins_by_cases_dmi,
-                     bins_by_cases_n34=bins_by_cases_n34,
-                     cases_dir=cases_dir, dates_dir=dates_dir,
-                     levels_main=levels, cbar_main=cbar_snr_t,
-                     levels_clim=levels_clim, cbar_clim='Spectral_r',
-                     title_var='Tref', name_fig='tref', dpi=dpi, save=save,
-                     out_dir=out_dir)
-
-########################################################################################################################
-# HGT #################################################################################################################
-# HINDCAST para climatología ------------------------------------------------------------------------------------------#
-
-try:
-    data = xr.open_dataset(out_data_dir + 'hgt_data_full.nc')
-except:
-    files = SelectNMMEFiles(model_name='NCEP-CFSv2', variable='hgt',
-                            dir='/pikachu/datos/luciano.andrian/hindcast/', All=True)
-    files = sorted(files, key=lambda x: x.split()[0])
-
-    # abriendo todos los archivos
-    data = xr.open_mfdataset(files, decode_times=False)  # xr no entiende la codificacion de Leads, r y las fechas
-    data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
-    data = data.sel(L=[0.5, 1.5, 2.5, 3.5])  # Solo leads 0 1 2 3
-    data['L'] = [0, 1, 2, 3]
-    data = xr.decode_cf(fix_calendar(data))  # corrigiendo fechas
-    #data = data.sel(lon=slice(30, 340), lat=slice(-80, 20), P=200)
-    data = data.sel(lat=slice(-90, 20), P=200)
-    data = data.drop('P')
-    data = data.sel(r=slice(1, 24))
-
-    # media movil de 3 meses para separar en estaciones
-    data = data.rolling(time=3, center=True).mean()
-    data = data.to_netcdf(out_data_dir + 'hgt_data_full_0_360.nc')
-    #data = data.compute()
-
-#----------------------------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------------------------#
-
 levels = [-300,-250,-200,-150,-100,-50,-25,0,25,50,100,150,200,250,300]
 levels_clim = np.linspace(10000,15000,11)
-
 ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=False,
-                     data=data*9.8,
                      cases=cases, bin_limits=bin_limits,
                      bins_by_cases_dmi=bins_by_cases_dmi,
                      bins_by_cases_n34=bins_by_cases_n34,
@@ -224,12 +88,10 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=False,
                      levels_main=levels, cbar_main=cbar_hgt,
                      levels_clim=levels_clim, cbar_clim='Spectral',
                      title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=dpi,
-                     x_lon=np.arange(30, 340, 25), x_lat=np.arange(-80, 20, 10),
                      figsize=[20,10], usemask=False, hcolorbar=True, save=save,
                      out_dir=out_dir)
-
+#----------------------------------------------------------------------------------------------------------------------#
 # Signal-to-Noise ratio
-levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
 levels = [-1,-.8,-.6,-.5,-.1,0,0.1,0.5,0.6,0.8,1]
 cbar_snr_t = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#6FFE9B', '#FFFFFF',
                                   '#FFFFFF', '#FFFFFF',
@@ -237,9 +99,7 @@ cbar_snr_t = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#6FFE9B', '
 cbar_snr_t.set_over('#251255')
 cbar_snr_t.set_under('#070B4F')
 cbar_snr_t.set_bad(color='white')
-
 ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=True,
-                     data=data,
                      cases=cases, bin_limits=bin_limits,
                      bins_by_cases_dmi=bins_by_cases_dmi,
                      bins_by_cases_n34=bins_by_cases_n34,
@@ -247,7 +107,141 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=True,
                      levels_main=levels, cbar_main=cbar_snr_t,
                      levels_clim=levels_clim, cbar_clim='YlGnBu',
                      title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=dpi,
-                     x_lon=np.arange(30, 340, 25), x_lat=np.arange(-80, 20, 10),
                      figsize=[20, 10], usemask=False, hcolorbar=True, save=save,
                      out_dir=out_dir)
 ########################################################################################################################
+#
+# # Prec #################################################################################################################
+# # HINDCAST para climatología ------------------------------------------------------------------------------------------#
+# try:
+#     data = xr.open_dataset(out_data_dir + 'prec_data_full.nc')
+# except:
+#     files = SelectNMMEFiles(model_name='NCEP-CFSv2', variable='prec',
+#                             dir='/pikachu/datos/osman/nmme/monthly/hindcast/', All=True)
+#     files = sorted(files, key=lambda x: x.split()[0])
+#
+#     # abriendo todos los archivos
+#     data = xr.open_mfdataset(files, decode_times=False)  # xr no entiende la codificacion de Leads, r y las fechas
+#     data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
+#     data = data.sel(L=[0.5, 1.5, 2.5, 3.5])  # Solo leads 0 1 2 3
+#     data['L'] = [0, 1, 2, 3]
+#     data = xr.decode_cf(fix_calendar(data))  # corrigiendo fechas
+#     data = data.sel(lon=slice(275, 330), lat=slice(-60, 15))
+#     data = data.sel(r=slice(1, 24))
+#     data = data.rolling(time=3, center=True).mean()
+#     #data.to_netcdf(out_data_dir + 'prec_data_full.nc')
+#     data = data.compute()
+# #----------------------------------------------------------------------------------------------------------------------#
+# #----------------------------------------------------------------------------------------------------------------------#
+# # Composite
+# levels = np.linspace(-30, 30, 13)
+# levels_clim = np.linspace(0,150,11)
+#
+# ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=False,
+#                      data=data,
+#                      cases=cases, bin_limits=bin_limits,
+#                      bins_by_cases_dmi=bins_by_cases_dmi,
+#                      bins_by_cases_n34=bins_by_cases_n34,
+#                      cases_dir=cases_dir, dates_dir=dates_dir,
+#                      levels_main=levels, cbar_main=cbar_pp,
+#                      levels_clim=levels_clim, cbar_clim='terrain_r',
+#                      title_var='Prec', name_fig='prec', dpi=dpi, save=save,
+#                      out_dir=out_dir)
+#
+# # Signal-to-Noise ratio
+# levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
+#
+# ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=True,
+#                      data=data,
+#                      cases=cases, bin_limits=bin_limits,
+#                      bins_by_cases_dmi=bins_by_cases_dmi,
+#                      bins_by_cases_n34=bins_by_cases_n34,
+#                      cases_dir=cases_dir, dates_dir=dates_dir,
+#                      levels_main=levels, cbar_main=cbar_snr,
+#                      levels_clim=levels_clim, cbar_clim='terrain_r',
+#                      title_var='Prec', name_fig='prec', dpi=dpi, save=save,
+#                      out_dir=out_dir)
+#
+# ########################################################################################################################
+# # Temp #################################################################################################################
+# # HINDCAST para climatología ------------------------------------------------------------------------------------------#
+# try:
+#     data = xr.open_dataset(out_data_dir + 'temp_data_full.nc')
+# except:
+#     files = SelectNMMEFiles(model_name='NCEP-CFSv2', variable='tref',
+#                             dir='/pikachu/datos/osman/nmme/monthly/hindcast/', All=True)
+#     files = sorted(files, key=lambda x: x.split()[0])
+#
+#     # abriendo todos los archivos
+#     data = xr.open_mfdataset(files, decode_times=False)  # xr no entiende la codificacion de Leads, r y las fechas
+#     data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
+#     data = data.sel(L=[0.5, 1.5, 2.5, 3.5])  # Solo leads 0 1 2 3
+#     data['L'] = [0, 1, 2, 3]
+#     data = xr.decode_cf(fix_calendar(data))  # corrigiendo fechas
+#     data = data.sel(lon=slice(275, 330), lat=slice(-60, 15))
+#     data = data.sel(r=slice(1, 24))
+#
+#     # media movil de 3 meses para separar en estaciones
+#     data = data.rolling(time=3, center=True).mean()
+#     #data = data.to_netcdf(out_data_dir + 'temp_data_full.nc')
+#     data = data.compute()
+#
+# #----------------------------------------------------------------------------------------------------------------------#
+# #----------------------------------------------------------------------------------------------------------------------#
+# # Composite
+# levels =  np.linspace(-1.2,1.2,13)
+# levels_clim = np.linspace(0,25,11)
+#
+# ComputeFieldsByCases(v='tref', v_name='tref', fix_factor=1, snr=False,
+#                      data=data-273,
+#                      cases=cases, bin_limits=bin_limits,
+#                      bins_by_cases_dmi=bins_by_cases_dmi,
+#                      bins_by_cases_n34=bins_by_cases_n34,
+#                      cases_dir=cases_dir, dates_dir=dates_dir,
+#                      levels_main=levels, cbar_main=cbar_t,
+#                      levels_clim=levels_clim, cbar_clim='Spectral_r',
+#                      title_var='Temp', name_fig='temp', dpi=dpi, save=save,
+#                      out_dir=out_dir)
+#
+# # Signal-to-Noise ratio
+# levels = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
+#
+# ComputeFieldsByCases(v='tref', v_name='tref', fix_factor=1, snr=True,
+#                      data=data-273,
+#                      cases=cases, bin_limits=bin_limits,
+#                      bins_by_cases_dmi=bins_by_cases_dmi,
+#                      bins_by_cases_n34=bins_by_cases_n34,
+#                      cases_dir=cases_dir, dates_dir=dates_dir,
+#                      levels_main=levels, cbar_main=cbar_snr_t,
+#                      levels_clim=levels_clim, cbar_clim='Spectral_r',
+#                      title_var='Tref', name_fig='tref', dpi=dpi, save=save,
+#                      out_dir=out_dir)
+#
+# ######################################################################################################################
+
+# Descarte HGT #
+# # HINDCAST para climatología ----------------------------------------------------------------------------------------#
+# try:
+#     data = xr.open_dataset(out_data_dir + 'hgt_data_full.nc')
+# except:
+#     files = SelectNMMEFiles(model_name='NCEP-CFSv2', variable='hgt',
+#                             dir='/pikachu/datos/luciano.andrian/hindcast/', All=True)
+#     files = sorted(files, key=lambda x: x.split()[0])
+#
+#     # abriendo todos los archivos
+#     data = xr.open_mfdataset(files, decode_times=False)  # xr no entiende la codificacion de Leads, r y las fechas
+#     data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
+#     data = data.sel(L=[0.5, 1.5, 2.5, 3.5])  # Solo leads 0 1 2 3
+#     data['L'] = [0, 1, 2, 3]
+#     data = xr.decode_cf(fix_calendar(data))  # corrigiendo fechas
+#     #data = data.sel(lon=slice(30, 340), lat=slice(-80, 20), P=200)
+#     data = data.sel(lat=slice(-80, 20), P=200)
+#     data = data.drop('P')
+#     data = data.sel(r=slice(1, 24))
+#
+#     # media movil de 3 meses para separar en estaciones
+#     data = data.rolling(time=3, center=True).mean()
+#     data = data.to_netcdf(out_data_dir + 'hgt_data_full_0_360.nc')
+#     data = data.compute()
+#
+# #--------------------------------------------------------------------------------------------------------------------#

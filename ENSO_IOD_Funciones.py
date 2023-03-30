@@ -1937,16 +1937,15 @@ def DetrendClim(data, mm, v_name='prec'):
 
     return season_anom_detrend.mean(['r', 'time'])
 
-def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
+
+def ComputeFieldsByCases(v, v_name, fix_factor, snr,
                          levels_main, cbar_main, levels_clim, cbar_clim,
                          title_var, name_fig, dpi,
                          cases, bin_limits, bins_by_cases_dmi, bins_by_cases_n34,
                          cases_dir, dates_dir,
-                         x_lon=np.arange(280, 330, 10), x_lat=np.arange(-60, 20, 20),
-                         figsize=[16,17], usemask=True, hcolorbar=False, save=True,
-                         proj='eq', obsdates=False,  out_dir='~/'):
-
-    # no, una genialidad...
+                         figsize=[16, 17], usemask=True, hcolorbar=False, save=True,
+                         proj='eq', obsdates=False, out_dir='~/'):
+    # no, una genialidad... -------------------------------------------------------------------------------------------#
     sec_plot = [13, 14, 10, 11,
                 7, 2, 22, 17,
                 8, 3, 9, 4,
@@ -1959,20 +1958,20 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                   'Moderate La Niña', None, None, None, None,
                   'Strong La Niña', None, None, None, None]
     col_titles = ['Strong IOD - ', 'Moderate IOD - ', 'Neutro IOD', 'Moderate IOD + ', 'Strong IOD + ']
-    # ------------------------------------------------------------------------------------------------------------------#
     num_neutros = [483, 585, 676, 673]
     porcentaje = 0.1
+    # ------------------------------------------------------------------------------------------------------------------#
+    print('Only SON')
+    print('No climatology')
     mm = 10
     for s in ['SON']:
         n_check = []
         sec_count = 0
-        ct = 0
-        cr = 0
-        comp_case_clim = DetrendClim(data, mm, v_name=v_name)
-        comp_case_clim *= fix_factor
+        # esto no tiene sentido
+        # comp_case_clim = DetrendClim(data, mm, v_name=v_name)
 
         crs_latlon = ccrs.PlateCarree()
-        if proj=='eq':
+        if proj == 'eq':
             fig, axs = plt.subplots(nrows=5, ncols=5,
                                     subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
                                     figsize=(figsize[0], figsize[1]))
@@ -1980,17 +1979,14 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
             fig, axs = plt.subplots(nrows=5, ncols=5,
                                     subplot_kw={'projection': ccrs.SouthPolarStereo(central_longitude=200)},
                                     figsize=(figsize[0], figsize[1]))
-
         axs = axs.flatten()
-        for c_count in [0, 1, 2, 3, 4, 5, 6, 7]:  # , 8]: # Loop en los cases -{neutro}
+        # Loop en los cases -{neutro} ---------------------------------------------------------------------------------#
+        for c_count in [0, 1, 2, 3, 4, 5, 6, 7]:  # , 8]:
             cases_bin, num_bin, aux = BinsByCases(v=v, v_name=v_name, fix_factor=fix_factor,
                                                   s=s, mm=mm, c=cases[c_count], c_count=c_count,
                                                   bin_limits=bin_limits, bins_by_cases_dmi=bins_by_cases_dmi,
                                                   bins_by_cases_n34=bins_by_cases_n34, snr=snr,
                                                   cases_dir=cases_dir, dates_dir=dates_dir, obsdates=obsdates)
-
-            mask = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(aux)
-            mask = xr.where(np.isnan(mask), mask, 1)
 
             bins_aux_dmi = bins_by_cases_dmi[c_count]
             bins_aux_n34 = bins_by_cases_n34[c_count]
@@ -1998,31 +1994,33 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                 for b_n34 in range(0, len(bins_aux_n34)):
                     n = sec_plot[sec_count]
                     if proj != 'eq':
-                        axs[n].set_extent([30, 340, -90, 0],
+                        axs[n].set_extent([0, 360, -80, 20],
                                           ccrs.PlateCarree(central_longitude=200))
                     comp_case = cases_bin[b_dmi][b_n34]
 
-                    if v == 'prec' and s == 'JJA':
-
-                        mask2 = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(comp_case_clim)
-                        mask2 = xr.where(np.isnan(mask2), mask2, 1)
-                        mask2 = mask2.to_dataset(name='prec')
-
-                        dry_season_mask = comp_case_clim.where(comp_case_clim.prec>30)
-                        dry_season_mask = xr.where(np.isnan(dry_season_mask), dry_season_mask, 1)
-                        dry_season_mask *= mask2
-
-                        if snr:
-                            comp_case['var'] *= dry_season_mask.prec
-                        else:
-                            comp_case *= dry_season_mask.prec.values
+                    # if v == 'prec' and s == 'JJA':
+                    #
+                    #     mask2 = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(comp_case_clim)
+                    #     mask2 = xr.where(np.isnan(mask2), mask2, 1)
+                    #     mask2 = mask2.to_dataset(name='prec')
+                    #
+                    #     dry_season_mask = comp_case_clim.where(comp_case_clim.prec>30)
+                    #     dry_season_mask = xr.where(np.isnan(dry_season_mask), dry_season_mask, 1)
+                    #     dry_season_mask *= mask2
+                    #
+                    #     if snr:
+                    #         comp_case['var'] *= dry_season_mask.prec
+                    #     else:
+                    #         comp_case *= dry_season_mask.prec.values
 
                     if usemask:
+                        mask = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(aux)
+                        mask = xr.where(np.isnan(mask), mask, 1)
                         comp_case *= mask
                     if snr:
                         comp_case = comp_case['var']
 
-                    if num_bin[b_dmi][b_n34] > num_neutros[mm-7]*porcentaje:
+                    if num_bin[b_dmi][b_n34] > num_neutros[mm - 7] * porcentaje:
                         im = axs[n].contourf(aux.lon, aux.lat, comp_case,
                                              levels=levels_main, transform=crs_latlon,
                                              cmap=cbar_main, extend='both')
@@ -2040,10 +2038,10 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                             # axs[n].xaxis.set_major_formatter(lon_formatter)
                             # axs[n].yaxis.set_major_formatter(lat_formatter)
                         else:
+                            # polar
                             gls = axs[n].gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
                                                    y_inline=True, xlocs=range(-180, 180, 30),
-                                                   ylocs=np.arange(-80, 0, 20))
-
+                                                   ylocs=np.arange(-80, 20, 20))
                             r_extent = 1.2e7
                             axs[n].set_xlim(-r_extent, r_extent)
                             axs[n].set_ylim(-r_extent, r_extent)
@@ -2069,49 +2067,45 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                         axs[n].xaxis.set_label_position('top')
                         axs[n].set_xlabel('N=' + str(num_bin[b_dmi][b_n34]), fontsize=12, loc='left', fontweight="bold")
 
-                    # else:
-                    #     im = axs[n].contourf(aux.lon, aux.lat, comp_case*0,
-                    #                          levels=levels_main, transform=crs_latlon, cmap=cbar_main, extend='both')
-
                     else:
                         n_check.append(n)
                         axs[n].axis('off')
 
                     sec_count += 1
 
-        #subtitulos columnas de no ploteados
+        # subtitulos columnas de no ploteados -------------------------------------------------------------------------#
         for n_aux in [0, 1, 2, 3, 4]:
             if n_aux in n_check:
-                if n_aux+5 in n_check:
-                    axs[n_aux+10].set_title(col_titles[n_aux], fontsize=15)
+                if n_aux + 5 in n_check:
+                    axs[n_aux + 10].set_title(col_titles[n_aux], fontsize=15)
                 else:
-                    axs[n_aux+5].set_title(col_titles[n_aux], fontsize=15)
+                    axs[n_aux + 5].set_title(col_titles[n_aux], fontsize=15)
 
         for n_aux in [0, 5, 10, 15, 20]:
             if n_aux in n_check:
-                if n_aux+1 in n_check:
-                    axs[n_aux+2].set_ylabel(row_titles[n_aux], fontsize=15)
+                if n_aux + 1 in n_check:
+                    axs[n_aux + 2].set_ylabel(row_titles[n_aux], fontsize=15)
                 else:
-                    axs[n_aux+1].set_ylabel(row_titles[n_aux], fontsize=15)
+                    axs[n_aux + 1].set_ylabel(row_titles[n_aux], fontsize=15)
 
-
+        # Climatologia = NADA en HGT ----------------------------------------------------------------------------------#
         # en el lugar del neutro -> climatología de la variable (data)
 
-        comp_case_clim = DetrendClim(data, mm, v_name=v_name)
+        # if usemask:
+        #     comp_case_clim = comp_case_clim[v_name] * fix_factor * mask
+        # else:
+        #     comp_case_clim = comp_case_clim[v_name] * fix_factor
 
-        if usemask:
-            comp_case_clim = comp_case_clim[v_name] * fix_factor * mask
-        else:
-            comp_case_clim = comp_case_clim[v_name] * fix_factor
+        # if v_name=='hgt':
+        #     comp_case_clim = 0
 
-        if v_name=='hgt':
-            comp_case_clim *= 0
-
-        im2 = axs[12].contourf(aux.lon, aux.lat, comp_case_clim,
+        aux0 = aux.sel(r=1, time='1982-10-01').drop(['r', 'L', 'time'])
+        im2 = axs[12].contourf(aux.lon, aux.lat, aux0['var'][0, :, :],
                                levels=levels_clim, transform=crs_latlon, cmap=cbar_clim, extend='max')
-
-        axs[12].add_feature(cartopy.feature.LAND, facecolor='lightgrey')
+        # --------------------------------------------------------------------------------------------------------------#
+        axs[12].add_feature(cartopy.feature.LAND, facecolor='grey')
         axs[12].add_feature(cartopy.feature.COASTLINE)
+
         if v_name != 'hgt':
             cb = plt.colorbar(im2, fraction=0.042, pad=0.032, shrink=1, ax=axs[12], aspect=20)
             cb.ax.tick_params(labelsize=5)
@@ -2121,9 +2115,9 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
             axs[12].set_xticks([])
             axs[12].set_yticks([])
         else:
+            # polar
             gls = axs[12].gridlines(draw_labels=True, crs=crs_latlon, lw=0.3, color="gray",
-                                   y_inline=True, xlocs=range(-180, 180, 30), ylocs=np.arange(-80, 0, 20))
-
+                                    y_inline=True, xlocs=range(-180, 180, 30), ylocs=np.arange(-80, 0, 20))
             r_extent = 1.2e7
             axs[12].set_xlim(-r_extent, r_extent)
             axs[12].set_ylim(-r_extent, r_extent)
@@ -2139,7 +2133,6 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr, data,
                 if (pos[0] == 150):
                     ea[2].set_position([0, pos[1]])
 
-        # Colorbar, por ahora vertical. tratando de optimizar el espacio en la verticar de la figura...
         if hcolorbar:
             pos = fig.add_axes([0.2, 0.05, 0.6, 0.01])
             cbar = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
