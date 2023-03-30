@@ -12,7 +12,7 @@ os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
 dates_dir = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/' # índices por estaciones
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/' # campos de las variables PP  ( y T cuando ande)
-out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/CuadByCases/'
+out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/cfsv2/'
 out_data_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 
 save = True
