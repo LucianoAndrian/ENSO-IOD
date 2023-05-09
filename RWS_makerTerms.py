@@ -8,7 +8,7 @@ os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 
 preproc = False
-compute = True
+compute = False
 RWS = True
 SF = False
 # Requiere de todo el dominio...

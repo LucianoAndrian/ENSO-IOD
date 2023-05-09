@@ -958,7 +958,7 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, return_neutro_
 
     try:
         case = aux[c]
-        case = case.where(case >= 1950)
+        case = case.where(case >= 1940)
         aux.close()
 
         case_num = len(case.values[np.where(~np.isnan(case.values))])

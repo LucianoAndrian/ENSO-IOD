@@ -18,13 +18,14 @@ from ENSO_IOD_Funciones import WAF, CaseComp, PlotComposite_wWAF
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/' #fechas
 data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' #T y PP ya procesados
 data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/' # ERA5 ya procesados
+data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/' # ERA5 ya procesados
 # out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/HS/'
 # out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/HS/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/composite/dmi_true_dipole/'
 
 #Plot
-save = True
-dpi = 300
+save = False
+dpi = 100
 sig = False
 waf = True
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMI_true_dipole/' # resultados de MC
@@ -106,6 +107,7 @@ sig2 = [True, False]
 steps = [1, 1]
 contours1 = [True, False]
 sig_v = [True, True]
+sig_v = [False, False]  #ESPERANDO MC!!!
 
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos',
          'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
@@ -119,7 +121,7 @@ seasons = ['SON']
 min_max_months = [[9,11]]
 
 v_count = 0
-for v, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], [200,750]):
+for v, hpalevel in zip(['HGT200_mer_d_w', 'HGT750_mer_d_w'], [200,750]):
 
     data = xr.open_dataset(data_dir_era5 + v + '.nc')
 
@@ -184,7 +186,7 @@ for v, hpalevel in zip(['hgt200_HS_mer_d_w', 'hgt750_mer_d_w'], [200,750]):
 ########################################################################################################################
 # Vp y Div ------------------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------------#
-v_from_w = ['div_from_w', 'vp_from_w'] # creadas a partir de windphsere
+v_from_w = ['div_UV200', 'vp_from_UV200_w'] # creadas a partir de windphsere
 def Detrend(xrda, dim):
     aux = xrda.polyfit(dim=dim, deg=1)
     try:

@@ -37,7 +37,7 @@ bwa = False
 # Se puede usar junto los ERA-Frankenstein... o solo ERA5 o ERA5 + ERA5_50-78
 
 #start = [1920,1950,1980] #*ERA5 va desde 1979 pero es una molestia en Nino34CPC y su climatologia movil.
-start = 1950
+start = 1940
 end = 2020
 ########################################################################################################################
 

@@ -6,7 +6,7 @@ import glob
 import math
 from datetime import datetime
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
-# Functions ############################################################################################################
+# Functions ####################################################################
 def CompositeSimple(original_data, index, mmin, mmax):
     def is_months(month, mmin, mmax):
         return (month >= mmin) & (month <= mmax)
@@ -59,14 +59,16 @@ def NumberPerts(data_to_concat, neutro, num = 0):
         n = n + jump + 1
 
     return M
-########################################################################################################################
-data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
-########################################################################################################################
+################################################################################
+#data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
+data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
+################################################################################
 seasons = ['SON']
-periodos = [['50', '20']]
+periodos = [['40', '20']]
 min_max_months = [[9, 11]]
-cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
-########################################################################################################################
+cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos', 'DMI_un_neg', 'N34_un_pos',
+         'N34_un_neg']
+################################################################################
 for dmi_true_dipole in [True, False]:
     if dmi_true_dipole:
         nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates/'
@@ -75,15 +77,15 @@ for dmi_true_dipole in [True, False]:
         nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
         out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/'
 
-    for v in ['hgt200', 'hgt750']:
+    for v in ['HGT200', 'HGT750']:
 
         print('Variable: ' + v + ', dmi_true_dipole=' + str(dmi_true_dipole))
 
         # control variables!!! (algunas ya no estan disponibles)
-        if v == 'hgt200':
+        if v == 'HGT200':
             ruta = data_dir
-            data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
-        elif v == 'hgt750':
+            data = xr.open_dataset(ruta + v + '_mer_d_w.nc')
+        elif v == 'HGT750':
             ruta = data_dir
             data = xr.open_dataset(ruta + v + '_mer_d_w.nc')
         elif v == 'vp':
@@ -97,7 +99,8 @@ for dmi_true_dipole in [True, False]:
             from sys import exit
             exit(1)
 
-        data = data.interp(lat=np.arange(-80, 20, 0.5)[::-1], lon=np.arange(0, 360, 0.5))
+        data = data.interp(lat=np.arange(-80, 20, 0.5)[::-1],
+                           lon=np.arange(0, 360, 0.5))
 
         for c in cases:
             print(c)
@@ -128,9 +131,11 @@ for dmi_true_dipole in [True, False]:
                         neutro_new = dates_rn[0:len(neutro)]
                         data_new = dates_rn[len(neutro):]
 
-                        neutro_comp = CompositeSimple(original_data=data, index=neutro_new,
+                        neutro_comp = CompositeSimple(original_data=data,
+                                                      index=neutro_new,
                                                       mmin=mmin, mmax=mmax)
-                        data_comp = CompositeSimple(original_data=data, index=data_new,
+                        data_comp = CompositeSimple(original_data=data,
+                                                    index=data_new,
                                                     mmin=mmin, mmax=mmax)
 
                         if (len(data_comp) != 0):
@@ -142,7 +147,8 @@ for dmi_true_dipole in [True, False]:
                                 comp = data_comp - neutro_comp
                                 comp = comp.expand_dims(time=[a])
                                 try:
-                                    comp_concat = xr.concat([comp_concat, comp], dim='time')
+                                    comp_concat = xr.concat([comp_concat, comp],
+                                                            dim='time')
                                 except:
                                     if a != n[0]:
                                         comp_concat = comp
@@ -192,7 +198,7 @@ for dmi_true_dipole in [True, False]:
                     print('quantiles')
                     aux = aux.chunk({'time': -1})
                     qt = aux.quantile([.05, .95], dim='time', interpolation='linear')
-                    qt.to_netcdf(out_dir + v + '_' + c + '1950_2020_' + s + '.nc', compute=True)
+                    qt.to_netcdf(out_dir + v + '_' + c + '1940_2020_' + s + '.nc', compute=True)
 
                     # if name == 'ERA20':
                     #     qt.to_netcdf('/datos/luciano.andrian/ncfiles/nc_quantiles/' + v + '_' + c + '_19' + i[0] +
