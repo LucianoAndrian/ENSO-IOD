@@ -21,11 +21,11 @@ data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/' # ERA5 ya procesados
 # out_dir_w_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/w_sig/HS/'
 # out_dir_no_sig = '/home/luciano.andrian/doc/salidas/ENSO_IOD/composite/no_sig/HS/'
-out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/composite/dmi_true_dipole/'
+out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/1940_2020/composite/dmi_true_dipole/'
 
 #Plot
-save = False
-dpi = 100
+save = True
+dpi = 300
 sig = False
 waf = True
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMI_true_dipole/' # resultados de MC
@@ -107,7 +107,6 @@ sig2 = [True, False]
 steps = [1, 1]
 contours1 = [True, False]
 sig_v = [True, True]
-sig_v = [False, False]  #ESPERANDO MC!!!
 
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos',
          'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
@@ -160,7 +159,7 @@ for v, hpalevel in zip(['HGT200_mer_d_w', 'HGT750_mer_d_w'], [200,750]):
 
             if sig_v[v_count]:
                 data_sig = xr.open_dataset(sig_dir + v.split('_')[0] +
-                                           '_' + c + '1950_2020_' + s + '.nc')
+                                           '_' + c + '1940_2020_' + s + '.nc')
                 #comp1_i = comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
                 sig = comp1.where((comp1 < data_sig['var'][0]) | (comp1 > data_sig['var'][1]))
                 sig = sig.where(np.isnan(sig['var']), 1)
