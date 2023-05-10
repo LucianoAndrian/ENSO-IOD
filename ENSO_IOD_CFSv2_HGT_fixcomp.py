@@ -59,6 +59,11 @@ def Plot(comp, comp_var, levels = np.linspace(-1,1,11),
     else:
         plt.show()
 
+def Weights(data):
+    weights = np.transpose(np.tile(np.cos(np.linspace(-80,20,101) * np.pi / 180),
+                                   (len(data.lon), 1)))
+    data_w = data * weights
+    return data_w
 ########################################################################################################################
 seasons = ['SON']
 cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg', 'sim_pos', 'sim_neg']
@@ -89,10 +94,10 @@ scale_cont= [-300,-250,-200,-150,-100,-50,-25,25,50,100,150,200,250,300]
 for s in seasons:
     neutro = xr.open_dataset(cases_dir + 'hgt_neutros_' + s + '.nc').rename({'hgt':'var'})
     c_count = 0
-    neutro = neutro.__mul__(9.80665)
+    neutro = Weights(neutro.__mul__(9.80665))
     for c in cases:
         case = xr.open_dataset(cases_dir + 'hgt_' + c + '_' + s + '.nc').rename({'hgt':'var'})
-        case = case.__mul__(9.80665)
+        case = Weights(case.__mul__(9.80665))
 
         try:
             num_case = len(case.time)

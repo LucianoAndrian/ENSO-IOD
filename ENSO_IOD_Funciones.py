@@ -1808,6 +1808,12 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
                 bin_limits, bins_by_cases_dmi, bins_by_cases_n34, dates_dir, cases_dir,
                 snr=False, neutro_clim=False, obsdates=False):
 
+    def Weights(data):
+        weights = np.transpose(np.tile(np.cos(np.linspace(-80,20,101) * np.pi / 180),
+                                       (len(data.lon), 1)))
+        data_w = data * weights
+        return data_w
+
     # 1. se abren los archivos de los índices (completos y se pesan por su SD)
     # tambien los archivos de la variable en cuestion pero para cada "case" = c
 
@@ -1821,11 +1827,11 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     end_nc_file = '.nc' if v != 'tref' else '_nodetrend.nc'
 
     if neutro_clim:
-        clim = xr.open_dataset(cases_dir + v + '_neutros' + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor
+        clim = Weights(xr.open_dataset(cases_dir + v + '_neutros' + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
     else:
-        clim = xr.open_dataset(cases_dir + v + '_' + s.lower() + end_nc_file).rename({v_name: 'var'}) * fix_factor
+        clim = Weights(xr.open_dataset(cases_dir + v + '_' + s.lower() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
 
-    case = xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor
+    case = Weights(xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
 
     # Anomalía
     for l in [0, 1, 2, 3]:
@@ -1997,6 +2003,7 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr,
                         axs[n].set_extent([0, 360, -80, 20],
                                           ccrs.PlateCarree(central_longitude=200))
                     comp_case = cases_bin[b_dmi][b_n34]
+
 
                     # if v == 'prec' and s == 'JJA':
                     #
@@ -2489,3 +2496,4 @@ def PlotComposite_wWAF(comp, levels, cmap, step1, contour1=True,
     else:
         plt.show()
 ########################################################################################################################
+
