@@ -24,8 +24,8 @@ data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/1940_2020/composite/dmi_standard/'
 
 #Plot
-save = True
-dpi = 300
+save = False
+dpi = 100
 sig = False
 waf = True
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/' # resultados de MC
@@ -253,9 +253,9 @@ for c in cases:
 # prueba hemisferio
 ########################################################################################################################
 # #T y PP con contornos de HGT200
-# variables_t_p = ['t_cru_HS_d_w_c_1950-2020_0.25.nc', 'pp_gpcc_HS_d_w_c_1950-2020_0.25.nc']
-# variables_ERA5 = ['hgt200_HS_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
-# v_count = 0
+variables_t_p = ['pp_gpcc_HS_d_w_c_1950-2020_0.25.nc']
+#variables_ERA5 = ['hgt200_HS_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
+v_count = 0
 # plt.rcParams['hatch.linewidth'] = 2
 # for v in variables_t_p:
 #     data = xr.open_dataset(data_dir_t_pp + v)
@@ -295,44 +295,150 @@ for c in cases:
 #     v_count += 1
 ########################################################################################################################
 # #T y PP con contornos de HGT200
-# v_count = 0
-# plt.rcParams['hatch.linewidth'] = 2
-# for v in variables_t_p:
-#     data = xr.open_dataset(data_dir_t_pp + v)
-#     data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
-#     data2 = data2.sel(lon=slice(270, 330), lat=slice(15, -60))
-#     #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
-#
-#     c_count = 0
-#     for c in cases:
-#         s_count = 0
-#         for s in seasons:
-#             comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-#                                               two_variables=True, data2=data2)
-#
-#             data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
-#                                        '_' + c + '1950_2020_' + s + '_DMIbase.nc')
-#
-#             comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
-#             sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
-#             sig = sig.where(np.isnan(sig['var']), 0)
-#
-#             if v_count != 0:
-#                 v_count_sc = 2
-#             else:
-#                 v_count_sc = 0
-#
-#             #MakeMask(pp, dataname='cluster')
-#             Plot(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
-#                  two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
-#                  mapa='sa', significance=True,
-#                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-#                  name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w_NSA',
-#                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
-#
-#             s_count += 1
-#         c_count += 1
-#     v_count += 1
+
+import matplotlib.pyplot as plt
+from matplotlib import colors
+import cartopy.feature
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+import cartopy.crs as ccrs
+
+def Plot(comp, levels, cmap, step1, contour1=True,
+         two_variables=False, comp2=None, levels2=np.linspace(-1,1,13), step2=4,
+         mapa='sa', title='title', name_fig='name_fig', dpi=100, save=save,
+         comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#4B4B4B',
+         out_dir='~/'):
+
+    import matplotlib.pyplot as plt
+
+    if mapa.lower()=='sa':
+        fig_size = (5, 6)
+        extent= [270, 330, -60, 20]
+        xticks = np.arange(270, 330, 10)
+        yticks = np.arange(-60, 40, 20)
+
+    elif mapa.lower()=='tropical':
+        fig_size = (7, 2)
+        extent = [50, 270, -20, 20]
+        xticks = np.arange(50, 270, 60)
+        yticks = np.arange(-20, 20, 20)
+
+    elif mapa.lower()=='sesa':
+        fig_size = (5, 6)
+        extent= [295, 315, -40, -12]
+        xticks = np.arange(295, 315, 5)
+        yticks = np.arange(-40, -10, 5)
+
+    else:
+        fig_size = (8, 3)
+        extent = [30, 330, -80, 20]
+        xticks = np.arange(30, 330, 30)
+        yticks = np.arange(-80, 20, 10)
+
+    levels_contour = levels.copy()
+    comp_var = comp['var']
+    if isinstance(levels, np.ndarray):
+        levels_contour = levels[levels != 0]
+    else:
+        levels_contour.remove(0)
+
+    if two_variables:
+        levels_contour2 = levels2.copy()
+        comp_var2=comp2['var']
+        if isinstance(levels2, np.ndarray):
+            levels_contour2 = levels2[levels2 != 0]
+        else:
+            levels_contour2.remove(0)
+
+    fig = plt.figure(figsize=fig_size, dpi=dpi)
+    ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+    crs_latlon = ccrs.PlateCarree()
+    ax.set_extent(extent, crs=crs_latlon)
+    if two_variables:
+        ax.contour(comp2.lon[::step2], comp2.lat[::step2], comp_var2[::step2, ::step2],
+                   linewidths=linewidht2, levels=levels_contour2, transform=crs_latlon, colors='k')
+    else:
+        if contour1:
+            ax.contour(comp.lon[::step1], comp.lat[::step1], comp_var[::step1, ::step1],
+                       linewidths=.8, levels=levels_contour, transform=crs_latlon, colors='black')
+
+    im = ax.contourf(comp.lon[::step1], comp.lat[::step1], comp_var[::step1, ::step1],
+                     levels=levels, transform=crs_latlon, cmap=cmap, extend='both')
+
+    if significance:
+        colors_l = [color_sig, color_sig]
+        comp_sig_var = comp_sig['var']
+        cs = ax.contourf(comp_sig.lon, comp_sig.lat, comp_sig_var,
+                         transform=crs_latlon, colors='none', hatches=["..", ".."], extend='lower')
+        for i, collection in enumerate(cs.collections):
+            collection.set_edgecolor(colors_l[i % len(colors_l)])
+
+        for collection in cs.collections:
+            collection.set_linewidth(0.)
+
+        ax.contour(comp_sig.lon, comp_sig.lat, comp_sig_var,
+                   linewidths=.8, levels=[0,1],
+                   transform=crs_latlon, colors='black')
+
+    cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.7)
+    cb.ax.tick_params(labelsize=8)
+    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor=color_map)
+    ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    if mapa.lower()=='sesa':
+        ax.add_feature(cartopy.feature.BORDERS,  alpha=0.7)
+    ax.coastlines(color=color_map, linestyle='-', alpha=1)
+    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+    ax.set_xticks(xticks, crs=crs_latlon)
+    ax.set_yticks(yticks, crs=crs_latlon)
+    lon_formatter = LongitudeFormatter(zero_direction_label=True)
+    lat_formatter = LatitudeFormatter()
+    ax.xaxis.set_major_formatter(lon_formatter)
+    ax.yaxis.set_major_formatter(lat_formatter)
+    ax.tick_params(labelsize=8)
+    plt.title(title, fontsize=10)
+    plt.tight_layout()
+
+    if save:
+        plt.savefig(out_dir + name_fig + '.jpg')
+        plt.close()
+    else:
+        plt.show()
+
+sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/'
+variables_t_p = ['pp_gpcc_d_w_c_1920-2020_0.25.nc']
+v_count = 0
+plt.rcParams['hatch.linewidth'] = 2
+for v in variables_t_p:
+    data = xr.open_dataset(data_dir_t_pp + v)
+    #data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
+    data2 = data2.sel(lon=slice(270, 330), lat=slice(15, -60))
+    #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
+
+    c_count = 0
+    for c in cases:
+        s_count = 0
+        for s in seasons:
+            comp1, num_case = \
+                CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+                         two_variables=False, nc_date_dir=nc_date_dir)
+
+            data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
+                                       '_' + c + '1950_2020_' + s + '_DMIbase.nc')
+
+            comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+            sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+            sig = sig.where(np.isnan(sig['var']), 0)
+
+
+            #MakeMask(pp, dataname='cluster')
+            Plot(comp=comp1, levels=scales[2], cmap = cmap_t_pp[2], step1=1, contour1=False,
+                 mapa='sa', significance=True,
+                 title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+                 name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_mer_d_w_NSA',
+                 dpi=dpi, save=save, comp_sig=sig, color_sig='k')
+
+            s_count += 1
+        c_count += 1
+    v_count += 1
 # SST -----------------------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------------#
 # def Detrend(xrda, dim):
