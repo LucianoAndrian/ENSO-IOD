@@ -4,6 +4,8 @@ Anomalía de PP (y T cuando ande) en regiones de SA según la magnitud de los í
 ########################################################################################################################
 import xarray as xr
 import numpy as np
+import os
+os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
 dates_dir = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/' # índices por estaciones
 fields_dir = '/pikachu/datos/luciano.andrian/cases_fields/' # campos de las variables PP  ( y T cuando ande)
@@ -34,16 +36,16 @@ def PlotBars(x, bin_n, bin_n_err, bin_n_len,
     fig = plt.figure(1, figsize=(7, 7), dpi=300)
     ax = fig.add_subplot(111)
     plt.hlines(y=0, xmin=-4, xmax=4, color='k')
-    ax.bar(x + 0.075, bin_n, color='royalblue', alpha=1, width=0.15, label='Niño3.4')
-    ax.errorbar(x + 0.075, bin_n, yerr=bin_n_err, capsize=4, fmt='o', alpha=1,
+    ax.bar(x, bin_n, color='royalblue', alpha=1, width=0.15, label='Niño3.4')
+    ax.errorbar(x, bin_n, yerr=bin_n_err, capsize=4, fmt='o', alpha=1,
                 elinewidth=0.9, ecolor='navy', mfc='w', mec='navy', markersize=5)
     ax2 = ax.twinx()
     ax2.bar(x + 0.075, bin_n_len, color='royalblue', alpha=0.5, width=0.15)
 
-    ax.bar(x - 0.075, np.nan_to_num(bin_d), color='indianred', alpha=1, width=0.15, label='DMI')
-    ax.errorbar(x - 0.075, bin_d, yerr=bin_d_err, capsize=4, fmt='o', alpha=1,
-                elinewidth=0.9, ecolor='firebrick', mec='firebrick', mfc='w', markersize=5)
-    ax2.bar(x - 0.075, bin_d_len, color='firebrick', alpha=0.5, width=0.15)
+    # ax.bar(x - 0.075, np.nan_to_num(bin_d), color='indianred', alpha=1, width=0.15, label='DMI')
+    # ax.errorbar(x - 0.075, bin_d, yerr=bin_d_err, capsize=4, fmt='o', alpha=1,
+    #             elinewidth=0.9, ecolor='firebrick', mec='firebrick', mfc='w', markersize=5)
+    # ax2.bar(x - 0.075, bin_d_len, color='firebrick', alpha=0.5, width=0.15)
 
     ax.legend(loc='upper left')
     ax.set_ylim(ymin, ymax)
@@ -71,7 +73,7 @@ def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
 
     if name == 'pp_gpcc':
         # GPCC2018
-        aux = xr.open_dataset('/datos/luciano.andrian/ncfiles/' + 'pp_gpcc.nc')
+        aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_viejo/' + 'pp_gpcc.nc')
         pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
         if interp:
             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
@@ -322,7 +324,22 @@ for s in seasons:
     x = np.linspace(-3, 3, 13)
 
     # Seleccion caja, computo y plot ----------------------------------------------------------------------------------#
-    S_SESA = data_prec.sel(lat=slice(-35, -29), lon=slice(300, 310))
+    SESA = data_prec.sel(lat=slice(-39, -17), lon=slice(296, 315))
+    SESA = SESA.mean(['lon', 'lat'])
+
+    bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
+        Compute(SESA, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
+                , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
+                n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6,
+                n34_b_1, n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
+
+    PlotBars(x, bin_n, bin_n_err, bin_n_len,
+             bin_d, bin_d_err, bin_d_len,
+             title='SESA - ' + s + ' - ' + 'Prec. Anomaly',
+             name_fig='PREC_SESA_' + s + '_N34.jpg', save=save,
+             ymax=60)
+
+    S_SESA = data_prec.sel(lat=slice(-39, -29), lon=slice(296, 315))
     S_SESA = S_SESA.mean(['lon', 'lat'])
 
     bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
@@ -334,10 +351,10 @@ for s in seasons:
     PlotBars(x, bin_n, bin_n_err, bin_n_len,
              bin_d, bin_d_err, bin_d_len,
              title='S-SESA - ' + s + ' - ' + 'Prec. Anomaly',
-             name_fig='PREC_S-SESA_' + s + '.jpg', save=save,
+             name_fig='PREC_S-SESA_' + s + '_N34.jpg', save=save,
              ymax=60)
 
-    N_SESA = data_prec.sel(lat=slice(-29, -20), lon=slice(300, 320))
+    N_SESA = data_prec.sel(lat=slice(-29, -17), lon=slice(300, 320))
     N_SESA = N_SESA.mean(['lon', 'lat'])
 
     bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
@@ -349,67 +366,70 @@ for s in seasons:
     PlotBars(x, bin_n, bin_n_err, bin_n_len,
              bin_d, bin_d_err, bin_d_len,
              title='N-SESA - ' + s + ' - ' + 'Prec. Anomaly',
-             name_fig='PREC_N-SESA_' + s + '.jpg', save=save,
-             ymax=60)
-
-    C_BRAZIL = data_prec.sel(lat=slice(-20, -10), lon=slice(300, 325))
-    C_BRAZIL = C_BRAZIL.mean(['lon', 'lat'])
-
-    bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
-        Compute(C_BRAZIL, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
-                , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
-                n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6, n34_b_1
-                , n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
-
-    PlotBars(x, bin_n, bin_n_err, bin_n_len,
-             bin_d, bin_d_err, bin_d_len,
-             title='C-BRAZIL - ' + s + ' - ' + 'Prec. Anomaly',
-             name_fig='PREC_C-BRAZIL_' + s + '.jpg', save=save,
+             name_fig='PREC_N-SESA_' + s + '_N34.jpg', save=save,
              ymax=60)
 
 
-    ANDES_CHILE = data_prec.sel(lat=slice(-40, -30), lon=slice(285, 290))
-    ANDES_CHILE = ANDES_CHILE.mean(['lon', 'lat'])
 
-    bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
-        Compute(ANDES_CHILE, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
-                , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
-                n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6, n34_b_1
-                , n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
-
-    PlotBars(x, bin_n, bin_n_err, bin_n_len,
-             bin_d, bin_d_err, bin_d_len,
-             title='ANDES-CHILE - ' + s + ' - ' + 'Prec. Anomaly',
-             name_fig='PREC_And-Chi_' + s + '.jpg', save=save,
-             ymax=60)
-
-    ANDES_CHILE_Sur = data_prec.sel(lat=slice(-60, -43), lon=slice(285, 288))
-    ANDES_CHILE = ANDES_CHILE_Sur.mean(['lon', 'lat'])
-
-    bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
-        Compute(ANDES_CHILE_Sur, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
-                , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
-                n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6, n34_b_1
-                , n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
-
-    PlotBars(x, bin_n, bin_n_err, bin_n_len,
-             bin_d, bin_d_err, bin_d_len,
-             title='ANDES-CHILE_Sur - ' + s + ' - ' + 'Prec. Anomaly',
-             name_fig='PREC_And-ChiS_' + s + '.jpg', save=save,
-             ymax=60)
-
-    SESA = data_prec.sel(lat=slice(-35, -20), lon=slice(300, 320))
-    SESA = SESA.mean(['lon', 'lat'])
-
-    bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
-        Compute(SESA, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
-                , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
-                n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6, n34_b_1
-                , n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
-
-    PlotBars(x, bin_n, bin_n_err, bin_n_len,
-             bin_d, bin_d_err, bin_d_len,
-             title='SESA* - ' + s + ' - ' + 'Prec. Anomaly',
-             name_fig='PREC_SESA_' + s + '.jpg', save=save,
-             ymax=60)
+    #
+    # C_BRAZIL = data_prec.sel(lat=slice(-20, -10), lon=slice(300, 325))
+    # C_BRAZIL = C_BRAZIL.mean(['lon', 'lat'])
+    #
+    # bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
+    #     Compute(C_BRAZIL, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
+    #             , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
+    #             n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6, n34_b_1
+    #             , n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
+    #
+    # PlotBars(x, bin_n, bin_n_err, bin_n_len,
+    #          bin_d, bin_d_err, bin_d_len,
+    #          title='C-BRAZIL - ' + s + ' - ' + 'Prec. Anomaly',
+    #          name_fig='PREC_C-BRAZIL_' + s + '.jpg', save=save,
+    #          ymax=60)
+    #
+    #
+    # ANDES_CHILE = data_prec.sel(lat=slice(-40, -30), lon=slice(285, 290))
+    # ANDES_CHILE = ANDES_CHILE.mean(['lon', 'lat'])
+    #
+    # bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
+    #     Compute(ANDES_CHILE, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
+    #             , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
+    #             n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6, n34_b_1
+    #             , n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
+    #
+    # PlotBars(x, bin_n, bin_n_err, bin_n_len,
+    #          bin_d, bin_d_err, bin_d_len,
+    #          title='ANDES-CHILE - ' + s + ' - ' + 'Prec. Anomaly',
+    #          name_fig='PREC_And-Chi_' + s + '.jpg', save=save,
+    #          ymax=60)
+    #
+    # ANDES_CHILE_Sur = data_prec.sel(lat=slice(-60, -43), lon=slice(285, 288))
+    # ANDES_CHILE = ANDES_CHILE_Sur.mean(['lon', 'lat'])
+    #
+    # bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
+    #     Compute(ANDES_CHILE_Sur, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
+    #             , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
+    #             n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6, n34_b_1
+    #             , n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
+    #
+    # PlotBars(x, bin_n, bin_n_err, bin_n_len,
+    #          bin_d, bin_d_err, bin_d_len,
+    #          title='ANDES-CHILE_Sur - ' + s + ' - ' + 'Prec. Anomaly',
+    #          name_fig='PREC_And-ChiS_' + s + '.jpg', save=save,
+    #          ymax=60)
+    #
+    # SESA = data_prec.sel(lat=slice(-35, -20), lon=slice(300, 320))
+    # SESA = SESA.mean(['lon', 'lat'])
+    #
+    # bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
+    #     Compute(SESA, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
+    #             , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
+    #             n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6, n34_b_1
+    #             , n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
+    #
+    # PlotBars(x, bin_n, bin_n_err, bin_n_len,
+    #          bin_d, bin_d_err, bin_d_len,
+    #          title='SESA* - ' + s + ' - ' + 'Prec. Anomaly',
+    #          name_fig='PREC_SESA_' + s + '.jpg', save=save,
+    #          ymax=60)
 ########################################################################################################################

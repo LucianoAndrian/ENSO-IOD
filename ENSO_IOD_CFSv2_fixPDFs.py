@@ -22,7 +22,7 @@ cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/PDFs/'
 
 save = False
-dpi = 200
+dpi = 100
 # Funciones ############################################################################################################
 def best_fit_distribution(data, size, start, end):
     """Model data by finding best fit distribution to data"""
@@ -300,7 +300,7 @@ for v in ['prec','tref']:
                                                                  len(case_anom),
                                                                  -1 * startend[v_count], startend[v_count])
 
-                ax[0].hist(case_anom, bins=30, density=True, color=positive_cases_colors[c_count], alpha=0.3)
+                #ax[0].hist(case_anom, bins=30, density=True, color=positive_cases_colors[c_count], alpha=0.3)
                 ax[0].plot(pdf_case, lw=2.5, color=positive_cases_colors[c_count], label=c)
                 c_count += 1
 
@@ -319,7 +319,7 @@ for v in ['prec','tref']:
                                                                  len(case_anom),
                                                                  -1 * startend[v_count], startend[v_count])
 
-                ax[1].hist(case_anom, bins=30, density=True, color=negative_cases_colors[c_count], alpha=0.3)
+                #ax[1].hist(case_anom, bins=30, density=True, color=negative_cases_colors[c_count], alpha=0.3)
                 ax[1].plot(pdf_case, lw=2.5, color=negative_cases_colors[c_count], label=c)
                 c_count += 1
 
