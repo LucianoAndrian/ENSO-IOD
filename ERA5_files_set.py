@@ -46,11 +46,15 @@ for v, n_v in zip(variables, name_variables):
 
     data = Weights(data)
     data = data.sel(lat=slice(20, -80))
-    data = Detrend(data, 'time')
+    data = data.rolling(time=3, center=True).mean()
+    for mm, s_name in zip([10], ['SON']): # main month seasons
+        aux = data.sel(time=data.time.dt.month.isin(mm))
+        aux = Detrend(aux, 'time')
 
-    print('to_netcdf...')
-    if v == 'UV200':
-        data.to_netcdf(out_dir + n_v + '_mer_d_w.nc')
-    else:
-        data.to_netcdf(out_dir + v + '_mer_d_w.nc')
+        print('to_netcdf...')
+        if v == 'UV200':
+            aux.to_netcdf(out_dir + n_v + '_' + s_name + '_mer_d_w.nc')
+        else:
+            aux.to_netcdf(out_dir + v + '_' + s_name + '_mer_d_w.nc')
+
 ###############################################################################
