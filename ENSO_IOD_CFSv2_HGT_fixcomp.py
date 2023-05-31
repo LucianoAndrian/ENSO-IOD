@@ -15,8 +15,8 @@ warnings.filterwarnings('ignore')
 ########################################################################################################################
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/cfsv2/'
-save = True
-dpi = 300
+save = False
+dpi = 100
 # Funciones ############################################################################################################
 def Plot(comp, comp_var, levels = np.linspace(-1,1,11),
          cmap='RdBu', dpi=100, save=True, step=1, name_fig='fig', title='title', color_map='grey'):
@@ -60,7 +60,7 @@ def Plot(comp, comp_var, levels = np.linspace(-1,1,11),
         plt.show()
 
 def Weights(data):
-    weights = np.transpose(np.tile(np.cos(np.linspace(-80,20,101) * np.pi / 180),
+    weights = np.transpose(np.tile(np.cos(data.lat * np.pi / 180),
                                    (len(data.lon), 1)))
     data_w = data * weights
     return data_w

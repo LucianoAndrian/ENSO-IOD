@@ -84,10 +84,10 @@ for dmi_true_dipole in [True, False]:
         # control variables!!! (algunas ya no estan disponibles)
         if v == 'HGT200':
             ruta = data_dir
-            data = xr.open_dataset(ruta + v + '_mer_d_w.nc')
+            data = xr.open_dataset(ruta + v + '_SON_mer_d_w.nc')
         elif v == 'HGT750':
             ruta = data_dir
-            data = xr.open_dataset(ruta + v + '_mer_d_w.nc')
+            data = xr.open_dataset(ruta + v + '_SON_mer_d_w.nc')
         elif v == 'vp':
             ruta = data_dir
             data = xr.open_dataset(ruta + v + '_from_w.nc')
