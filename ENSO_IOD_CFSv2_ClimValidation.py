@@ -1,20 +1,24 @@
 """
 Validacion climatologica CFSv2 SON HGT200 contra ERA5
-Periodo: 1981-2020 ?
-Detrend ?
+Periodo: 1981-2020
+Con y sin tendencia
 """
 ################################################################################
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 from ENSO_IOD_Funciones import SelectNMMEFiles
-#------------------------------------------------------------------------------#
+import warnings
+warnings.filterwarnings("ignore")
+################################################################################
 dir_hc = '/pikachu/datos/luciano.andrian/hindcast/'
 dir_rt = '/pikachu/datos/luciano.andrian/real_time/'
 out_dir = '/pikachu/datos/luciano.andrian/val_clim_cfsv2/'
 v = 'hgt'
+#------------------------------------------------------------------------------#
 compute = False
-save = False
+save = True
+dpi = 300
 ################################################################################
 def fix_calendar(ds, timevar='time'):
     """
@@ -47,8 +51,8 @@ def Plot(comp, comp_var, levels, save, dpi, title, name_fig, out_dir,
     fig = plt.figure(figsize=fig_size, dpi=dpi)
     ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
     ax.set_extent(extent, crs=crs_latlon)
-    im = ax.contourf(comp.lon, comp.lat, comp_var,
-                     levels=levels, transform=crs_latlon, cmap=cmap, extend='both')
+    im = ax.contourf(comp.lon, comp.lat, comp_var, levels=levels,
+                     transform=crs_latlon, cmap=cmap, extend='both')
 
     cb = plt.colorbar(im, fraction=0.042, pad=0.035, shrink=0.8)
     cb.ax.tick_params(labelsize=8)
@@ -240,49 +244,82 @@ data = data.sel(time=data.time.dt.year.isin(range(1981, 2012)))
 era_hind = data.sel(time=data.time.dt.year.isin(range(1981, 2012)))
 era_real = data.sel(time=data.time.dt.year.isin(range(2011, 2020)))
 
-# Diferencias
-# crudo
-# hindcast
-print('plot...')
-aux = era_hind.interp(lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
-dif = Weights(hindcast) - Weights(aux.mean(['time']).__mul__(1/9.8))
-Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, 100, 
-     'ERA5 - CFSv2 hindcast', 'dif_hind.jpg', out_dir, 'k', 'RdBu_r')
+#------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------#
+era_hind = era_hind.interp(lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
+era_hind = era_hind.mean('time').__mul__(1/9.8)
+era_real = era_real.interp(lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
+era_real = era_real.mean('time').__mul__(1/9.8)
 
-# Real time
-aux = era_real.interp(lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
-dif = Weights(real_time) - Weights(aux.mean(['time']).__mul__(1/9.8))
-Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, 100, 
-     'ERA5 - CFSv2 real time', 'dif_real.jpg', out_dir, 'k', 'RdBu_r')
-
-#  sin tendencia
+# sin tendencia
 era_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 data = xr.open_dataset(era_dir + 'HGT200_SON_mer_d_w.nc')
 data = data.rename({'var':'hgt'})
 era_hind_d = data.sel(time=data.time.dt.year.isin(range(1981, 2012)))
+era_hind_d = era_hind_d.interp(
+    lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
+era_hind_d = era_hind_d.mean('time').__mul__(1/9.8)
+
 era_real_d = data.sel(time=data.time.dt.year.isin(range(2011, 2020)))
+era_real_d = era_real_d.interp(
+    lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
+era_real_d = era_real_d.mean('time').__mul__(1/9.8)
 
-aux = era_hind.interp(lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
-aux2 = era_hind_d.interp(lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
+#------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------#
+print('plot...')
+# hindcast sin proc
+dif = Weights(hindcast) - Weights(era_hind)
+Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
+     'ERA5 - CFSv2 hindcast', 'dif_hind.jpg', out_dir, 'k', 'RdBu_r')
 
-#sumando la media
+# Real time sin proc
+dif = Weights(real_time) - Weights(era_real)
+Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
+     'ERA5 - CFSv2 real time', 'dif_real.jpg', out_dir, 'k', 'RdBu_r')
+
+# Sin tendencia ---------------------------------------------------------------#
+# hindcast
 dif1 = Weights(son_hindcast_detrend) + Weights(hindcast)
-dif2 = Weights(aux2.mean(['time']).__mul__(1/9.8)) + \
-        Weights(aux.mean(['time']).__mul__(1/9.8))
+dif2 = Weights(era_hind_d) + Weights(era_hind)
 dif = dif1 - dif2
-Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, 100,
+Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
      'ERA5 - CFSv2 hindcast (detrended)', 'dif_hind_d.jpg', out_dir, 
      'k', 'RdBu_r')
 
 # realtime
-aux = era_real.interp(lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
-aux2 = era_real_d.interp(lat=np.arange(-90,91)[::-1], lon=np.arange(0,361))
 dif1 = Weights(son_realtime_detrend) + Weights(real_time)
-dif2 = Weights(aux2.mean(['time']).__mul__(1/9.8)) + \
-        Weights(aux.mean(['time']).__mul__(1/9.8))
+dif2 = Weights(era_real_d) + Weights(era_real)
 dif = dif1 - dif2
-Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, 100,
+Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
      'ERA5 - CFSv2 real time (detrended)', 'dif_realtime_d.jpg', out_dir,
      'k', 'RdBu_r')
 
+#------------------------------------------------------------------------------#
+# total -----------------------------------------------------------------------#
+# total sin proc
+era_full = Weights(
+    xr.concat([era_hind, era_real], dim='time').mean('time'))
+cfsv2_full = Weights(
+    xr.concat([hindcast, real_time], dim='time').mean('time'))
+
+dif = cfsv2_full - era_full
+Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
+     'ERA5 - CFSv2 hindcast + real time', 'dif_hind_real.jpg', out_dir,
+     'k', 'RdBu_r')
+
+# total sin tendencia
+aux = Weights(xr.concat([era_hind_d, era_real_d], dim='time').mean('time')) + \
+      Weights(xr.concat([era_hind, era_real], dim='time').mean('time'))
+
+aux2 = xr.concat([Weights(son_hindcast_detrend) + Weights(hindcast),
+                  Weights(son_realtime_detrend) + Weights(real_time)],
+                 dim='time').mean('time')
+
+dif = aux2 - aux
+Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
+     'ERA5 - CFSv2 hindcast + real time (detrended)', 'dif_hind_real_d.jpg',
+     out_dir, 'k', 'RdBu_r')
+#------------------------------------------------------------------------------#
 print('done')
+#------------------------------------------------------------------------------#
