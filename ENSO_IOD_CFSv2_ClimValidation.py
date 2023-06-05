@@ -271,28 +271,28 @@ print('plot...')
 # hindcast sin proc
 dif = Weights(hindcast) - Weights(era_hind)
 Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
-     'ERA5 - CFSv2 hindcast', 'dif_hind.jpg', out_dir, 'k', 'RdBu_r')
+     'CFSv2 hindcast - ERA5', 'dif_hind.jpg', out_dir, 'k', 'RdBu_r')
 
 # Real time sin proc
 dif = Weights(real_time) - Weights(era_real)
 Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
-     'ERA5 - CFSv2 real time', 'dif_real.jpg', out_dir, 'k', 'RdBu_r')
+     'CFSv2 real time - ERA5', 'dif_real.jpg', out_dir, 'k', 'RdBu_r')
 
 # Sin tendencia ---------------------------------------------------------------#
 # hindcast
 dif1 = Weights(son_hindcast_detrend) + Weights(hindcast)
-dif2 = Weights(era_hind_d) + Weights(era_hind)
+dif2 = era_hind_d + Weights(era_hind) # era_hind_d ya fue pesado por lat.
 dif = dif1 - dif2
 Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
-     'ERA5 - CFSv2 hindcast (detrended)', 'dif_hind_d.jpg', out_dir, 
+     'CFSv2 hindcast - ERA5 (detrended)', 'dif_hind_d.jpg', out_dir,
      'k', 'RdBu_r')
 
 # realtime
 dif1 = Weights(son_realtime_detrend) + Weights(real_time)
-dif2 = Weights(era_real_d) + Weights(era_real)
+dif2 = era_real_d + Weights(era_real)
 dif = dif1 - dif2
 Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
-     'ERA5 - CFSv2 real time (detrended)', 'dif_realtime_d.jpg', out_dir,
+     'CFSv2 real time - ERA5 (detrended)', 'dif_realtime_d.jpg', out_dir,
      'k', 'RdBu_r')
 
 #------------------------------------------------------------------------------#
@@ -305,11 +305,11 @@ cfsv2_full = Weights(
 
 dif = cfsv2_full - era_full
 Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
-     'ERA5 - CFSv2 hindcast + real time', 'dif_hind_real.jpg', out_dir,
+     'CFSv2 hindcast + real time - ERA5', 'dif_hind_real.jpg', out_dir,
      'k', 'RdBu_r')
 
 # total sin tendencia
-aux = Weights(xr.concat([era_hind_d, era_real_d], dim='time').mean('time')) + \
+aux = xr.concat([era_hind_d, era_real_d], dim='time').mean('time') + \
       Weights(xr.concat([era_hind, era_real], dim='time').mean('time'))
 
 aux2 = xr.concat([Weights(son_hindcast_detrend) + Weights(hindcast),
@@ -318,7 +318,7 @@ aux2 = xr.concat([Weights(son_hindcast_detrend) + Weights(hindcast),
 
 dif = aux2 - aux
 Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
-     'ERA5 - CFSv2 hindcast + real time (detrended)', 'dif_hind_real_d.jpg',
+     'CFSv2 hindcast + real time - ERA5 (detrended)', 'dif_hind_real_d.jpg',
      out_dir, 'k', 'RdBu_r')
 #------------------------------------------------------------------------------#
 print('done')
