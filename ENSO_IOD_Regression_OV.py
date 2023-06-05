@@ -65,8 +65,8 @@ def MakerMaskSig(data):
 variables = ['div_UV200', 'vp_from_UV200_w']
 #name_var = ['div_from_w', 'vp_from_w']
 #title_var = []
-seasons = [7, 10] # main month
-seasons_name = ['JJA', 'SON']
+seasons = [10] # main month
+seasons_name = ['SON']
 interp = [True, False]
 two_variables=True
 SA = False
@@ -100,50 +100,64 @@ n34 = n34_or.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
 
 # data: ------------------------------------------------------------------------
 data_div = xr.open_dataset(data_dir + variables[0] + '.nc')
-data_div = Detrend(OrdenarNC_wTime_fromW(data_div.rename({'divergence':'var'})),
-                   'time')
+data_div = data_div.sel(variable='var')
+data_div = data_div.rename({'divergence':'var'})
+# data_div = Detrend(OrdenarNC_wTime_fromW(data_div.rename({'divergence':'var'})),
+#                    'time')
 data_div = data_div.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
 
 data_vp = xr.open_dataset(data_dir + variables[1] + '.nc')
-data_vp = Detrend(
-    OrdenarNC_wTime_fromW(data_vp.rename({'velocity_potential':'var'})), 'time')
+# data_vp = Detrend(
+#     OrdenarNC_wTime_fromW(data_vp.rename({'velocity_potential':'var'})), 'time')
+data_vp = data_vp.sel(variable='var')
+data_vp = data_vp.rename({'velocity_potential':'var'})
 data_vp = data_vp.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
 
 data_sst = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
 data_sst = data_sst.rename({'sst':'var'})
 data_sst = data_sst.drop('time_bnds')
+data_sst = data_sst.rolling(time=3, center=True).mean()
+data_sst = data_sst.sel(time=data_sst.time.dt.month.isin(10))
 data_sst = Detrend(data_sst, 'time')
 data_sst = data_sst.sel(time=slice('1940-01-01', '2020-12-01'))
 
 time_original = data_sst.time
 
 # Anomaly ---------------------------------------------------------------------
-data_div = data_div.groupby('time.month') - \
-           data_div.groupby('time.month').mean('time', skipna=True)
-
-data_vp = data_vp.groupby('time.month') - \
-          data_vp.groupby('time.month').mean('time', skipna=True)
-
-data_sst = data_sst.groupby('time.month') - \
-           data_sst.groupby('time.month').mean('time', skipna=True)
+# data_div = data_div.groupby('time.month') - \
+#            data_div.groupby('time.month').mean('time', skipna=True)
+#
+# data_vp = data_vp.groupby('time.month') - \
+#           data_vp.groupby('time.month').mean('time', skipna=True)
+#
+# data_sst = data_sst.groupby('time.month') - \
+#            data_sst.groupby('time.month').mean('time', skipna=True)
+#esto no hace nada
+data_div = data_div - data_div.mean('time')
+data_vp = data_vp - data_vp.mean('time')
+data_sst = data_sst - data_sst.mean('time')
 
 # 3-month running mean ---------------------------------------------------------
-data_div = data_div.rolling(time=3, center=True).mean()
-data_vp = data_vp.rolling(time=3, center=True).mean()
-data_sst = data_sst.rolling(time=3, center=True).mean()
+# data_div = data_div.rolling(time=3, center=True).mean()
+# data_vp = data_vp.rolling(time=3, center=True).mean()
+# data_sst = data_sst.rolling(time=3, center=True).mean()
 
 for s, s_count in zip(seasons_name, [0,1]):
     aux_n34, aux_corr_n34, aux_dmi, \
     aux_corr_dmi, aux_n34_2, aux_corr_n34_2, \
     aux_dmi_2, aux_corr_dmi_2 = ComputeWithEffect(
-        data=data_div, data2=data_vp, n34=n34, dmi=dmi,
+        data=data_div, data2=data_vp,
+        n34=n34.sel(time=n34.time.dt.month.isin(10)),
+        dmi=dmi.sel(time=dmi.time.dt.month.isin(10)),
         two_variables=two_variables, m=seasons[s_count],
         full_season=False, time_original=time_original)
 
     aux_n34_sst, aux_corr_n34_sst, aux_dmi_sst, \
     aux_corr_dmi_sst, aux_n34_2_sst, aux_corr_n34_2_sst, \
     aux_dmi_2_sst, aux_corr_dmi_2_sst = ComputeWithEffect(
-        data=data_sst, data2=None, n34=n34, dmi=dmi,
+        data=data_sst, data2=None,
+        n34=n34.sel(time=n34.time.dt.month.isin(10)),
+        dmi=dmi.sel(time=dmi.time.dt.month.isin(10)),
         two_variables=False, m=seasons[s_count],
         full_season=False, time_original=time_original)
 
@@ -184,11 +198,20 @@ for s, s_count in zip(seasons_name, [0,1]):
             third_variable=True, data3=aux_dmi, levels3=[-4.33e-07, 4.33e-07])
 
     aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi = \
-        ComputeWithoutEffect(data_div, n34, dmi, seasons[s_count], time_original)
+        ComputeWithoutEffect(data_div,
+                             n34.sel(time=n34.time.dt.month.isin(10)),
+                             dmi.sel(time=dmi.time.dt.month.isin(10)),
+                             seasons[s_count], time_original)
     aux_n34_wodmi_2, aux_corr_n34_2, aux_dmi_won34_2, aux_corr_dmi_2 = \
-        ComputeWithoutEffect(data_vp, n34, dmi, seasons[s_count], time_original)
+        ComputeWithoutEffect(data_vp,
+                             n34.sel(time=n34.time.dt.month.isin(10)),
+                             dmi.sel(time=dmi.time.dt.month.isin(10)),
+                             seasons[s_count], time_original)
     aux_n34_wodmi_sst, aux_corr_n34_sst, aux_dmi_won34_sst, aux_corr_dmi_sst = \
-        ComputeWithoutEffect(data_sst, n34, dmi, seasons[s_count], time_original)
+        ComputeWithoutEffect(data_sst,
+                             n34.sel(time=n34.time.dt.month.isin(10)),
+                             dmi.sel(time=dmi.time.dt.month.isin(10)),
+                             seasons[s_count], time_original)
 
 
     PlotReg(data=aux_n34_wodmi_sst*SigDivMask(aux_corr_n34_sst, r_crit),

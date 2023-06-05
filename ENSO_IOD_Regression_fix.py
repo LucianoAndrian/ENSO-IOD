@@ -242,7 +242,7 @@ def ComputeWaf(reg_output, data_clim, hpalevel):
 sig = True
 
 #variables = ['hgt200_HS_mer_d_w', 'hgt750_mer_d_w']
-variables = ['HGT200_mer_d_w', 'HGT750_mer_d_w']
+variables = ['HGT200_SON_mer_d_w', 'HGT750_SON_mer_d_w']
 name_var = ['precip']
 title_var = ['HGT200 ERA5', 'HGT750 ERA5']
 seasons = [10] # main month
@@ -300,35 +300,41 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
     time_original = data.time
 
     # Anomaly ------------------------------------------------------------------
-    data = data.groupby('time.month') - \
-           data.groupby('time.month').mean('time',skipna=True)
+    # data = data.groupby('time.month') - \
+    #        data.groupby('time.month').mean('time',skipna=True)
+    data = data - data.mean('time')
 
     # 3-month running mean -----------------------------------------------------
-    data = data.rolling(time=3, center=True).mean()
+    #data = data.rolling(time=3, center=True).mean()
 
     # --- WAF --- #
     if waf:
         data_sf = xr.open_dataset(era5_dir + 'sf_from_UV' +
                                   str(hpalevel) + '_w.nc')
-        data_sf = Detrend(OrdenarNC_wTime_fromW(
-            data_sf.rename({'streamfunction': 'var'})), 'time')
+        data_sf = data_sf.sel(variable='var') # WTF
+        #data_sf = Detrend(OrdenarNC_wTime_fromW(
+        data_sf = data_sf.rename({'streamfunction': 'var'})
 
         data_sf = data_sf.sel(time=slice(str(p[0])+'-01-01',str(p[1])+'-12-31'))
         # Climatology SON ------------------------------------------------------
-        aux = data_sf.rolling(time=3, center=True).mean()
-        data_clim = aux.sel(time=aux.time.dt.month.isin(10)).mean('time')
+        #aux = data_sf.rolling(time=3, center=True).mean()
+        data_clim = data_sf.sel(time=data_sf.time.dt.month.isin(10)).mean('time')
+        data_sf = data_sf.sel(time=data_sf.time.dt.month.isin(10))
         # Anomaly --------------------------------------------------------------
-        data_sf = data_sf.groupby('time.month') -\
-                  data_sf.groupby('time.month').mean('time', skipna=True)
+        data_sf = data_sf - data_sf.mean('time')
+        # data_sf = data_sf.groupby('time.month') -\
+        #           data_sf.groupby('time.month').mean('time', skipna=True)
         # 3-month running mean -------------------------------------------------
-        data_sf = data_sf.rolling(time=3, center=True).mean()
+        # data_sf = data_sf.rolling(time=3, center=True).mean()
 
     # Seasons ------------------------------------------------------------------
     for s, s_count in zip(seasons_name, np.arange(0,len(seasons_name))):
         aux_n34, aux_corr_n34, aux_dmi, \
         aux_corr_dmi, aux_n34_2, aux_corr_n34_2, \
         aux_dmi_2, aux_corr_dmi_2 = \
-            ComputeWithEffect(data=data, data2=None, n34=n34, dmi=dmi,
+            ComputeWithEffect(data=data, data2=None,
+                              n34=n34.sel(time=n34.time.dt.month.isin(10)),
+                              dmi=dmi.sel(time=dmi.time.dt.month.isin(10)),
                               two_variables=two_variables, m=seasons[s_count],
                               full_season=False, time_original=time_original)
 
@@ -337,7 +343,9 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
             aux_waf_aux_n34, aux_waf_aux_corr_n34, aux_waf_aux_dmi, \
             aux_waf_aux_corr_dmi, aux_waf_aux_n34_2, aux_waf_aux_corr_n34_2, \
             aux_waf_aux_dmi_2, aux_waf_aux_corr_dmi_2 = \
-                ComputeWithEffect(data=data_sf, data2=None,n34=n34, dmi=dmi,
+                ComputeWithEffect(data=data_sf, data2=None,
+                                  n34=n34.sel(time=n34.time.dt.month.isin(10)),
+                                  dmi=dmi.sel(time=dmi.time.dt.month.isin(10)),
                                   two_variables=False,
                                   m=seasons[s_count], full_season=False,
                                   time_original=time_original)
@@ -364,7 +372,7 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
                 sig2=False, levels2=scales[v_count], SA=SA[v_count], step=1,
                 color_map='grey', color_sig='k', sig_point=True, r_crit=r_crit,
                 waf=True, px=px_n34, py=py_n34, data_waf=data_sf,
-                waf_scale=1/1000, step_waf=4)
+                waf_scale=1/800, step_waf=4)
 
         PlotReg(data=aux_dmi * MakerMaskSig(aux_corr_dmi), data_cor=aux_corr_dmi,
                 levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
@@ -378,13 +386,15 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
                 SA=SA[v_count], step=1, color_map='grey', color_sig='k',
                 sig_point=False, r_crit=r_crit,
                 waf=True, px=px_dmi, py=py_dmi, data_waf=data_sf,
-                waf_scale=1/1000, step_waf=4)
+                waf_scale=1/800, step_waf=4)
 
         del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, aux_corr_n34, \
             aux_corr_dmi_2, aux_corr_n34_2
         # Compute Without Effect -----------------------------------------------
         aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi = \
-            ComputeWithoutEffect(data, n34, dmi, seasons[s_count], time_original)
+            ComputeWithoutEffect(data, n34.sel(time=n34.time.dt.month.isin(10)),
+                                 dmi.sel(time=dmi.time.dt.month.isin(10)),
+                                 seasons[s_count], time_original)
 
         aux_n34_wodmi_2 = 0
         aux_corr_n34_2 = 0
@@ -395,7 +405,8 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
             print('#--- WAF form SF ---#')
             aux_waf_aux_n34_wodmi, aux_waf_aux_corr_n34, aux_waf_aux_dmi_won34, \
             aux_waf_aux_corr_dmi = \
-                ComputeWithoutEffect(data_sf, n34, dmi, seasons[s_count],
+                ComputeWithoutEffect(data_sf, n34.sel(time=n34.time.dt.month.isin(10)),
+                                     dmi.sel(time=dmi.time.dt.month.isin(10)), seasons[s_count],
                                      time_original)
 
             # N34_wo_DMI WAF
@@ -418,7 +429,7 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
                 sig2=False, levels2=scales[v_count], SA=SA[v_count], step=1,
                 color_map='grey', color_sig='k', sig_point=True, r_crit=r_crit,
                 waf=True, px=px_n34_wodmi, py=py_n34_wodmi, data_waf=data_sf,
-                waf_scale=1/1000, step_waf=4)
+                waf_scale=1/800, step_waf=4)
 
         PlotReg(data=aux_dmi_won34 * MakerMaskSig(aux_corr_dmi),
                 data_cor=aux_corr_dmi,
@@ -431,7 +442,7 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
                 sig2=False, levels2=scales[v_count], SA=SA[v_count], step=1,
                 color_map='grey', color_sig='k', sig_point=True, r_crit=r_crit,
                 waf=True, px=px_dmi_won34, py=py_dmi_won34, data_waf=data_sf,
-                waf_scale=1/2000, step_waf=4)
+                waf_scale=1/800, step_waf=4)
 
         del aux_n34_wodmi, aux_dmi_won34, aux_corr_dmi, aux_corr_n34, \
             aux_n34_wodmi_2, aux_dmi_won34_2, aux_corr_dmi_2, aux_corr_n34_2

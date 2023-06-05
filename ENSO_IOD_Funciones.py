@@ -1426,20 +1426,21 @@ def RegWEffect(n34, dmi,data=None, data2=None, m=9,two_variables=False):
 
     data['time'] = n34
      #print('Full Season')
-    try:
-        aux = LinearReg(data.groupby('month')[m], 'time')
-    except:
-        aux = LinearReg(data.groupby('time.month')[m], 'time')
+    # try:
+    #     aux = LinearReg(data.groupby('month')[m], 'time')
+    # except:
+    #     aux = LinearReg(data.groupby('time.month')[m], 'time')
+    aux = LinearReg(data, 'time')
     # aux = xr.polyval(data.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
     #       aux.var_polyfit_coefficients[1]
     var_reg_n34 = aux.var_polyfit_coefficients[0]
 
     data['time'] = dmi
-    try:
-        aux = LinearReg(data.groupby('month')[m], 'time')
-    except:
-        aux = LinearReg(data.groupby('time.month')[m], 'time')
-
+    # try:
+    #     aux = LinearReg(data.groupby('month')[m], 'time')
+    # except:
+    #     aux = LinearReg(data.groupby('time.month')[m], 'time')
+    aux = LinearReg(data, 'time')
     var_reg_dmi = aux.var_polyfit_coefficients[0]
     var_reg_dmi = aux.var_polyfit_coefficients[0]
 
@@ -1448,11 +1449,13 @@ def RegWEffect(n34, dmi,data=None, data2=None, m=9,two_variables=False):
 
         data2['time'] = n34
         #print('Full Season data2, m ignored')
-        aux = LinearReg(data2.groupby('month')[m], 'time')
+        #aux = LinearReg(data2.groupby('month')[m], 'time')
+        aux = LinearReg(data2, 'time')
         var_reg_n34_2 = aux.var_polyfit_coefficients[0]
 
         data2['time'] = dmi
-        aux = LinearReg(data2.groupby('month')[m], 'time')
+        #aux = LinearReg(data2.groupby('month')[m], 'time')
+        aux = LinearReg(data2, 'time')
         var_reg_dmi_2 = aux.var_polyfit_coefficients[0]
 
     return var_reg_n34, var_reg_dmi, var_reg_n34_2, var_reg_dmi_2
@@ -1462,49 +1465,69 @@ def RegWOEffect(n34, n34_wo_dmi, dmi, dmi_wo_n34, m=9, datos=None):
     datos['time'] = n34
 
     try:
-        aux = LinearReg(datos.groupby('month')[m], 'time')
-        aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) +\
+        #aux = LinearReg(datos.groupby('month')[m], 'time')
+        aux = LinearReg(datos, 'time')
+        # aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) +\
+        #       aux.var_polyfit_coefficients[1]
+        aux = xr.polyval(datos.time,
+                         aux.var_polyfit_coefficients[0]) + \
               aux.var_polyfit_coefficients[1]
     except:
-        aux = LinearReg(datos.groupby('time.month')[m], 'time')
-        aux = xr.polyval(datos.groupby('time.month')[m].time, aux.var_polyfit_coefficients[0]) +\
+        #aux = LinearReg(datos.groupby('time.month')[m], 'time')
+        aux = LinearReg(datos, 'time')
+        # aux = xr.polyval(datos.groupby('time.month')[m].time, aux.var_polyfit_coefficients[0]) +\
+        #       aux.var_polyfit_coefficients[1]
+        aux = xr.polyval(datos.time, aux.var_polyfit_coefficients[0]) +\
               aux.var_polyfit_coefficients[1]
     #wo n34
     try:
-        var_regdmi_won34 = datos.groupby('month')[m]-aux
+        #var_regdmi_won34 = datos.groupby('month')[m]-aux
+        var_regdmi_won34 = datos - aux
 
-        var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m] #index wo influence
+        #var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m] #index wo influence
+        var_regdmi_won34['time'] = dmi_wo_n34
         var_dmi_won34 = LinearReg(var_regdmi_won34,'time')
     except:
-        var_regdmi_won34 = datos.groupby('time.month')[m] - aux
+        #var_regdmi_won34 = datos.groupby('time.month')[m] - aux
+        var_regdmi_won34 = datos - aux
 
-        var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m]  # index wo influence
+        #var_regdmi_won34['time'] = dmi_wo_n34.groupby('time.month')[m]  # index wo influence
+        var_regdmi_won34['time'] = dmi_wo_n34  # index wo influence
         var_dmi_won34 = LinearReg(var_regdmi_won34, 'time')
 
     #-----------------------------------------#
 
     datos['time'] = dmi
     try:
-        aux = LinearReg(datos.groupby('month')[m], 'time')
-        aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
-          aux.var_polyfit_coefficients[1]
+        #aux = LinearReg(datos.groupby('month')[m], 'time')
+        aux = LinearReg(datos, 'time')
+        # aux = xr.polyval(datos.groupby('month')[m].time, aux.var_polyfit_coefficients[0]) + \
+        #   aux.var_polyfit_coefficients[1]
+        aux = xr.polyval(datos.time,
+                         aux.var_polyfit_coefficients[0]) + \
+              aux.var_polyfit_coefficients[1]
     except:
         aux = LinearReg(datos.groupby('time.month')[m], 'time')
-        aux = xr.polyval(datos.groupby('time.month')[m].time, aux.var_polyfit_coefficients[0]) + \
-          aux.var_polyfit_coefficients[1]
-
-
+        aux = LinearReg(datos, 'time')
+        # aux = xr.polyval(datos.groupby('time.month')[m].time, aux.var_polyfit_coefficients[0]) + \
+        #   aux.var_polyfit_coefficients[1]
+        aux = xr.polyval(datos.time,
+                         aux.var_polyfit_coefficients[0]) + \
+              aux.var_polyfit_coefficients[1]
     #wo
     try:
-        var_regn34_wodmi = datos.groupby('month')[m]-aux
-        var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
+        # var_regn34_wodmi = datos.groupby('month')[m]-aux
+        # var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
+        var_regn34_wodmi = datos-aux
+        var_regn34_wodmi['time'] = n34_wo_dmi #index wo influence
         var_n34_wodmi = LinearReg(var_regn34_wodmi,'time')
+
     except:
-        var_regn34_wodmi = datos.groupby('time.month')[m]-aux
-        var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
+        # var_regn34_wodmi = datos.groupby('time.month')[m]-aux
+        # var_regn34_wodmi['time'] = n34_wo_dmi.groupby('time.month')[m] #index wo influence
+        var_regn34_wodmi = datos - aux
+        var_regn34_wodmi['time'] = n34_wo_dmi #index wo influence
         var_n34_wodmi = LinearReg(var_regn34_wodmi,'time')
-
-
 
     return var_n34_wodmi.var_polyfit_coefficients[0],\
            var_dmi_won34.var_polyfit_coefficients[0],\
@@ -1512,18 +1535,30 @@ def RegWOEffect(n34, n34_wo_dmi, dmi, dmi_wo_n34, m=9, datos=None):
 
 def Corr(datos, index, time_original, m=9):
     try:
-        aux_corr1 = xr.DataArray(datos.groupby('month')[m]['var'],
-                             coords={'time': time_original.groupby('time.month')[m].values,
+        # aux_corr1 = xr.DataArray(datos.groupby('month')[m]['var'],
+        #                      coords={'time': time_original.groupby('time.month')[m].values,
+        #                              'lon': datos.lon.values, 'lat': datos.lat.values},
+        #                      dims=['time', 'lat', 'lon'])
+
+        aux_corr1 = xr.DataArray(datos['var'],
+                             coords={'time': time_original.values,
                                      'lon': datos.lon.values, 'lat': datos.lat.values},
                              dims=['time', 'lat', 'lon'])
     except:
-        aux_corr1 = xr.DataArray(datos.groupby('time.month')[m]['var'],
-                             coords={'time': time_original.groupby('time.month')[m].values,
+        # aux_corr1 = xr.DataArray(datos.groupby('time.month')[m]['var'],
+        #                      coords={'time': time_original.groupby('time.month')[m].values,
+        #                              'lon': datos.lon.values, 'lat': datos.lat.values},
+        #                      dims=['time', 'lat', 'lon'])
+        aux_corr1 = xr.DataArray(datos['var'],
+                             coords={'time': time_original.values,
                                      'lon': datos.lon.values, 'lat': datos.lat.values},
                              dims=['time', 'lat', 'lon'])
 
-    aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
-                             coords={'time': time_original.groupby('time.month')[m]},
+    # aux_corr2 = xr.DataArray(index.groupby('time.month')[m],
+    #                          coords={'time': time_original.groupby('time.month')[m]},
+    #                          dims={'time'})
+    aux_corr2 = xr.DataArray(index,
+                             coords={'time': time_original},
                              dims={'time'})
 
     return xr.corr(aux_corr1, aux_corr2, 'time')

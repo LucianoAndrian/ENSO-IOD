@@ -7,7 +7,7 @@ os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 #data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 
-preproc = False
+preproc = True
 compute = False
 RWS = True
 SF = False
@@ -52,15 +52,16 @@ if preproc:
             data = data.rename({'latitude': 'lat'})
 
             data = Weights(data)
-            # viento sin detrend.
-            # b es del orden 10-8...
-            # y genera un desastre en WAF.
-            #data = Detrend(data, 'time')
+            data = data.rolling(time=3, center=True).mean()
+            # <<<<<<<<<<<<<<VERIFICAR COMO QUEDA WAF>>>>>>>>>>>>>>>>>>>>>>>>
+            for mm, s_name in zip([10], ['SON']):
+                aux = data.sel(time=data.time.dt.month.isin(mm))
+                aux = Detrend(aux, 'time')
+                print('to_netcdf...')
+                aux.to_netcdf(out_dir + n_v + '_' + v + '_w_.nc')
 
-            print('to_netcdf...')
-
-            data.to_netcdf(out_dir + n_v + '_' + v + '_w_.nc')
-
+                aux2 = aux+data.mean('time')
+                aux.to_netcdf(out_dir + n_v + '_' + v + '_w_detrend.nc')
 ################################################################################
 if compute:
     from windspharm.examples import example_data_path
@@ -69,8 +70,12 @@ if compute:
         ds = xr.open_dataset(example_data_path('uwnd_mean.nc'))
         uwnd_aux = ds['uwnd']
 
+        # al haber aplicado el rolling el primer y ultimo
+        # mes no estan y falla Vectorwind
         uwnd = xr.open_dataset(data_dir + 'u_' + v + '_w_.nc')
+        uwnd = uwnd.sel(time=slice('1940-02-01', '2020-11-01'))
         vwnd = xr.open_dataset(data_dir + 'v_' + v + '_w_.nc')
+        vwnd = vwnd.sel(time=slice('1940-02-01', '2020-11-01'))
 
         uwnd = uwnd.interp(lat=np.linspace(uwnd_aux.latitude.values[0],
                                            uwnd_aux.latitude.values[-1], 179),
@@ -81,41 +86,35 @@ if compute:
                            lon=np.linspace(uwnd_aux.longitude.values[0],
                                            uwnd_aux.longitude.values[-1], 359))
 
-        # uwnd = Weights(uwnd)
-        # vwnd = Weights(vwnd)
-
         uwnd = uwnd.to_array()
         vwnd = vwnd.to_array()
 
-        # Create a VectorWind instance to handle the computations.
         w = VectorWind(uwnd, vwnd)
 
         #### DE A UNO!!! #####
-        # Compute components of rossby wave source: absolute vorticity,
-        # divergence, irrotational (divergent) wind components, gradients
-        # of absolute vorticity.
         eta = w.absolutevorticity()
         eta.to_netcdf(data_dir + 'eta_' + v + '.nc')
-
-
-
-        # div = w.divergence()
-        # div.to_netcdf(data_dir + 'div_' + v + '.nc')
-        # del div
-        #
-        # uchi, vchi = w.irrotationalcomponent()
-        # uchi.to_netcdf(data_dir + 'uchi_' + v + '.nc')
-        # del uchi
-        # vchi.to_netcdf(data_dir + 'vchi_' + v + '.nc')
-        # del vchi
-
+        div = w.divergence()
+        div.to_netcdf(data_dir + 'div_' + v + '.nc')
+        del div
+        uchi, vchi = w.irrotationalcomponent()
+        uchi.to_netcdf(data_dir + 'uchi_' + v + '.nc')
+        del uchi
+        vchi.to_netcdf(data_dir + 'vchi_' + v + '.nc')
+        del vchi
         etax, etay = w.gradient(eta)
         etax.to_netcdf(data_dir + 'etax_' + v + '.nc')
-        #etay.to_netcdf(data_dir + 'etay_' + v + '.nc')
+        etay.to_netcdf(data_dir + 'etay_' + v + '.nc')
+        del etax, etay
+        sf, vp = w.sfvp()
+        sf.to_netcdf(data_dir + 'sf_from_' + v + '_w.nc')
+        vp.to_netcdf(data_dir + 'vp_from_' + v + '_w.nc')
+        del sf, vp
 
-        # sf, vp = w.sfvp()
-        # sf.to_netcdf(data_dir + 'sf_from_' + v + '_w.nc')
-        # vp.to_netcdf(data_dir + 'vp_from_' + v + '_w.nc')
+        # sf = w.streamfunction()
+        # sf.to_netcdf(data_dir + 'sf_from__w_' + v + '.nc')
+
+
 ################################################################################
 
 if RWS:
@@ -142,37 +141,20 @@ if RWS:
 ################################################################################
 ## ah! y Streamfunction y VP ######  ###########################################
 ################################################################################
+#------------------------------------------------------------------------------#
 
-# Create a VectorWind instance to handle the computation of streamfunction and
-# velocity potential.
 if SF:
     from windspharm.examples import example_data_path
-    dir_files = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/merged/'
-    out_dir = data_dir
-    # Funciones ################################################################
-    def Detrend(xrda, dim, return_trend=False):
-        aux = xrda.polyfit(dim=dim, deg=1)
-        try:
-            trend = xr.polyval(xrda[dim], aux.var_polyfit_coefficients)
-        except:
-            trend = xr.polyval(xrda[dim], aux.polyfit_coefficients)
-        dt = xrda - trend
-        if return_trend:
-            return dt, trend
-        else:
-            return dt
 
-    def Weights(data):
-        weights = np.transpose(np.tile(np.cos(data.lat * np.pi / 180),
-                                       (len(data.lon), 1)))
-        data_w = data * weights
-        return data_w
+    dir_files = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5' \
+                '/downloaded/'
+    out_dir = data_dir
     # -------------------------------------------------------------------------#
     name_variables = ['u', 'v']
     v_count = 0
     for v in ['UV200', 'UV750']:
         for n_v in name_variables:
-            data = xr.open_dataset(dir_files + 'ERA5_' + v + '_50-20_mer.nc')
+            data = xr.open_dataset(dir_files + 'ERA5_' + v + '_40-20.nc')
             #n_v = name_variables[v_count]
             if n_v == 'u':
                 print('Drop v')
