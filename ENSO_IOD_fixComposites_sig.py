@@ -120,7 +120,7 @@ seasons = ['SON']
 min_max_months = [[9,11]]
 
 v_count = 0
-for v, hpalevel in zip(['HGT200_mer_d_w', 'HGT750_mer_d_w'], [200,750]):
+for v, hpalevel in zip(['HGT200_SON_mer_d_w', 'HGT750_SON_mer_d_w'], [200,750]):
 
     data = xr.open_dataset(data_dir_era5 + v + '.nc')
 
