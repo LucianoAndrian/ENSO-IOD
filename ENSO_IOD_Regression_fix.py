@@ -26,8 +26,8 @@ era5_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/1940_2020/' \
           'regression/'
 ################################################################################
-save = False
-dpi = 50
+save = True
+dpi = 300
 full_season = False
 text = False
 waf = True
@@ -290,7 +290,8 @@ y1 = 0
 p = periodos[0]
 r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0] + y1) - 2) / t_critic) ** 2) + 1))
 
-for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
+for v, v_count, hpalevel, waf_scale in zip(variables,[0,1], [200,750],
+                                           [1/800, 1/500]):
     # indices: -----------------------------------------------------------------
     dmi = dmi_or.sel(time=slice(str(p[0] + y1) + '-01-01', str(p[1]) + '-12-01'))
     n34 = n34_or.sel(time=slice(str(p[0] + y1) + '-01-01', str(p[1]) + '-12-01'))
@@ -372,7 +373,7 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
                 sig2=False, levels2=scales[v_count], SA=SA[v_count], step=1,
                 color_map='grey', color_sig='k', sig_point=True, r_crit=r_crit,
                 waf=True, px=px_n34, py=py_n34, data_waf=data_sf,
-                waf_scale=1/800, step_waf=4)
+                waf_scale=waf_scale, step_waf=4)
 
         PlotReg(data=aux_dmi * MakerMaskSig(aux_corr_dmi), data_cor=aux_corr_dmi,
                 levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
@@ -386,7 +387,7 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
                 SA=SA[v_count], step=1, color_map='grey', color_sig='k',
                 sig_point=False, r_crit=r_crit,
                 waf=True, px=px_dmi, py=py_dmi, data_waf=data_sf,
-                waf_scale=1/800, step_waf=4)
+                waf_scale=waf_scale, step_waf=4)
 
         del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, aux_corr_n34, \
             aux_corr_dmi_2, aux_corr_n34_2
@@ -405,8 +406,10 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
             print('#--- WAF form SF ---#')
             aux_waf_aux_n34_wodmi, aux_waf_aux_corr_n34, aux_waf_aux_dmi_won34, \
             aux_waf_aux_corr_dmi = \
-                ComputeWithoutEffect(data_sf, n34.sel(time=n34.time.dt.month.isin(10)),
-                                     dmi.sel(time=dmi.time.dt.month.isin(10)), seasons[s_count],
+                ComputeWithoutEffect(data_sf,
+                                     n34.sel(time=n34.time.dt.month.isin(10)),
+                                     dmi.sel(time=dmi.time.dt.month.isin(10)),
+                                     seasons[s_count],
                                      time_original)
 
             # N34_wo_DMI WAF
@@ -429,7 +432,7 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
                 sig2=False, levels2=scales[v_count], SA=SA[v_count], step=1,
                 color_map='grey', color_sig='k', sig_point=True, r_crit=r_crit,
                 waf=True, px=px_n34_wodmi, py=py_n34_wodmi, data_waf=data_sf,
-                waf_scale=1/800, step_waf=4)
+                waf_scale=waf_scale, step_waf=4)
 
         PlotReg(data=aux_dmi_won34 * MakerMaskSig(aux_corr_dmi),
                 data_cor=aux_corr_dmi,
@@ -442,7 +445,7 @@ for v, v_count, hpalevel in zip(variables,[0,1], [200,750]):
                 sig2=False, levels2=scales[v_count], SA=SA[v_count], step=1,
                 color_map='grey', color_sig='k', sig_point=True, r_crit=r_crit,
                 waf=True, px=px_dmi_won34, py=py_dmi_won34, data_waf=data_sf,
-                waf_scale=1/800, step_waf=4)
+                waf_scale=waf_scale, step_waf=4)
 
         del aux_n34_wodmi, aux_dmi_won34, aux_corr_dmi, aux_corr_n34, \
             aux_n34_wodmi_2, aux_dmi_won34_2, aux_corr_dmi_2, aux_corr_n34_2

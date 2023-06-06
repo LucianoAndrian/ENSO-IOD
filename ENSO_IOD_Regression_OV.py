@@ -244,86 +244,86 @@ for s, s_count in zip(seasons_name, [0,1]):
             r_crit=r_crit, out_dir=out_dir,
             third_variable=True, data3=aux_dmi_won34, levels3=[-4.33e-07, 4.33e-07])
 
-
-################################################################################
-#--------------------------- RWS ----------------------------------------------#
-################################################################################
-# data: ------------------------------------------------------------------------
-#data_rws = xr.open_dataset(data_dir + 'RWS.nc')
-data_rws = xr.open_dataset(data_dir + 'RWSUV200.nc')
-data_rws = Detrend(OrdenarNC_wTime_fromW(data_rws),'time')
-data_rws = data_rws.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
-time_original = data_rws.time
-
-# Anomaly ----------------------------------------------------------------------
-data_rws = data_rws.groupby('time.month') - \
-           data_rws.groupby('time.month').mean('time', skipna=True)
-
-# 3-month running mean ---------------------------------------------------------
-data_rws = data_rws.rolling(time=3, center=True).mean()
-
-cbar_rws = colors.ListedColormap(['#4FCDF4','white', '#F4C847'])
-cbar_rws.set_over('#F49927')
-cbar_rws.set_under('#3489F4')
-cbar_rws.set_bad(color='white')
-
-s_count=0
-for s in seasons_name:
-    aux_n34, aux_corr_n34, aux_dmi, \
-    aux_corr_dmi, aux_n34_2, aux_corr_n34_2, \
-    aux_dmi_2, aux_corr_dmi_2 = ComputeWithEffect(
-        data=data_rws, data2=None, n34=n34, dmi=dmi, two_variables=False,
-        m=seasons[s_count], full_season=False, time_original=time_original)
-
-    v_count=0
-    print('Plot')
-    PlotReg(data=aux_n34, data_cor=aux_corr_n34,
-            levels=[-1.2e-10, -0.1e-10, 0, 0.1e-10,1.2e-10], cmap=cbar_rws,
-            dpi=dpi,
-            title='RWS ' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4',
-            name_fig='rws_' + s + str(p[0]) + '_' + str(p[1]) + '_N34',
-            save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
-            two_variables=False,
-            SA=False, step=2,
-            color_map='grey', color_sig='k', r_crit=r_crit, out_dir=out_dir)
-
-    PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
-            levels=[-1.2e-10, -0.1e-10, 0, 0.1e-10,1.2e-10], cmap=cbar_rws,
-            dpi=dpi,
-            title='RWS ' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI',
-            name_fig='rws_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI',
-            save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
-            two_variables=False,
-            SA=False, step=2,
-            color_map='grey', color_sig='k', r_crit=r_crit, out_dir=out_dir)
-
-    aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi = \
-        ComputeWithoutEffect(data_rws, n34, dmi, seasons[s_count], time_original)
-    # aux_n34_wodmi_2, aux_corr_n34_2, aux_dmi_won34_2, aux_corr_dmi_2 = \
-    #     ComputeWithoutEffect(data_vp, n34, dmi, seasons[s_count], time_original)
-
-
-    PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34,
-            levels=[-1.2e-10, -0.1e-10, 0, 0.1e-10,1.2e-10], cmap=cbar_rws,
-            dpi=dpi,
-            title='RWS ' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4 -{DMI}',
-            name_fig='rws_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
-            save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
-            two_variables=False,
-            SA=False, step=2,
-            color_map='grey', color_sig='k', r_crit=r_crit, out_dir=out_dir)
-
-    PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
-            levels=[-1.2e-10, -0.1e-10, 0, 0.1e-10,1.2e-10], cmap=cbar_rws,
-            dpi=dpi,
-            title='RWS ' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI -{Niño3.4}',
-            name_fig='rws_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_won34',
-            save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
-            two_variables=False,
-            SA=False, step=2,
-            color_map='grey', color_sig='k', r_crit=r_crit, out_dir=out_dir)
-
-    s_count+=1
+#
+# ################################################################################
+# #--------------------------- RWS ----------------------------------------------#
+# ################################################################################
+# # data: ------------------------------------------------------------------------
+# #data_rws = xr.open_dataset(data_dir + 'RWS.nc')
+# data_rws = xr.open_dataset(data_dir + 'RWSUV200.nc')
+# data_rws = Detrend(OrdenarNC_wTime_fromW(data_rws),'time')
+# data_rws = data_rws.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
+# time_original = data_rws.time
+#
+# # Anomaly ----------------------------------------------------------------------
+# data_rws = data_rws.groupby('time.month') - \
+#            data_rws.groupby('time.month').mean('time', skipna=True)
+#
+# # 3-month running mean ---------------------------------------------------------
+# data_rws = data_rws.rolling(time=3, center=True).mean()
+#
+# cbar_rws = colors.ListedColormap(['#4FCDF4','white', '#F4C847'])
+# cbar_rws.set_over('#F49927')
+# cbar_rws.set_under('#3489F4')
+# cbar_rws.set_bad(color='white')
+#
+# s_count=0
+# for s in seasons_name:
+#     aux_n34, aux_corr_n34, aux_dmi, \
+#     aux_corr_dmi, aux_n34_2, aux_corr_n34_2, \
+#     aux_dmi_2, aux_corr_dmi_2 = ComputeWithEffect(
+#         data=data_rws, data2=None, n34=n34, dmi=dmi, two_variables=False,
+#         m=seasons[s_count], full_season=False, time_original=time_original)
+#
+#     v_count=0
+#     print('Plot')
+#     PlotReg(data=aux_n34, data_cor=aux_corr_n34,
+#             levels=[-1.2e-10, -0.1e-10, 0, 0.1e-10,1.2e-10], cmap=cbar_rws,
+#             dpi=dpi,
+#             title='RWS ' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4',
+#             name_fig='rws_' + s + str(p[0]) + '_' + str(p[1]) + '_N34',
+#             save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
+#             two_variables=False,
+#             SA=False, step=2,
+#             color_map='grey', color_sig='k', r_crit=r_crit, out_dir=out_dir)
+#
+#     PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
+#             levels=[-1.2e-10, -0.1e-10, 0, 0.1e-10,1.2e-10], cmap=cbar_rws,
+#             dpi=dpi,
+#             title='RWS ' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI',
+#             name_fig='rws_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI',
+#             save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
+#             two_variables=False,
+#             SA=False, step=2,
+#             color_map='grey', color_sig='k', r_crit=r_crit, out_dir=out_dir)
+#
+#     aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi = \
+#         ComputeWithoutEffect(data_rws, n34, dmi, seasons[s_count], time_original)
+#     # aux_n34_wodmi_2, aux_corr_n34_2, aux_dmi_won34_2, aux_corr_dmi_2 = \
+#     #     ComputeWithoutEffect(data_vp, n34, dmi, seasons[s_count], time_original)
+#
+#
+#     PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34,
+#             levels=[-1.2e-10, -0.1e-10, 0, 0.1e-10,1.2e-10], cmap=cbar_rws,
+#             dpi=dpi,
+#             title='RWS ' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' Niño3.4 -{DMI}',
+#             name_fig='rws_' + s + str(p[0]) + '_' + str(p[1]) + '_N34_wodmi',
+#             save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
+#             two_variables=False,
+#             SA=False, step=2,
+#             color_map='grey', color_sig='k', r_crit=r_crit, out_dir=out_dir)
+#
+#     PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
+#             levels=[-1.2e-10, -0.1e-10, 0, 0.1e-10,1.2e-10], cmap=cbar_rws,
+#             dpi=dpi,
+#             title='RWS ' + s + ' - ' + str(p[0]) + '-' + str(p[1]) + ' DMI -{Niño3.4}',
+#             name_fig='rws_' + s + str(p[0]) + '_' + str(p[1]) + '_DMI_won34',
+#             save=save, sig=True, sig_point=True, sig2=True, sig_point2=False,
+#             two_variables=False,
+#             SA=False, step=2,
+#             color_map='grey', color_sig='k', r_crit=r_crit, out_dir=out_dir)
+#
+#     s_count+=1
 
 
 ########################################################################################################################
