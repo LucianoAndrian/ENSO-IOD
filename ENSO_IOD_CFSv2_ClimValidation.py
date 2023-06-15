@@ -17,8 +17,8 @@ out_dir = '/pikachu/datos/luciano.andrian/val_clim_cfsv2/'
 v = 'hgt'
 #------------------------------------------------------------------------------#
 compute = True
-save = False
-dpi = 100
+save = True
+dpi = 300
 ################################################################################
 def fix_calendar(ds, timevar='time'):
     """
@@ -255,9 +255,9 @@ era_clim = era_clim.mean('time').__mul__(1/9.8)
 era_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 data = xr.open_dataset(era_dir + 'HGT200_SON_mer_d_w.nc')
 data = data.rename({'var':'hgt'})
-data = data.sel(time=data.time.dt.year.isin(range(1981, 2020)))
+data = data.sel(time=data.time.dt.year.isin(range(1981, 2021)))
 
-era_full = data.sel(time=data.time.dt.year.isin(range(1982, 2020)))
+era_full = data.sel(time=data.time.dt.year.isin(range(1982, 2021)))
 era_full = era_full.interp(
     lat=np.arange(-80,21)[::-1], lon=np.arange(0,360))
 era_full = era_full.__mul__(1/9.8)
@@ -273,8 +273,6 @@ era_full = era_full.__mul__(1/9.8)
 # era_real_d = era_real_d.mean('time').__mul__(1/9.8)
 
 #------------------------------------------------------------------------------#
-
-
 #------------------------------------------------------------------------------#
 print('Plot...')
 # total sin tendencia
@@ -295,12 +293,35 @@ Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
      'CFSv2 hindcast + real time - ERA5 (detrended)', 'dif_hind_real_d.jpg',
      out_dir, 'k', 'RdBu_r')
 
-# Continuar
-print('t test')
+
+# Testeo ----------------------------------------------------------------------#
+print('Testeo de diferencia de medias con t-student por leadtime')
+#from scipy import stats
+# # promediando todos los r (y leadtimes, sino hay condicion sobre el tiempo)
+# aux = stats.ttest_ind(
+#     cfsv2.mean('r').hgt,
+#     era.isel(lat=slice(None, None, -1)).hgt,
+#     equal_var=False)
+# plt.imshow(aux[0]);plt.colorbar();plt.show()
+
+# por leadtimes
 from scipy.stats import ttest_ind
-aux = ttest_ind(cfsv2.mean('r').hgt, era.hgt, equal_var=False)
-from scipy.stats import t
-t_cr = t.ppf(0.95, len(era.time))
+pvalue = []
+for m in [7, 8, 9, 10]:
+    cfsv2_monthly_mean = cfsv2.sel(
+        time=cfsv2.time.dt.month.isin(m)).mean('r').hgt
+    era_inverted = era.isel(lat=slice(None, None, -1)).hgt
+    # test
+    pvalue.append(
+        ttest_ind(cfsv2_monthly_mean, era_inverted, equal_var=False)[1])
+
+# promedio de pvalue por leadtime
+pvalue = sum(pvalue) / len(pvalue)
+
+Plot(dif, dif.where(pvalue<0.05).hgt, np.arange(-100, 120, 20), save, dpi,
+     'CFSv2 hindcast + real time - ERA5 (detrended)',
+     'dif_hind_real_d_tested.jpg',
+     out_dir, 'k', 'RdBu_r')
 #------------------------------------------------------------------------------#
 print('done')
 #------------------------------------------------------------------------------#
