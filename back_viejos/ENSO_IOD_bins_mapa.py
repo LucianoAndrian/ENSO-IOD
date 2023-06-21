@@ -58,6 +58,7 @@ for i in range(0,len(box_name)):
 
 ax.add_feature(cartopy.feature.LAND, facecolor='#d9d9d9')
 ax.add_feature(cartopy.feature.LAND, facecolor='white')
+ax.add_feature(cartopy.feature.BORDERS, facecolor='white')
 ax.add_feature(cartopy.feature.COASTLINE)
 ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
 ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
