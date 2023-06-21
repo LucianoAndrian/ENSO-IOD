@@ -32,9 +32,9 @@ out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Validation/'
 #Plot
 save = True
 dpi = 300
-detrend_cfsv2=True
+detrend_cfsv2=True # esto era para PP
 # Functions ####################################################################
-def CompositeSimple(original_data, index, mmin, mmax):
+def CompositeSimple(original_data, index, mmin, mmax, mean=True):
     def is_months(month, mmin, mmax):
         return (month >= mmin) & (month <= mmax)
 
@@ -43,8 +43,12 @@ def CompositeSimple(original_data, index, mmin, mmax):
             time=original_data.time.dt.year.isin([index]))
         comp_field = comp_field.sel(
             time=is_months(month=comp_field['time.month'], mmin=mmin, mmax=mmax))
+
         if len(comp_field.time) != 0:
-            comp_field = comp_field.mean(['time'], skipna=True)
+            if mean:
+                comp_field = comp_field.mean(['time'], skipna=True)
+            else:
+                pass
         else:  # si sólo hay un año
             comp_field = comp_field.drop_dims(['time'])
 
@@ -73,9 +77,9 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None):
         case_num = len(case.values[np.where(~np.isnan(case.values))])
 
         neutro_comp = CompositeSimple(original_data=data, index=neutro,
-                                      mmin=mmin, mmax=mmax)
+                                      mmin=mmin, mmax=mmax, mean=True)
         data_comp = CompositeSimple(original_data=data, index=case,
-                                    mmin=mmin, mmax=mmax)
+                                    mmin=mmin, mmax=mmax, mean=False)
 
         comp = data_comp - neutro_comp
 
@@ -276,7 +280,6 @@ cbar_pp.set_bad(color='white')
 
 cbar_t = colors.ListedColormap(['#9B1C00', '#B9391B', '#CD4838', '#E25E55',
                                 '#F28C89', '#FFCECC',
-                              'white',
                               '#B3DBFF', '#83B9EB', '#5E9AD7', '#3C7DC3',
                                 '#2064AF', '#014A9B'][::-1])
 cbar_t.set_over('#691800')
@@ -324,6 +327,11 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
             cases_dir + 'hgt_' + cases_cfs[3] + '_' + s + '.nc')\
             .rename({'hgt': 'var'}).__mul__(9.8))
 
+        from scipy.stats import ttest_ind
+
+        enso_cfs_test = ttest_ind(
+            en_cfs['var'].values, ln_cfs['var'].values, equal_var=False)[1]
+
         enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
 
         # IOD_CFSv2 -----------------------------------------------------------
@@ -334,6 +342,8 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
             cases_dir + 'hgt_' + cases_cfs[1] + '_' + s + '.nc')\
             .rename({'hgt': 'var'}).__mul__(9.8))
 
+        iod_cfs_test = ttest_ind(
+            iodp_cfs['var'].values, iodn_cfs['var'].values, equal_var=False)[1]
         iod_dif_cfs = iodp_cfs.mean('time') - iodn_cfs.mean('time')
 
         # ENSO_obs ------------------------------------------------------------#
@@ -348,8 +358,10 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
             two_variables=False)
         ln_obs = ln_obs.interp(lon=enso_dif_cfs.lon.values,
                                lat=enso_dif_cfs.lat.values)
+        enso_obs_test = ttest_ind(
+            en_obs['var'].values, ln_obs['var'].values, equal_var=False)[1]
 
-        enso_dif_obs = en_obs - ln_obs
+        enso_dif_obs = en_obs.mean('time') - ln_obs.mean('time')
 
         # IOD_obs -------------------------------------------------------------#
         x, y, iodp_obs = CaseComp(data, s, mmonth=min_max_months[s_count],
@@ -362,7 +374,10 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
         iodn_obs = iodn_obs.interp(lon=enso_dif_cfs.lon.values,
                                    lat=enso_dif_cfs.lat.values)
 
-        iod_dif_obs = iodp_obs - iodn_obs
+        iod_obs_test = ttest_ind(
+            iodp_obs['var'].values, iodn_obs['var'].values, equal_var=False)[1]
+
+        iod_dif_obs = iodp_obs.mean('time') - iodn_obs.mean('time')
 
         fig = plt.figure(figsize=(8, 3), dpi=dpi)
         gs = fig.add_gridspec(2, 2)
@@ -370,7 +385,10 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
         title = ['EN-LN_ERA5', 'EN-LN_CFSv2',
                  'IOD_pos-neg_ERA5', 'IOD_pos-neg_CFSv2']
         comps = [enso_dif_obs, enso_dif_cfs, iod_dif_obs, iod_dif_cfs]
-        for field, f_count, f_count_c, t in zip(comps,[0,1,0,1],[0,0,1,1], title):
+        tests = [enso_obs_test, enso_cfs_test, iod_obs_test, iod_cfs_test ]
+        for field, f_count, f_count_c, t, test in \
+                zip(comps,[0,1,0,1],[0,0,1,1], title, tests):
+
             ax = fig.add_subplot(gs[f_count, f_count_c],
                              projection=ccrs.PlateCarree(central_longitude=180))
             crs_latlon = ccrs.PlateCarree()
@@ -379,13 +397,14 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
             ax.contour(field.lon, field.lat, field['var'],
                        transform=crs_latlon, colors='k',
                        levels=scale, linewidths=1)
-            im = ax.contourf(field.lon, field.lat, field['var'],
+            im = ax.contourf(field.lon, field.lat,
+                             field.where(test<0.05)['var'],
                              levels=scale,
                              transform=crs_latlon, cmap=cbar_t, extend='both')
 
             cb = plt.colorbar(im, fraction=0.017, pad=0.025, shrink=0.8)
             cb.ax.tick_params(labelsize=5)
-            ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey',
+            ax.add_feature(cartopy.feature.LAND, facecolor='white',
                            edgecolor='#4B4B4B')
             ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
             ax.coastlines(color='#4B4B4B', linestyle='-', alpha=1)
