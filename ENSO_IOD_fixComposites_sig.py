@@ -26,7 +26,7 @@ out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/1940_2020/composite
 #Plot
 save = True
 dpi = 300
-sig = False
+sig = True
 waf = True
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMI_true_dipole/' # resultados de MC
 ########################################################################################################################

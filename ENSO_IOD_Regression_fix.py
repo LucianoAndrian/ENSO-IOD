@@ -373,7 +373,7 @@ for v, v_count, hpalevel, waf_scale in zip(variables,[0,1], [200,750],
                 sig2=False, levels2=scales[v_count], SA=SA[v_count], step=1,
                 color_map='grey', color_sig='k', sig_point=True, r_crit=r_crit,
                 waf=True, px=px_n34, py=py_n34, data_waf=data_sf,
-                waf_scale=waf_scale, step_waf=4)
+                waf_scale = 1/1000, step_waf=4)
 
         PlotReg(data=aux_dmi * MakerMaskSig(aux_corr_dmi), data_cor=aux_corr_dmi,
                 levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
@@ -387,7 +387,7 @@ for v, v_count, hpalevel, waf_scale in zip(variables,[0,1], [200,750],
                 SA=SA[v_count], step=1, color_map='grey', color_sig='k',
                 sig_point=False, r_crit=r_crit,
                 waf=True, px=px_dmi, py=py_dmi, data_waf=data_sf,
-                waf_scale=waf_scale, step_waf=4)
+                waf_scale = 1/1000, step_waf=4)
 
         del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, aux_corr_n34, \
             aux_corr_dmi_2, aux_corr_n34_2
@@ -432,7 +432,7 @@ for v, v_count, hpalevel, waf_scale in zip(variables,[0,1], [200,750],
                 sig2=False, levels2=scales[v_count], SA=SA[v_count], step=1,
                 color_map='grey', color_sig='k', sig_point=True, r_crit=r_crit,
                 waf=True, px=px_n34_wodmi, py=py_n34_wodmi, data_waf=data_sf,
-                waf_scale=waf_scale, step_waf=4)
+                waf_scale = 1/1000, step_waf=4)
 
         PlotReg(data=aux_dmi_won34 * MakerMaskSig(aux_corr_dmi),
                 data_cor=aux_corr_dmi,
@@ -445,7 +445,7 @@ for v, v_count, hpalevel, waf_scale in zip(variables,[0,1], [200,750],
                 sig2=False, levels2=scales[v_count], SA=SA[v_count], step=1,
                 color_map='grey', color_sig='k', sig_point=True, r_crit=r_crit,
                 waf=True, px=px_dmi_won34, py=py_dmi_won34, data_waf=data_sf,
-                waf_scale=waf_scale, step_waf=4)
+                waf_scale=1/2000, step_waf=4)
 
         del aux_n34_wodmi, aux_dmi_won34, aux_corr_dmi, aux_corr_n34, \
             aux_n34_wodmi_2, aux_dmi_won34_2, aux_corr_dmi_2, aux_corr_n34_2

@@ -61,7 +61,7 @@ if preproc:
                 aux.to_netcdf(out_dir + n_v + '_' + v + '_w_.nc')
 
                 aux2 = aux+data.mean('time')
-                aux.to_netcdf(out_dir + n_v + '_' + v + '_w_detrend.nc')
+                aux2.to_netcdf(out_dir + n_v + '_' + v + '_w_detrend.nc')
 ################################################################################
 if compute:
     from windspharm.examples import example_data_path
@@ -72,9 +72,9 @@ if compute:
 
         # al haber aplicado el rolling el primer y ultimo
         # mes no estan y falla Vectorwind
-        uwnd = xr.open_dataset(data_dir + 'u_' + v + '_w_.nc')
+        uwnd = xr.open_dataset(data_dir + 'u_' + v + '_w_detrend.nc')
         uwnd = uwnd.sel(time=slice('1940-02-01', '2020-11-01'))
-        vwnd = xr.open_dataset(data_dir + 'v_' + v + '_w_.nc')
+        vwnd = xr.open_dataset(data_dir + 'v_' + v + '_w_detrend.nc')
         vwnd = vwnd.sel(time=slice('1940-02-01', '2020-11-01'))
 
         uwnd = uwnd.interp(lat=np.linspace(uwnd_aux.latitude.values[0],
@@ -142,59 +142,59 @@ if RWS:
 ## ah! y Streamfunction y VP ######  ###########################################
 ################################################################################
 #------------------------------------------------------------------------------#
-
-if SF:
-    from windspharm.examples import example_data_path
-
-    dir_files = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5' \
-                '/downloaded/'
-    out_dir = data_dir
-    # -------------------------------------------------------------------------#
-    name_variables = ['u', 'v']
-    v_count = 0
-    for v in ['UV200', 'UV750']:
-        for n_v in name_variables:
-            data = xr.open_dataset(dir_files + 'ERA5_' + v + '_40-20.nc')
-            #n_v = name_variables[v_count]
-            if n_v == 'u':
-                print('Drop v')
-                data = data.drop('v')
-            elif n_v == 'v':
-                print('Drop u')
-                data = data.drop('u')
-
-            data = data.rename({n_v: 'var'})
-            data = data.rename({'longitude': 'lon'})
-            data = data.rename({'latitude': 'lat'})
-
-            ds = xr.open_dataset(example_data_path('uwnd_mean.nc'))
-            uwnd_aux = ds['uwnd']
-
-            data = data.interp(lat=np.linspace(uwnd_aux.latitude.values[0],
-                                               uwnd_aux.latitude.values[-1],
-                                               179),
-                               lon=np.linspace(uwnd_aux.longitude.values[0],
-                                               uwnd_aux.longitude.values[-1],
-                                               359))
-
-            data = Weights(data)
-            # data = Detrend(data, 'time')
-
-            data.to_netcdf(out_dir + n_v + '_mer_d_w_world.nc')
-            v_count += 1
-        del data
-
-        uwnd = xr.open_dataset(data_dir + 'u_mer_d_w_world.nc')
-        vwnd = xr.open_dataset(data_dir + 'v_mer_d_w_world.nc')
-
-        uwnd = uwnd.to_array()
-        vwnd = vwnd.to_array()
-
-        w = VectorWind(uwnd, vwnd)
-        #sf, vp = w.sfvp()
-        sf = w.streamfunction()
-        sf.to_netcdf(data_dir + 'sf_from_' + v + '_w.nc')
-        #vp.to_netcdf(data_dir + 'vp_from_w.nc')
+#  NO ES NECESARIO ESTO
+# if SF:
+#     from windspharm.examples import example_data_path
+#
+#     dir_files = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5' \
+#                 '/downloaded/'
+#     out_dir = data_dir
+#     # -------------------------------------------------------------------------#
+#     name_variables = ['u', 'v']
+#     v_count = 0
+#     for v in ['UV200', 'UV750']:
+#         for n_v in name_variables:
+#             data = xr.open_dataset(dir_files + 'ERA5_' + v + '_40-20.nc')
+#             #n_v = name_variables[v_count]
+#             if n_v == 'u':
+#                 print('Drop v')
+#                 data = data.drop('v')
+#             elif n_v == 'v':
+#                 print('Drop u')
+#                 data = data.drop('u')
+#
+#             data = data.rename({n_v: 'var'})
+#             data = data.rename({'longitude': 'lon'})
+#             data = data.rename({'latitude': 'lat'})
+#
+#             ds = xr.open_dataset(example_data_path('uwnd_mean.nc'))
+#             uwnd_aux = ds['uwnd']
+#
+#             data = data.interp(lat=np.linspace(uwnd_aux.latitude.values[0],
+#                                                uwnd_aux.latitude.values[-1],
+#                                                179),
+#                                lon=np.linspace(uwnd_aux.longitude.values[0],
+#                                                uwnd_aux.longitude.values[-1],
+#                                                359))
+#
+#             data = Weights(data)
+#             # data = Detrend(data, 'time')
+#
+#             data.to_netcdf(out_dir + n_v + '_mer_d_w_world.nc')
+#             v_count += 1
+#         del data
+#
+#         uwnd = xr.open_dataset(data_dir + 'u_mer_d_w_world.nc')
+#         vwnd = xr.open_dataset(data_dir + 'v_mer_d_w_world.nc')
+#
+#         uwnd = uwnd.to_array()
+#         vwnd = vwnd.to_array()
+#
+#         w = VectorWind(uwnd, vwnd)
+#         #sf, vp = w.sfvp()
+#         sf = w.streamfunction()
+#         sf.to_netcdf(data_dir + 'sf_from_' + v + '_w.nc')
+#         #vp.to_netcdf(data_dir + 'vp_from_w.nc')
 ################################################################################
 
 
