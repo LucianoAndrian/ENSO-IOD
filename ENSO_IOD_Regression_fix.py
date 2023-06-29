@@ -453,165 +453,119 @@ for v, v_count, hpalevel, waf_scale in zip(variables,[0,1], [200,750],
 # Temp y PP#####################################################################
 ################################################################################
 #
-# def OpenDataSet(name, interp=False, lat_interp=None, lon_interp=None):
-#
-#     if name == 'pp_gpcc':
-#         # GPCC2018
-#         aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
-#                               'pp_gpcc_d_w_c_1950-2020_1.nc')
-#         pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
-#         if interp:
-#             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
-#         #pp_gpcc = pp_gpcc.rename({'precip': 'var'})
-#
-#         return pp_gpcc
-#     elif name == 'pp_gpcc_0.25':
-#         # GPCC2018
-#         aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
-#                               'pp_gpcc_d_w_c_1950-2020_0.25.nc')
-#         pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
-#         if interp:
-#             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
-#         #pp_gpcc = pp_gpcc.rename({'precip': 'var'})
-#
-#         return pp_gpcc
-#     elif name == 'pp_gpcc_or':
-#         aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_no_detrend/' +
-#                               'pp_gpcc_v2020_0.25.nc')
-#         pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
-#         if interp:
-#             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
-#         return pp_gpcc
-#     elif name == 'pp_cmap':
-#         aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
-#                               'pp_cmap_d_w_c_1979-2020_2.5.nc')
-#         pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
-#         if interp:
-#             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
-#         return pp_gpcc
-#     elif name == 't_cru':
-#         aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
-#                               't_cru_d_w_c_1920-2020_0.25.nc')
-#         pp_gpcc = aux.sel(lon=slice(270, 330), lat=slice(-60, 15))
-#         if interp:
-#             pp_gpcc = aux.interp(lon=lon_interp, lat=lat_interp)
-#         return pp_gpcc
-#     elif name == 'pp_prec':
-#         aux = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/' +
-#                               'pp_prec_d_w_c_1950-2020_2.5.nc')
-#         aux = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
-#         if interp:
-#             aux = aux.interp(lon=lon_interp, lat=lat_interp)
-#         return aux
-# v_count = 0
-# for v in variables:
-#     if v == 'pp_cmap':
-#         y1 = 29
-#     else:
-#
-#     if v != 'hgt200_HS_mer_d_w' and v != 'hgt750_mer_d_w':
-#         plt.rcParams['hatch.linewidth'] = 2
-#         for p in periodos:
-#             r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0]) - 2) / t_critic) ** 2) + 1))
-#
-#             # indices: ------------------------------------------------------------------------------------------------#
-#             dmi = dmi_or.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
-#             n34 = n34_or.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
-#
-#             data = OpenDataSet(name=v, interp=False)
-#             data = data.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
-#             time_original = data.time
-#
-#             if v == 'pp_gpcc_or':
-#                 data = data.rename({name_var[v_count]: 'var'})
-#                 dmi = dmi.sel(time=slice(str(p[0]) + '-' + '0'+str(data.time[0].dt.month.values) +'-01',
-#                                          str(time_original[-1].dt.year.values) + '-12-01'))
-#                 n34 = n34.sel(time=slice(str(p[0]) + '-' + '0'+str(data.time[0].dt.month.values) +'-01',
-#                                          str(time_original[-1].dt.year.values) + '-12-01'))
-#             elif v == 'pp_gpcc_0.25':
-#                 dmi = dmi.sel(time=slice(str(p[0]) + '-' + '0'+str(data.time[0].dt.month.values) +'-01',
-#                                          str(time_original[-1].dt.year.values) + '-12-01'))
-#                 n34 = n34.sel(time=slice(str(p[0]) + '-' + '0'+str(data.time[0].dt.month.values) +'-01',
-#                                          str(time_original[-1].dt.year.values) + '-12-01'))
-#             elif v == 'pp_cmap':
-#                 dmi = dmi.sel(time=slice('1979-' + '0'+str(data.time[0].dt.month.values) +'-01',
-#                                          str(time_original[-1].dt.year.values) + '-12-01'))
-#                 n34 = n34.sel(time=slice('1979-'+ '0'+str(data.time[0].dt.month.values) +'-01',
-#                                          str(time_original[-1].dt.year.values) + '-12-01'))
-#
-#             # Anomaly -------------------------------------------------------------------------------------------------#
-#             data = data.groupby('time.month') - data.groupby('time.month').mean('time', skipna=True)
-#
-#             # 3-month running mean ------------------------------------------------------------------------------------#
-#             data = data.rolling(time=3, center=True).mean()
-#
-#             # Seasons -------------------------------------------------------------------------------------------------#
-#             s_count = 0
-#             for s in seasons_name:
-#                 aux_n34, aux_corr_n34, aux_dmi, \
-#                 aux_corr_dmi, aux_n34_2, aux_corr_n34_2, \
-#                 aux_dmi_2, aux_corr_dmi_2 = ComputeWithEffect(data=data, data2=None, n34=n34, dmi=dmi,
-#                                                               two_variables=two_variables, m=seasons[s_count],
-#                                                               full_season=False, time_original=time_original)
-#
-#                 print('Plot')
-#                 PlotReg(data=aux_n34, data_cor=aux_corr_n34,
-#                         levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
-#                         title=title_var[v_count] + '_' + s +
-#                               '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4',
-#                         name_fig=v + '_' + s + '_' + str(p[0] + y1) +
-#                                  '_' + str(p[1]) + '_N34',
-#                         save=save, sig=True,sig_point=True,
-#                         two_variables=False,
-#                         SA=SA[v_count], step=1,
-#                         color_map='k', color_sig='k')
-#
-#                 PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
-#                         levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
-#                         title=title_var[v_count] + '_' + s +
-#                               '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI',
-#                         name_fig=v + '_' + s + '_' + str(p[0] + y1) +
-#                                  '_' + str(p[1]) + '_DMI',
-#                         save=save, sig=True,sig_point=True,
-#                         two_variables=False,
-#                         SA=SA[v_count], step=1, color_map='k', color_sig='k')
-#
-#
-#                 del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, aux_corr_n34, \
-#                     aux_corr_dmi_2, aux_corr_n34_2
-#
-#                 aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi = \
-#                     ComputeWithoutEffect(data, n34, dmi, seasons[s_count])
-#
-#                 aux_n34_wodmi_2 = 0
-#                 aux_corr_n34_2 = 0
-#                 aux_dmi_won34_2 = 0
-#                 aux_corr_dmi_2 = 0
-#
-#                 print('Plot...')
-#                 PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34,
-#                         levels=scales[v_count], cmap=cmap[v_count], dpi=200,
-#                         title=title_var[v_count] + '_' + s +
-#                               '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4 -{DMI}',
-#                         name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(p[1]) + '_N34_wodmi',
-#                         save=save, sig=True,sig_point=True,
-#                         two_variables=False,
-#                         SA=SA[v_count], step=1, color_map='k', color_sig='k')
-#
-#                 PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
-#                         levels=scales[v_count], cmap=cmap[v_count], dpi=200,
-#                         title=title_var[v_count] + '_' + s +
-#                               '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI -{N34}',
-#                         name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(p[1]) + '_DMI_woN34',
-#                         save=save, sig=True,sig_point=True,
-#                         two_variables=False,
-#                         SA=SA[v_count], step=1,  color_map='k', color_sig='k')
-#
-#                 del aux_n34_wodmi, aux_dmi_won34, aux_corr_dmi, aux_corr_n34, \
-#                     aux_n34_wodmi_2, aux_dmi_won34_2, aux_corr_dmi_2, aux_corr_n34_2
-#
-#                 s_count +=1
-#
-#     else:
-#             s_count += 1
-#     v_count += 1
+def OpenObsDataSet(name, sa=True,
+                   dir='/pikachu/datos/luciano.andrian/observado/ncfiles'
+                        '/data_obs_d_w_c/'):
+
+    aux = xr.open_dataset(dir + name + '.nc')
+    if sa:
+        aux2 = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
+        if len(aux2.lat) > 0:
+            return aux2
+        else:
+            aux2 = aux.sel(lon=slice(270, 330), lat=slice(-60, 15))
+            return aux2
+    else:
+        return aux
+
+################################################################################
+variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
+name_var = ['var']
+title_var = ['PP GPCC', 'T Cru']
+seasons = [7, 10] # main month
+seasons_name = ['JJA', 'SON']
+SA = [True, False]
+
+scales = [np.linspace(-15, 15, 13),   #pp
+          [-.6,-.4,-.2,-.1,-.05,0,0.05,0.1,0.2,0.4,0.6]] #t
+cmap = [cbar_pp, cbar]
+
+periodos = [[1940,2020]]
+t_critic = 1.66 # es MUY similar (2 digitos) para ambos períodos
+y1 = 0
+p = periodos[0]
+r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0] + y1) - 2) / t_critic) ** 2) + 1))
+
+for v, v_count in zip(variables_tpp, [0,1]):
+
+    plt.rcParams['hatch.linewidth'] = 2
+    # indices: ----------------------------------------------------------------#
+    dmi = dmi_or.sel(
+        time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
+    n34 = n34_or.sel(
+        time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
+
+    for sa in SA:
+        for s, mm in zip(seasons_name, seasons):
+            data = OpenObsDataSet(name=v + '_' + s, sa=sa)
+            data = data.sel(
+                time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
+            time_original = data.time
+            aux_n34, aux_corr_n34, aux_dmi, aux_corr_dmi, aux_n34_2,\
+            aux_corr_n34_2, aux_dmi_2, aux_corr_dmi_2 = \
+                ComputeWithEffect(data=data, data2=None,
+                                  n34=n34.sel(time=n34.time.dt.month.isin(mm)),
+                                  dmi=dmi.sel(time=dmi.time.dt.month.isin(mm)),
+                                  two_variables=two_variables, m=mm,
+                                  full_season=False,
+                                  time_original=time_original)
+
+            print('Plot')
+            PlotReg(data=aux_n34, data_cor=aux_corr_n34,
+                    levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
+                    title=title_var[v_count] + '_' + s +
+                          '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4',
+                    name_fig=v + '_' + s + '_' + str(p[0] + y1) +
+                             '_' + str(p[1]) + '_N34',
+                    save=save, sig=True, sig_point=True,
+                    two_variables=False,
+                    SA=sa, step=1,
+                    color_map='k', color_sig='k')
+
+            PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
+                    levels=scales[v_count], cmap=cmap[v_count], dpi=dpi,
+                    title=title_var[v_count] + '_' + s +
+                          '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI',
+                    name_fig=v + '_' + s + '_' + str(p[0] + y1) +
+                             '_' + str(p[1]) + '_DMI',
+                    save=save, sig=True, sig_point=True,
+                    two_variables=False,
+                    SA=sa, step=1, color_map='k', color_sig='k')
+
+            del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, \
+                aux_corr_n34, aux_corr_dmi_2, aux_corr_n34_2
+
+            aux_n34_wodmi, aux_corr_n34, aux_dmi_won34, aux_corr_dmi = \
+                ComputeWithoutEffect(data,
+                                     n34.sel(time=n34.time.dt.month.isin(mm)),
+                                     dmi.sel(time=dmi.time.dt.month.isin(mm)),
+                                     mm, time_original)
+
+            aux_n34_wodmi_2 = 0
+            aux_corr_n34_2 = 0
+            aux_dmi_won34_2 = 0
+            aux_corr_dmi_2 = 0
+
+            print('Plot...')
+            PlotReg(data=aux_n34_wodmi, data_cor=aux_corr_n34,
+                    levels=scales[v_count], cmap=cmap[v_count], dpi=200,
+                    title=title_var[v_count] + '_' + s +
+                          '_' + str(p[0] + y1) + '_' + str(
+                        p[1]) + '_Niño3.4 -{DMI}',
+                    name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(
+                        p[1]) + '_N34_wodmi',
+                    save=save, sig=True, sig_point=True,
+                    two_variables=False,
+                    SA=sa, step=1, color_map='k', color_sig='k')
+
+            PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
+                    levels=scales[v_count], cmap=cmap[v_count], dpi=200,
+                    title=title_var[v_count] + '_' + s +
+                          '_' + str(p[0] + y1) + '_' + str(
+                        p[1]) + '_DMI -{N34}',
+                    name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(
+                        p[1]) + '_DMI_woN34',
+                    save=save, sig=True, sig_point=True,
+                    two_variables=False,
+                    SA=sa, step=1, color_map='k', color_sig='k')
+################################################################################
