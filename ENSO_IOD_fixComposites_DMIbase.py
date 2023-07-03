@@ -97,7 +97,7 @@ cbar_sst.set_over('#9B1C00')
 cbar_sst.set_under('#014A9B')
 cbar_sst.set_bad(color='white')
 
-cmap_t_pp = [cbar_t, cbar_pp, cbar_pp]
+cmap_t_pp = [cbar_pp, cbar_t]
 cmap_era5 = [cbar_t, cbar_t_r]
 ########################################################################################################################
 # HGT + WAF -----------------------------------------------------------------------------------------------------------#
@@ -250,49 +250,103 @@ for c in cases:
 
 ########################################################################################################################
 ########################################################################################################################
-# prueba hemisferio
+# T y PP HS y SA
+def OpenObsDataSet(name, sa=True,
+                   dir='/pikachu/datos/luciano.andrian/observado/ncfiles'
+                        '/data_obs_d_w_c/'):
+
+    aux = xr.open_dataset(dir + name + '.nc')
+    if sa:
+        aux2 = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
+        if len(aux2.lat) > 0:
+            return aux2
+        else:
+            aux2 = aux.sel(lon=slice(270, 330), lat=slice(-60, 15))
+            return aux2
+    else:
+        return aux
 ########################################################################################################################
 # #T y PP con contornos de HGT200
-variables_t_p = ['pp_gpcc_HS_d_w_c_1950-2020_0.25.nc']
+variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
+title_var = ['PP GPCC', 'T Cru']
+scales = [np.linspace(-45, 45, 15), # pp
+          [-1, -.75, -.5, -.25, -.1, 0, .1, .25, .5, .75, 1]] #t
+#seasons = [7, 10] # main month
+min_max_months = [[6,8],[9,11]]
+seasons_name = ['JJA', 'SON']
+SA = borders = [True, False]
+
+aux_name = ['HS', 'SA'] # esto funciona con sa, [True] = 'SA'
 #variables_ERA5 = ['hgt200_HS_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
 v_count = 0
-# plt.rcParams['hatch.linewidth'] = 2
-# for v in variables_t_p:
-#     data = xr.open_dataset(data_dir_t_pp + v)
-#     data2 = xr.open_dataset(data_dir_era5 + variables_ERA5[0] + '.nc')
-#     data2 = data2.sel(lat=slice(20, -90))
-#     #data2 = data2.interp(lon=data.lon.values, lat=data.lat.values)
-#
-#     c_count = 0
-#     for c in cases:
-#         s_count = 0
-#         for s in seasons:
-#             comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
-#                                               two_variables=True, data2=data2)
-#
-#             data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
-#                                        '_' + c + '1950_2020_' + s + '.nc')
-#
-#             comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
-#             sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
-#             sig = sig.where(np.isnan(sig['var']), 0)
-#
-#             if v_count != 0:
-#                 v_count_sc = 2
-#             else:
-#                 v_count_sc = 0
-#
-#             #MakeMask(pp, dataname='cluster')
-#             PlotComposite_wWAF(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
-#                  two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
-#                  mapa='hs', significance=False,
-#                  title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
-#                  name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_HS_mer_d_w',
-#                  dpi=dpi, save=save, comp_sig=sig, color_sig='k')
-#
-#             s_count += 1
-#         c_count += 1
-#     v_count += 1
+plt.rcParams['hatch.linewidth'] = 2
+for v, v_count in zip(variables_tpp, [0,1]):
+    for sa in SA:
+        for s, s_count in zip(seasons_name, [0,1]):
+            data = OpenObsDataSet(name=v + '_' + s, sa=sa)
+            data = data.sel(time=slice('1940-01-01','2020-12-31'))
+
+            # sel ?
+            for c, c_count in zip(cases, range(0, len(cases))):
+                comp1, num_case = CaseComp(data, s,
+                                           mmonth=min_max_months[s_count], c=c,
+                                           nc_date_dir=nc_date_dir)
+
+                # stand by... corriendo MC
+                # Significancia
+                # data_sig = xr.open_dataset(
+                #     sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
+                #     '_' + c + '1940_2020_' + s + '.nc')
+                # comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+                # sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+                # sig = sig.where(np.isnan(sig['var']), 0)
+
+                PlotComposite_wWAF(comp=comp1, levels=scales[v_count],
+                                   cmap=cmap_t_pp[v_count], step1=1,
+                                   contour1=False,
+                                   two_variables=False,
+                                   mapa=aux_name[sa], significance=False,
+                                   title=v_name[v_count] + '\n' +
+                                         title_case[c_count] + '\n' + s +
+                                         ' - Events: ' + str(num_case) ,
+                                   name_fig=v_name_fig[v_count] + s + '_' +
+                                            cases[c_count] + '_mer_d_w_' +
+                                            aux_name[sa],
+                                   dpi=dpi, save=save, comp_sig=None,
+                                   color_sig='k', color_map='k',
+                                   borders=sa)
+
+
+    # c_count = 0
+    # for c in cases:
+    #     s_count = 0
+    #     for s in seasons:
+    #         comp1, num_case, comp2 = CaseComp(data, s, mmonth=min_max_months[s_count], c=c,
+    #                                           two_variables=True, data2=data2)
+    #
+    #         data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + v.split('_')[1] +
+    #                                    '_' + c + '1950_2020_' + s + '.nc')
+
+    #         comp1_i=comp1.interp(lon=data_sig.lon.values, lat=data_sig.lat.values)
+    #         sig = comp1_i.where((comp1_i < data_sig['var'][0]) | (comp1_i > data_sig['var'][1]))
+    #         sig = sig.where(np.isnan(sig['var']), 0)
+    #
+    #         if v_count != 0:
+    #             v_count_sc = 2
+    #         else:
+    #             v_count_sc = 0
+    #
+    #         #MakeMask(pp, dataname='cluster')
+    #         PlotComposite_wWAF(comp=comp1, levels=scales[v_count_sc], cmap = cmap_t_pp[v_count], step1=1, contour1=False,
+    #              two_variables=True, comp2=comp2, levels2=scales[v_count_sc + 1], step2=4,
+    #              mapa='hs', significance=False,
+    #              title=v_name[v_count] + '\n' + title_case[c_count] + '\n' + s + ' - Events: ' + str(num_case) ,
+    #              name_fig=v_name_fig[v_count] + s + '_' + cases[c_count] + '_HS_mer_d_w',
+    #              dpi=dpi, save=save, comp_sig=sig, color_sig='k')
+    #
+    #         s_count += 1
+    #     c_count += 1
+    # v_count += 1
 ########################################################################################################################
 # #T y PP con contornos de HGT200
 

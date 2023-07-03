@@ -2378,7 +2378,7 @@ def PlotComposite_wWAF(comp, levels, cmap, step1, contour1=True,
                        two_variables=False, comp2=None, levels2=np.linspace(-1, 1, 13), step2=4,
                        mapa='sa', title='title', name_fig='name_fig', dpi=100, save=False,
                        comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#d9d9d9',
-                       out_dir='RUTA', proj='eq',
+                       out_dir='RUTA', proj='eq', borders=False,
                        third_variable=False, comp3=None, levels_contour3=np.linspace(-1, 1, 13),
                        waf=False, data_waf=None, px=None, py=False, waf_scale=1 / 1000, step_waf=10):
     import matplotlib.pyplot as plt
@@ -2492,6 +2492,9 @@ def PlotComposite_wWAF(comp, levels, cmap, step1, contour1=True,
     cb = plt.colorbar(im, fraction=0.042, pad=0.035, shrink=0.8)
     cb.ax.tick_params(labelsize=8)
     ax.add_feature(cartopy.feature.LAND, facecolor='white', edgecolor=color_map)
+    if borders:
+        ax.add_feature(cartopy.feature.BORDERS, facecolor='white',
+                       edgecolor=color_map)
     # ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
     ax.coastlines(color=color_map, linestyle='-', alpha=1)
 

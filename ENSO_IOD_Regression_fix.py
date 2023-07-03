@@ -475,6 +475,7 @@ title_var = ['PP GPCC', 'T Cru']
 seasons = [7, 10] # main month
 seasons_name = ['JJA', 'SON']
 SA = [True, False]
+aux_name = ['HS', 'SA'] # esto funciona con sa, [True] = 'SA'
 
 scales = [np.linspace(-15, 15, 13),   #pp
           [-.6,-.4,-.2,-.1,-.05,0,0.05,0.1,0.2,0.4,0.6]] #t
@@ -516,7 +517,7 @@ for v, v_count in zip(variables_tpp, [0,1]):
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0] + y1) + '_' + str(p[1]) + '_Niño3.4',
                     name_fig=v + '_' + s + '_' + str(p[0] + y1) +
-                             '_' + str(p[1]) + '_N34',
+                             '_' + str(p[1]) + '_N34_' + aux_name[sa],
                     save=save, sig=True, sig_point=True,
                     two_variables=False,
                     SA=sa, step=1,
@@ -527,7 +528,7 @@ for v, v_count in zip(variables_tpp, [0,1]):
                     title=title_var[v_count] + '_' + s +
                           '_' + str(p[0] + y1) + '_' + str(p[1]) + '_DMI',
                     name_fig=v + '_' + s + '_' + str(p[0] + y1) +
-                             '_' + str(p[1]) + '_DMI',
+                             '_' + str(p[1]) + '_DMI_' + aux_name[sa],
                     save=save, sig=True, sig_point=True,
                     two_variables=False,
                     SA=sa, step=1, color_map='k', color_sig='k')
@@ -553,7 +554,7 @@ for v, v_count in zip(variables_tpp, [0,1]):
                           '_' + str(p[0] + y1) + '_' + str(
                         p[1]) + '_Niño3.4 -{DMI}',
                     name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(
-                        p[1]) + '_N34_wodmi',
+                        p[1]) + '_N34_wodmi_' + aux_name[sa],
                     save=save, sig=True, sig_point=True,
                     two_variables=False,
                     SA=sa, step=1, color_map='k', color_sig='k')
@@ -564,7 +565,7 @@ for v, v_count in zip(variables_tpp, [0,1]):
                           '_' + str(p[0] + y1) + '_' + str(
                         p[1]) + '_DMI -{N34}',
                     name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(
-                        p[1]) + '_DMI_woN34',
+                        p[1]) + '_DMI_woN34_' + aux_name[sa],
                     save=save, sig=True, sig_point=True,
                     two_variables=False,
                     SA=sa, step=1, color_map='k', color_sig='k')

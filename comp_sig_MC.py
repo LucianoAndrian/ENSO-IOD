@@ -64,8 +64,14 @@ def NumberPerts(data_to_concat, neutro, num = 0):
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 ################################################################################
 seasons = ['SON']
-periodos = [['40', '20']]
 min_max_months = [[9, 11]]
+
+#seasons = ['JJA']
+#min_max_months = [[7, 8]]
+print(seasons[0])
+periodos = [['40', '20']]
+
+
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos', 'DMI_un_neg', 'N34_un_pos',
          'N34_un_neg']
 ################################################################################
@@ -77,7 +83,7 @@ for dmi_true_dipole in [True, False]:
         nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
         out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/'
 
-    for v in ['HGT200', 'HGT750']:
+    for v in ['tcru', 'ppgpcc']:
 
         print('Variable: ' + v + ', dmi_true_dipole=' + str(dmi_true_dipole))
 
@@ -94,13 +100,24 @@ for dmi_true_dipole in [True, False]:
         elif v == 'div200':
             ruta = data_dir
             data = xr.open_dataset(ruta + v + '_HS_mer_d_w.nc')
+
+        # T y PP PROVISIONAL!
+        # Para hacer JJA y SON será a mano (literal) luego solo SON
+        elif v == 'tcru':
+            ruta = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/'
+            data = xr.open_dataset(ruta + 'tcru_w_c_d_0.25_SON.nc')
+        elif v == 'ppgpcc':
+            ruta = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/'
+            data = xr.open_dataset(ruta + 'ppgpcc_w_c_d_1_SON.nc')
+
         else:
             print('que es esto <<' + v + '>> ?!!!')
             from sys import exit
             exit(1)
 
-        data = data.interp(lat=np.arange(-80, 20, 0.5)[::-1],
-                           lon=np.arange(0, 360, 0.5))
+        if v != 'ppgpcc':
+            data = data.interp(lat=np.arange(-80, 20, 0.5)[::-1],
+                               lon=np.arange(0, 360, 0.5))
 
         for c in cases:
             print(c)
