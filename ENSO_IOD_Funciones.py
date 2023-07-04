@@ -2380,7 +2380,7 @@ def PlotComposite_wWAF(comp, levels, cmap, step1, contour1=True,
                        comp_sig=None, color_sig='k', significance=True, linewidht2=.5, color_map='#d9d9d9',
                        out_dir='RUTA', proj='eq', borders=False,
                        third_variable=False, comp3=None, levels_contour3=np.linspace(-1, 1, 13),
-                       waf=False, data_waf=None, px=None, py=False, waf_scale=1 / 1000, step_waf=10):
+                       waf=False, data_waf=None, px=None, py=False, waf_scale=1 / 1000, step_waf=10, hatches='..'):
     import matplotlib.pyplot as plt
     import cartopy.feature
     from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
@@ -2461,7 +2461,8 @@ def PlotComposite_wWAF(comp, levels, cmap, step1, contour1=True,
         colors_l = [color_sig, color_sig]
         comp_sig_var = comp_sig['var']
         cs = ax.contourf(comp_sig.lon, comp_sig.lat, comp_sig_var,
-                         transform=crs_latlon, colors='none', hatches=["..", ".."], extend='lower')
+                         transform=crs_latlon, colors='none',
+                         hatches=[hatches, hatches], extend='lower')
         for i, collection in enumerate(cs.collections):
             collection.set_edgecolor(colors_l[i % len(colors_l)])
 
