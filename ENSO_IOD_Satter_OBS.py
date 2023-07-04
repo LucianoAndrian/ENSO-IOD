@@ -154,7 +154,7 @@ for s in seasons_n:
                 marker='+',
                 s=70, color='k', alpha=1)
 
-    plt.legend(loc=(.01,.62))
+    plt.legend(loc=(.01,.55))
 
     plt.ylim((-5, 5))
     plt.xlim((-5, 5))
