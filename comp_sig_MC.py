@@ -66,8 +66,9 @@ data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 seasons = ['SON']
 min_max_months = [[9, 11]]
 
-#seasons = ['JJA']
-#min_max_months = [[7, 8]]
+# seasons = ['JJA']
+# min_max_months = [[7, 8]]
+print('#######################################################################')
 print(seasons[0])
 periodos = [['40', '20']]
 
@@ -121,6 +122,7 @@ for dmi_true_dipole in [True, False]:
 
         for c in cases:
             print(c)
+            print('----------------------------------------------------------')
             count = 0
             for s in seasons:
                 print(s)
