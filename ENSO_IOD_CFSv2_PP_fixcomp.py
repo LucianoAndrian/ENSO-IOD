@@ -18,7 +18,7 @@ from ENSO_IOD_Funciones import MakeMask
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/PP/'
 save = True
-dpi = 200
+dpi = 300
 detrend = True
 # Funciones ############################################################################################################
 def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
@@ -37,8 +37,8 @@ def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
                      levels=levels, transform=crs_latlon, cmap=cmap, extend='both')
     cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
     cb.ax.tick_params(labelsize=8)
-    #ax.add_feature(cartopy.feature.LAND, facecolor='#d9d9d9')
-    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey')
+    ax.add_feature(cartopy.feature.BORDERS, facecolor='k')
+    ax.add_feature(cartopy.feature.LAND, facecolor='k')
     ax.add_feature(cartopy.feature.COASTLINE)
     ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
     ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
@@ -129,12 +129,12 @@ for s in seasons:
             mask = MakeMask(comp, 'var')
             comp *= mask
 
-            # Plot(comp, levels=scale_signal, cmap=cbar_pp, dpi=dpi, step=1,
-            #      name_fig='prec_comp_' + c + '_' + s + name_fig_end,
-            #      title='Mean Composite - CFSv2 - ' + s + '\n'
-            #            + title_case[c_count] + '\n' + ' ' + 'PREC'
-            #            + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
-            #      save=save)
+            Plot(comp, levels=scale_signal, cmap=cbar_pp, dpi=dpi, step=1,
+                 name_fig='prec_comp_' + c + '_' + s + name_fig_end,
+                 title='Mean Composite - CFSv2 - ' + s + '\n'
+                       + title_case[c_count] + '\n' + ' ' + 'PREC'
+                       + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
+                 save=save)
 
             # # spread
             spread = case - comp
