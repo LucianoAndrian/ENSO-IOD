@@ -25,8 +25,8 @@ out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/1940_2020/' \
           'composite/dmi_standard/'
 
 #Plot
-save = False
-dpi = 50
+save = True
+dpi = 300
 sig = True
 waf = True
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' \
@@ -330,5 +330,6 @@ for v, v_count in zip(variables_tpp, [0,1]):
                                             aux_name[sa] + '_DMIST',
                                    dpi=dpi, save=save, comp_sig=sig,
                                    color_sig=color_sig, color_map='k',
-                                   borders=sa, hatches=hatches)
+                                   borders=sa, hatches=hatches,
+                                   out_dir=out_dir)
 ################################################################################

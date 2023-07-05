@@ -330,5 +330,6 @@ for v, v_count in zip(variables_tpp, [0,1]):
                                             aux_name[sa] + '_DMITD',
                                    dpi=dpi, save=save, comp_sig=sig,
                                    color_sig=color_sig, color_map='k',
-                                   borders=sa, hatches=hatches)
+                                   borders=sa, hatches=hatches,
+                                   out_dir=out_dir)
 ################################################################################
