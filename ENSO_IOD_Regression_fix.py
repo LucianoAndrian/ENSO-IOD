@@ -24,7 +24,7 @@ from ENSO_IOD_Funciones import ComputeWithEffect, ComputeWithoutEffect, WAF
 #era5_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 era5_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/1940_2020/' \
-          'regression/'
+          'regression/nosig_aux/'
 ################################################################################
 save = True
 dpi = 300
