@@ -36,16 +36,18 @@ def PlotBars(x, bin_n, bin_n_err, bin_n_len,
     fig = plt.figure(1, figsize=(7, 7), dpi=300)
     ax = fig.add_subplot(111)
     plt.hlines(y=0, xmin=-4, xmax=4, color='k')
-    ax.bar(x, bin_n, color='royalblue', alpha=1, width=0.15, label='Niño3.4')
-    ax.errorbar(x, bin_n, yerr=bin_n_err, capsize=4, fmt='o', alpha=1,
+    ax.bar(x + 0.075, bin_n, color='royalblue', alpha=1, width=0.15, label='Niño3.4')
+    ax.errorbar(x + 0.075, bin_n, yerr=bin_n_err, capsize=4, fmt='o', alpha=1,
                 elinewidth=0.9, ecolor='navy', mfc='w', mec='navy', markersize=5)
     ax2 = ax.twinx()
     ax2.bar(x + 0.075, bin_n_len, color='royalblue', alpha=0.5, width=0.15)
 
-    # ax.bar(x - 0.075, np.nan_to_num(bin_d), color='indianred', alpha=1, width=0.15, label='DMI')
-    # ax.errorbar(x - 0.075, bin_d, yerr=bin_d_err, capsize=4, fmt='o', alpha=1,
-    #             elinewidth=0.9, ecolor='firebrick', mec='firebrick', mfc='w', markersize=5)
-    # ax2.bar(x - 0.075, bin_d_len, color='firebrick', alpha=0.5, width=0.15)
+    ax.bar(x - 0.075, np.nan_to_num(bin_d), color='indianred', alpha=1,
+           width=0.15, label='DMI')
+    ax.errorbar(x - 0.075, bin_d, yerr=bin_d_err, capsize=4, fmt='o', alpha=1,
+                elinewidth=0.9, ecolor='firebrick', mec='firebrick', mfc='w',
+                markersize=5)
+    ax2.bar(x - 0.075, bin_d_len, color='firebrick', alpha=0.5, width=0.15)
 
     ax.legend(loc='upper left')
     ax.set_ylim(ymin, ymax)
@@ -263,7 +265,8 @@ def Compute(box, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6, dmi_b_1
     return bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len
 ########################################################################################################################
 
-seasons = ['JJA', 'JAS', 'ASO', 'SON']
+#seasons = ['JJA', 'JAS', 'ASO', 'SON']
+seasons = ['JJA', 'SON']
 for s in seasons:
 
     # indices
@@ -367,6 +370,21 @@ for s in seasons:
              bin_d, bin_d_err, bin_d_len,
              title='N-SESA - ' + s + ' - ' + 'Prec. Anomaly',
              name_fig='PREC_N-SESA_' + s + '_N34.jpg', save=save,
+             ymax=60)
+
+    PAT = data_prec.sel(lat=slice(-55, -40), lon=slice(288, 300))
+    PAT = PAT.mean(['lon', 'lat'])
+
+    bin_n, bin_n_err, bin_n_len, bin_d, bin_d_err, bin_d_len = \
+        Compute(PAT, dmi_b0, dmi_b1, dmi_b2, dmi_b3, dmi_b4, dmi_b5, dmi_b6
+                , dmi_b_1, dmi_b_2, dmi_b_3, dmi_b_4, dmi_b_5, dmi_b_6,
+                n34_b0, n34_b1, n34_b2, n34_b3, n34_b4, n34_b5, n34_b6, n34_b_1
+                , n34_b_2, n34_b_3, n34_b_4, n34_b_5, n34_b_6)
+
+    PlotBars(x, bin_n, bin_n_err, bin_n_len,
+             bin_d, bin_d_err, bin_d_len,
+             title='PAT - ' + s + ' - ' + 'Prec. Anomaly',
+             name_fig='PREC_PAT_' + s + '_N34.jpg', save=save,
              ymax=60)
 
 

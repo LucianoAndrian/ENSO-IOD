@@ -21,8 +21,8 @@ from sklearn.cluster import KMeans
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/PDFs/'
 
-save = False
-dpi = 100
+save = True
+dpi = 300
 # Funciones ####################################################################
 def best_fit_distribution(data, size, start, end):
     """Model data by finding best fit distribution to data"""
@@ -67,7 +67,8 @@ def best_fit_distribution(data, size, start, end):
                 sse = np.sum(np.power(y - pdf, 2.0))
 
                 # identify if this distribution is better
-                best_distributions.append((distribution, params, sse, distribution_name))
+                best_distributions.append((distribution, params, sse,
+                                           distribution_name))
 
         except Exception:
             pass
@@ -114,18 +115,20 @@ def CFSv2Data(v):
         files = sorted(files, key=lambda x: x.split()[0])
 
         # abriendo todos los archivos
+        # xr no entiende la codificacion de Leads, r y las fechas
         data_cfsv2 = xr.open_mfdataset(files, decode_times=False).sel(
-            L=[0.5, 1.5, 2.5, 3.5])  # xr no entiende la codificacion de Leads, r y las fechas
-        data_cfsv2 = data_cfsv2.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
+            L=[0.5, 1.5, 2.5, 3.5])
+        data_cfsv2 = data_cfsv2.rename(
+            {'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
         data_cfsv2['L'] = [0, 1, 2, 3]
-        data_cfsv2 = xr.decode_cf(fix_calendar(data_cfsv2))  # corrigiendo fechas
+        data_cfsv2 = xr.decode_cf(fix_calendar(data_cfsv2)) #corrigiendo fechas
         data_cfsv2 = data_cfsv2.sel(lon=slice(275, 330), lat=slice(-60, 15))
         data_cfsv2 = data_cfsv2.sel(r=slice(1, 24))
         data_cfsv2.to_netcdf(out_data_dir + v + '_data_cfsv2_noRoll.nc')
         data_cfsv2 = data_cfsv2.compute()
     return data_cfsv2
 ################################################################################
-seasons = ['JJA', 'SON']
+seasons = ['SON']
 
 cases = ['dmi_puros_pos', 'dmi_puros_neg',
         'n34_puros_pos', 'n34_puros_neg',
@@ -135,15 +138,18 @@ cases = ['dmi_puros_pos', 'dmi_puros_neg',
 positive_cases = ['dmi_puros_pos', 'n34_puros_pos', 'sim_pos']
 negative_cases = ['dmi_puros_neg', 'n34_puros_neg', 'sim_neg']
 
+positive_cases_names = ['IOD pos.', 'El Niño', 'El Niño + IOD pos.']
+negative_cases_names = ['IOD neg.', 'La Niña', 'La Niña + IOD neg.']
+
 title_case = ['DMI pure - positive',
               'DMI pure - negative',
               'El Niño pure', 'La Niña pure',
               'DMI positive - El Niño',
               'DMI negative - La Niña']
 # cajas ------------------------------------------------------------------------
-box_name = ['S_SESA', 'N-SESA', 'SESA']
-box_lats = [[-39,-29], [-29,-17], [-39,-17]]
-box_lons = [[296, 315], [296, 315], [296,315]]
+box_name = ['S_SESA', 'N-SESA', 'SESA', 'Patagonia']
+box_lats = [[-39,-29], [-29,-17], [-39,-17], [-55,-40]]
+box_lons = [[296, 315], [296, 315], [296,315], [288,300]]
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 v = 'prec' # <<<<<<solo precpitacion>>>>>>
@@ -158,6 +164,10 @@ ylim = 0.020
 
 for s in seasons:
     for bl, bt, name in zip(box_lons, box_lats, box_name):
+        if name == 'Patagonia':
+            startend = -30
+        else:
+            startend = -60
         # Climatologia
         neutro = xr.open_dataset(
             cases_dir + v + '_neutros_' + s + '.nc').rename(
@@ -195,8 +205,8 @@ for s in seasons:
         # ax[1].set_ylim(0, ylim)
         ax[0].set_xlabel(v + '- anomaly ' + units)
         ax[1].set_xlabel(v + '- anomaly ' + units)
-        ax[0].set_title('Clim - Positive Phases', color='firebrick')
-        ax[1].set_title('Clim. - Negative Phases', color='royalblue')
+        ax[0].set_title('Fases positivas', color='firebrick')
+        ax[1].set_title('Fases negativas', color='navy')
 
         cases_color = ['darkorange', 'blue', 'firebrick', 'cyan', 'forestgreen',
                        'purple']
@@ -211,10 +221,13 @@ for s in seasons:
             np.nan_to_num(aux_clim_full), len(aux_clim_full),
             -1 * startend, startend)
 
-        ax[0].plot(pdf_clim_full, lw=1.5, color='k', label='climatology')
-        ax[1].plot(pdf_clim_full, lw=1.5, color='k', label='climatology')
-
-        for c, c_count in zip(positive_cases, range(0, len(positive_cases))):
+        ax[0].plot(pdf_clim_full, lw=1.5, color='k', label='clim.')
+        ax[1].plot(pdf_clim_full, lw=1.5, color='k', label='clim.')
+        max_y = []
+        max_y.append(max(pdf_clim_full))
+        for c, c_count, c_names in zip(positive_cases,
+                                       range(0, len(positive_cases)),
+                                       positive_cases_names):
             case = xr.open_dataset(
                 cases_dir + v + '_' + c + '_' + s + '.nc').rename({v: 'var'})
             case *= fix_factor
@@ -230,9 +243,11 @@ for s in seasons:
                 np.nan_to_num(case_anom), len(case_anom),
                 -1 * startend, startend)
             ax[0].plot(pdf_case, lw=2.5, color=positive_cases_colors[c_count],
-                       label=c)
+                       label=c_names)
+            max_y.append(max(pdf_case))
 
-        for c, c_count in zip(negative_cases, range(0, len(negative_cases))):
+        for c, c_count, c_names in zip(negative_cases, range(0, len(negative_cases)),
+                              negative_cases_names):
             case = xr.open_dataset(
                 cases_dir + v + '_' + c + '_' + s + '.nc').rename({v: 'var'})
             case *= fix_factor
@@ -248,14 +263,17 @@ for s in seasons:
                 np.nan_to_num(case_anom), len(case_anom),
                 -1 * startend, startend)
             ax[1].plot(pdf_case, lw=2.5, color=negative_cases_colors[c_count],
-                       label=c)
+                       label=c_names)
+            max_y.append(max(pdf_case))
 
         ax[0].grid(alpha=0.5)
         ax[1].grid(alpha=0.5)
         ax[0].legend(loc='best')
         ax[1].legend(loc='best')
+        ax[0].set_ylim(0, max(max_y))
+        ax[1].set_ylim(0, max(max_y))
 
-        fig.suptitle(v + ' - ' + name + ' - ' + s)
+        fig.suptitle('PDFs precipitación - ' + name + ' - ' + s)
         # fig.legend(bbox_to_anchor=(1, 0.5), loc="center right")  # , bbox_transform=fig.transFigure, ncol=len(cases2))
         # plt.subplots_adjust(right=0.85)
         plt.yticks(size=10)
@@ -263,7 +281,7 @@ for s in seasons:
         # plt.tight_layout(rect=[0, 0, 0.7, 0])
         if save:
             plt.savefig(
-                out_dir + v + '_PDF_' + 'cluster_name[cs]' + '_' + s + '.jpg',
+                out_dir + v + '_PDF_' + name + '_box' + '_' + s + '.jpg',
                 box_inches="tight")
         else:
             plt.show()

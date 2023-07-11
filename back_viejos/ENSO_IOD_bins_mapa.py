@@ -34,10 +34,10 @@ mask = OpenDataSet('pp_gpcc', interp=True,
 # box_color =['Spectral_r', 'afmhot_r', 'BrBG', 'BrBG_r', 'RdBu', 'RdBu_r', 'Accent']
 # box_lats = [[-35,-29],[-35,-20],[-29,-20],[-20,0],[-40,-30], [-60,-43]]
 # box_lons = [[300, 310],[300,320],[300,320],[300,325],[285,290], [285,288]]
-box_name = ['SESA', "N-SESA"]
-box_color =['Spectral_r', 'RdBu']
-box_lats = [[-39,-29], [-29,-17]]
-box_lons = [[296, 315], [296, 315]]
+box_name = ['SESA', "N-SESA", 'Patagonia']
+box_color =['Spectral_r', 'RdBu', 'Spectral']
+box_lats = [[-39,-29], [-29,-17], [-55,-40]]
+box_lons = [[296, 315], [296, 315], [288,300]]
 #----------------------------------------------------------------------
 
 import matplotlib.patches as patches
