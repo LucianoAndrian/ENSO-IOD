@@ -28,13 +28,13 @@ v = 'Ks'
 def WhatDMI(true_dipole):
     if true_dipole:
         out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/' \
-                  'composite/dmi_true_dipole/'
+                  '1940_2020/composite/dmi_true_dipole/'
         nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
                       'nc_composites_dates/'
         dmi_index='DMI_true_dipole'
     else:
         out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/' \
-                  'composite/dmi_standard/'
+                  '1940_2020/composite/dmi_standard/'
         nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
                       'nc_composites_dates_no_ind_sst_anom/'
         dmi_index = 'DMI_standard'
