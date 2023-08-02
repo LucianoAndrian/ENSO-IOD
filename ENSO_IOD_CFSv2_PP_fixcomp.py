@@ -80,13 +80,16 @@ def SpatialProbability(data, mask):
 ################################################################################
 seasons = ['JJA','SON']
 cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg',
-         'sim_pos', 'sim_neg']
+         'sim_pos', 'sim_neg',
+         'n34_pos', 'n34_neg', 'dmi_pos', 'dmi_neg']
 
 title_case = ['DMI pure - positive',
               'DMI pure - negative',
               'El Niño pure', 'La Niña pure',
               'DMI positive - El Niño',
-              'DMI negative - La Niña']
+              'DMI negative - La Niña',
+              'El Niño', 'La Niña',
+              'DMI positive', 'DMI negative']
 # colorbars -------------------------------------------------------------------#
 cbar_pp = colors.ListedColormap(['#003C30', '#004C42', '#0C7169', '#79C8BC',
                                  '#B4E2DB',

@@ -47,7 +47,9 @@ for v, n_v in zip(variables, name_variables):
     data = Weights(data)
     data = data.sel(lat=slice(20, -80))
     data = data.rolling(time=3, center=True).mean()
-    for mm, s_name in zip([10], ['SON']): # main month seasons
+    #for mm, s_name in zip([7], ['JJA']):
+    #for mm, s_name in zip([10], ['SON']): # main month seasons
+    for mm, s_name in zip([7, 10], ['JJA', 'SON']):
         aux = data.sel(time=data.time.dt.month.isin(mm))
         aux = Detrend(aux, 'time')
 

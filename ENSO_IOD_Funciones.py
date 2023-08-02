@@ -991,6 +991,54 @@ def CaseComp(data, s, mmonth, c, two_variables=False, data2=None, return_neutro_
             return comp, case_num
 
 
+def SelectCase(original_data, index, mmin, mmax):
+    def is_months(month, mmin, mmax):
+        return (month >= mmin) & (month <= mmax)
+
+    if len(index) != 0:
+        comp_field = original_data.sel(
+            time=original_data.time.dt.year.isin([index]))
+        comp_field = comp_field.sel(
+            time=is_months(
+                month=comp_field['time.month'], mmin=mmin, mmax=mmax))
+
+        return comp_field
+    else:
+        print('len index = 0')
+
+def CaseSNR(data, s, mmonth, c, nc_date_dir='None'):
+    mmin = mmonth[0]
+    mmax = mmonth[-1]
+
+    aux = xr.open_dataset(nc_date_dir + '1920_2020' + '_' + s + '.nc')
+    neutro = aux.Neutral
+
+    try:
+        case = aux[c]
+        case = case.where(case >= 1940)
+        aux.close()
+
+        case_num = len(case.values[np.where(~np.isnan(case.values))])
+
+        neutro_comp = SelectCase(original_data=data, index=neutro,
+                                     mmin=mmin, mmax=mmax)
+        data_comp = SelectCase(original_data=data, index=case,
+                                 mmin=mmin, mmax=mmax)
+
+        comp = data_comp.mean(['time'], skipna=True) -\
+               neutro_comp.mean(['time'], skipna=True)
+
+        spread = data - comp
+        spread = spread.std(['time'], skipna=True)
+
+        snr = comp / spread
+
+        return snr, case_num
+    except:
+        print('Error en ' + s + ' ' + c)
+
+
+
 def ChangeLons(data, lon_name='lon'):
     data['_longitude_adjusted'] = xr.where(
         data[lon_name] < 0,
