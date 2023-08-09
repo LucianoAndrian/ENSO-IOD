@@ -63,8 +63,8 @@ def NumberPerts(data_to_concat, neutro, num = 0):
 #data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 ################################################################################
-seasons = ['SON']
-min_max_months = [[9, 11]]
+seasons = ['JJA', 'SON']
+min_max_months = [[6, 8],[9, 11]]
 
 # seasons = ['JJA']
 # min_max_months = [[7, 8]]
@@ -84,7 +84,7 @@ for dmi_true_dipole in [True, False]:
         nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_composites_dates_no_ind_sst_anom/'
         out_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/DMIbase/'
 
-    for v in ['tcru', 'ppgpcc']:
+    for v in ['HGT200', 'HGT750', 'tcru', 'ppgpcc']:
 
         print('Variable: ' + v + ', dmi_true_dipole=' + str(dmi_true_dipole))
 
@@ -199,8 +199,8 @@ for dmi_true_dipole in [True, False]:
                         n_thread = 30
                         pool = ThreadPool(30)
                     else:
-                        n_thread = 15
-                        pool = ThreadPool(15)
+                        n_thread = 10
+                        pool = ThreadPool(10)
 
                     print('Threads: ', n_thread)
 
