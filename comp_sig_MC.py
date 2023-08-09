@@ -174,7 +174,7 @@ for dmi_true_dipole in [True, False]:
                                         comp_concat = comp
                         else:
                             next
-                    print('test')
+
                     comp_concat.to_netcdf('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_comps/' + 'Comps_' +
                                           str(int(a)) + '.nc')
                     del comp
