@@ -132,7 +132,7 @@ for s in seasons_n:
     # sim opp. sing
     plt.scatter(x=dmi_pos_n34_neg.values, y=n34_sim_neg.values, marker='s', s=50,
                 edgecolor='orange',color='orange', alpha=1, label='Niña & IOD+')
-    plt.scatter(x=dmi_neg_n34_pos.values, y=n34_sim_neg.values, marker='s', s=50,
+    plt.scatter(x=dmi_neg_n34_pos.values, y=n34_sim_pos.values, marker='s', s=50,
                 edgecolor='gold', color='gold', alpha=1, label='Niño & IOD-')
 
     plt.scatter(x=dmi_sim_pos_td.values, y=n34_sim_pos_td.values, marker='+',
