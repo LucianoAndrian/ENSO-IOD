@@ -63,9 +63,10 @@ def NumberPerts(data_to_concat, neutro, num = 0):
 #data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 ################################################################################
-seasons = ['JJA', 'SON']
-min_max_months = [[6, 8],[9, 11]]
-
+seasons = ['SON']
+min_max_months = [[9, 11]]
+# seasons = ['JJA', 'SON']
+# min_max_months = [[6, 8],[9, 11]]
 # seasons = ['JJA']
 # min_max_months = [[7, 8]]
 print('#######################################################################')
@@ -173,7 +174,7 @@ for dmi_true_dipole in [True, False]:
                                         comp_concat = comp
                         else:
                             next
-
+                    print('test')
                     comp_concat.to_netcdf('/pikachu/datos/luciano.andrian/observado/ncfiles/nc_comps/' + 'Comps_' +
                                           str(int(a)) + '.nc')
                     del comp
