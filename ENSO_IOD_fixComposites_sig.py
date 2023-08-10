@@ -278,12 +278,15 @@ title_case = ['DMI-ENSO simultaneous positive phase ',
 scales = [np.linspace(-45, 45, 15), # pp
           [-1, -.75, -.5, -.25, -.1, 0, .1, .25, .5, .75, 1]] #t
 #seasons = [7, 10] # main month
-min_max_months = [[6,8],[9,11]]
-seasons_name = ['JJA', 'SON']
-SA = borders = [True, False]
+# min_max_months = [[6,8],[9,11]]
+# seasons_name = ['JJA', 'SON']
+# SA = borders = [True, False]
+
+min_max_months = [[9,11]]
+seasons_name = ['SON']
+SA = borders = [False]
 
 aux_name = ['HS', 'SA'] # esto funciona con sa, [True] = 'SA'
-#variables_ERA5 = ['hgt200_HS_mer_d_w', 'div200_mer_d_w', 'vp200_mer_d_w']
 
 for v, v_count in zip(variables_tpp, [0,1]):
     for sa in SA:
