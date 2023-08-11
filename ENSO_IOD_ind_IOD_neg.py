@@ -27,7 +27,7 @@ from shapely.errors import ShapelyDeprecationWarning
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 ################################################################################
 #------------------------------------------------------------------------------#
-save = False
+save = True
 seasons = ['SON']
 min_max_months = [[9, 11]]
 true_dipole = [False, True]
@@ -53,13 +53,13 @@ v2 = ['HGT200', 'HGT750']
 def WhatDMI(true_dipole):
     if true_dipole:
         out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/' \
-                  '1940_2020/composite/dmi_true_dipole/'
+                  '1940_2020/composite/single_iod/dmi_true_dipole/'
         nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
                       'nc_composites_dates/'
         dmi_index='DMI_true_dipole'
     else:
         out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/' \
-                  '1940_2020/composite/dmi_standard/'
+                  '1940_2020/composite/single_iod/dmi_standard/'
         nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
                       'nc_composites_dates_no_ind_sst_anom/'
         dmi_index = 'DMI_standard'
@@ -125,6 +125,59 @@ def Subplots(data_array, level, cmap, title, save, dpi, name_fig, out_dir,
         plt.close()
     else:
         plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.1)
+        plt.show()
+
+def Plot(data, level, cmap, title, save, dpi, name_fig, out_dir,
+         contour=True):
+
+    extent= [0, 359, -80, 10]
+    crs_latlon = ccrs.PlateCarree()
+    if contour:
+        levels_contour = level.copy()
+        if isinstance(levels_contour, np.ndarray):
+            levels_contour = levels_contour[levels_contour != 0]
+        else:
+            levels_contour.remove(0)
+
+    fig = plt.figure(figsize=(7, 3), dpi=dpi)
+    ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+    crs_latlon = ccrs.PlateCarree()
+    ax.set_extent(extent, crs=crs_latlon)
+
+    try:
+        aux_var = data['var']
+    except:
+        aux_var = data
+    aux = data
+    im = ax.contourf(aux.lon, aux.lat, aux_var, levels=level,
+                     transform=crs_latlon, cmap=cmap, extend='both')
+
+    if contour:
+        ax.contour(aux.lon, aux.lat, aux_var, linewidths=.5, alpha=0.5,
+                   levels=levels_contour, transform=crs_latlon,
+                   colors='black')
+
+    cb = plt.colorbar(im, fraction=0.042, pad=0.035,shrink=0.8)
+    cb.ax.tick_params(labelsize=8)
+    ax.add_feature(cartopy.feature.LAND, facecolor='#d9d9d9')
+    ax.add_feature(cartopy.feature.COASTLINE)
+    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+    ax.set_xticks(np.arange(0, 360, 30), crs=crs_latlon)
+    ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
+    ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    ax.coastlines(color='k', linestyle='-', alpha=1)
+    lon_formatter = LongitudeFormatter(zero_direction_label=True)
+    lat_formatter = LatitudeFormatter()
+    ax.xaxis.set_major_formatter(lon_formatter)
+    ax.yaxis.set_major_formatter(lat_formatter)
+    ax.tick_params(labelsize=7)
+    plt.title(title, fontsize=10)
+    plt.tight_layout()
+    if save:
+        plt.savefig(out_dir + name_fig + '.jpg')
+        plt.close()
+
+    else:
         plt.show()
 
 def extractlevel(x):
@@ -202,6 +255,17 @@ for td in true_dipole:
                 Subplots(data_hgt, scale_hgt, cbar, title, save, dpi, name_fig,
                          out_dir)
 
+                print('Plot single HGT ---------------------------------------')
+                for d in data_hgt.time.values:
+                    title = 'z' + level + 'hPa - ' + title_case[c_count] + \
+                            '\n' + str(pd.Timestamp(d).year)
+                    name_fig = 'single_events_' + v2_v + '_' + c + '_' + \
+                               str(pd.Timestamp(d).year)
+                    Plot(data_hgt.sel(time=d), scale_hgt, cbar, title,
+                         save, dpi, name_fig, out_dir,
+                         contour=True)
+
+
                 if level == '200':
                     print('Ks ------------------------------------------------')
                     data_y_eta = eta_grad_y. \
@@ -222,4 +286,16 @@ for td in true_dipole:
                     Subplots(ks, scale_ks, cbar_ks, title, save, dpi, name_fig,
                              out_dir, contour=False)
 
+                    print('Plot single Ks ------------------------------------')
+                    for d in ks.time.values:
+                        title = 'Ks - ' + title_case[c_count] + '\n' +\
+                                str(pd.Timestamp(d).year)
+                        name_fig = 'single_events_KS_' + c + '_' + \
+                                   str(pd.Timestamp(d).year)
+                        Plot(ks.sel(time=d), scale_ks, cbar_ks, title,
+                             save, dpi, name_fig, out_dir,
+                             contour=False)
+
+################################################################################
+print('Done')
 ################################################################################
