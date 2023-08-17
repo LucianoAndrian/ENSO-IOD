@@ -284,7 +284,7 @@ scales = [np.linspace(-45, 45, 15), # pp
 
 min_max_months = [[9,11]]
 seasons_name = ['SON']
-SA = borders = [False]
+SA = borders = [True]
 
 aux_name = ['HS', 'SA'] # esto funciona con sa, [True] = 'SA'
 
