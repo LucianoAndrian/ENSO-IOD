@@ -61,14 +61,31 @@ def OpenObsDataSet(name, sa=True, dir=data_dir_t_pp):
         return aux
 ################################################################################
 # colorbar
-cbar_snr = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#6FFE9B',
+cbar_snr_hgt = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#6FFE9B',
                                   '#FFFFFF',
                                   '#FFFFFF', '#FFFFFF',
                                   '#FEB77E','#CA3E72','#782281','#251255'])
-cbar_snr.set_over('#251255')
-cbar_snr.set_under('#070B4F')
+cbar_snr_hgt.set_over('#251255')
+cbar_snr_hgt.set_under('#070B4F')
+cbar_snr_hgt.set_bad(color='white')
+
+cbar_snr = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#6FFE9B',
+                                  '#FFFFFF',
+                                  '#FFFFFF', '#FFFFFF',
+                                  '#FEB77E','#CA3E72','#782281','#251255'][::-1])
+cbar_snr.set_under('#251255')
+cbar_snr.set_over('#070B4F')
 cbar_snr.set_bad(color='white')
 
+cbar_snr_t = colors.ListedColormap(['#003069','#4142B0', '#67B3FE' ,'#A9FED6',
+                                  '#FFFFFF',
+                                  '#FFFFFF', '#FFFFFF',
+                                  '#FEF785','#FE8051','#B22E3C','#710733'])
+cbar_snr_t.set_under('#003069')
+cbar_snr_t.set_over('#710733')
+cbar_snr_t.set_bad(color='white')
+
+cbars = [cbar_snr, cbar_snr_t]
 ################################################################################
 # general
 cases = ['N34_pos', 'N34_neg', 'DMI_pos', 'DMI_neg',
@@ -123,7 +140,7 @@ for s, s_count in zip(seasons, range(0, len(seasons))):
             snr, case_num = CaseSNR(data, s, min_max_months[s_count],
                                     c, nc_date_dir)
 
-            PlotComposite_wWAF(comp=snr, cmap=cbar_snr, step1=1,
+            PlotComposite_wWAF(comp=snr, cmap=cbar_snr_hgt, step1=1,
                                levels =
                                [-1,-.8,-.6,-.5,-.1,0,0.1,0.5,0.6,0.8,1],
                                contour1=True, two_variables=False,
@@ -163,7 +180,7 @@ for s, s_count in zip(seasons, range(0, len(seasons))):
 
             snr = snr*MakeMask(snr, 'var')
 
-            PlotComposite_wWAF(comp=snr, cmap=cbar_snr, step1=1,
+            PlotComposite_wWAF(comp=snr, cmap=cbars[v_count], step1=1,
                                levels =
                                [-1,-.8,-.6,-.5,-.1,0,0.1,0.5,0.6,0.8,1],
                                contour1=True, two_variables=False,
