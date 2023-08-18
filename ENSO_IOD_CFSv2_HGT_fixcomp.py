@@ -16,8 +16,10 @@ warnings.filterwarnings('ignore')
 ################################################################################
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/cfsv2/'
-save = True
-dpi = 300
+out_dir2 = '/pikachu/datos/luciano.andrian/esquemas/'
+save = False
+dpi = 10
+save_nc = True
 # Funciones ####################################################################
 def Plot(comp, comp_var, levels = np.linspace(-1,1,11),
          cmap='RdBu', dpi=100, save=True, step=1, name_fig='fig',
@@ -127,6 +129,9 @@ for s in seasons:
             spread = case - comp
             spread = spread.std('time')
             snr = comp / spread
+
+            if save_nc & (s=='SON'):
+                snr.to_netcdf(out_dir2 + 'SNR_hgt_CFSv2' + c + '_' + s + '.nc')
 
             Plot(snr, snr['var'],
                  levels = [-1,-.8,-.6,-.5,-.1,0,0.1,0.5,0.6,0.8,1],

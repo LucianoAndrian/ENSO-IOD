@@ -25,12 +25,14 @@ from ENSO_IOD_Funciones import ComputeWithEffect, ComputeWithoutEffect, WAF
 era5_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/1940_2020/' \
           'regression/nosig_aux/'
+out_dir2 = '/pikachu/datos/luciano.andrian/esquemas/'
 ################################################################################
 save = True
 dpi = 300
 full_season = False
 text = False
 waf = True
+save_nc = True
 # Functions ####################################################################
 
 
@@ -360,7 +362,12 @@ for v, v_count, hpalevel, waf_scale in zip(variables,[0,1], [200,750],
             py_n34 = None
             px_dmi = None
             py_dmi = None
-
+        
+        if save_nc & (s=='SON') & (hpalevel==200):
+            aux_n34.to_netcdf(out_dir2 + v + '_' + s + '_' + str(p[0] + y1) +
+                              '_' + str(p[1]) + '_N34' + '.nc')
+            aux_dmi.to_netcdf(out_dir2 + v + '_' + s + '_' + str(p[0] + y1) +
+                              '_' + str(p[1]) + '_DMI' + '.nc')
 
         print('Plot')
         PlotReg(data=aux_n34 * MakerMaskSig(aux_corr_n34), data_cor=aux_corr_n34,
@@ -419,6 +426,14 @@ for v, v_count, hpalevel, waf_scale in zip(variables,[0,1], [200,750],
             #DMI_wo_N34 WAF
             px_dmi_won34, py_dmi_won34 = ComputeWaf(aux_waf_aux_dmi_won34,
                                                     data_clim, hpalevel)
+            
+        if save_nc & (s=='SON') & (hpalevel==200):
+            aux_n34_wodmi.to_netcdf(out_dir2 + v + '_' + s + '_' +
+                                    str(p[0] + y1) + '_' +  str(p[1]) +
+                                    '_N34_wodmi' + '.nc')
+            aux_dmi_won34.to_netcdf(out_dir2 + v + '_' + s + '_' +
+                                    str(p[0] + y1) + '_' + str(p[1]) +
+                                    '_DMI_woN34' + '.nc')
 
         print('Plot...')
         PlotReg(data=aux_n34_wodmi * MakerMaskSig(aux_corr_n34),

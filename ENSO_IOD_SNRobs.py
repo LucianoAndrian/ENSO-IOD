@@ -14,11 +14,13 @@ warnings.filterwarnings("ignore")
 
 from ENSO_IOD_Funciones import CaseSNR, PlotComposite_wWAF, MakeMask
 ################################################################################
-DMIbase = False # si es False usa DMI true-dipole
+DMIbase = True # si es False usa DMI true-dipole
 
 # Plot
 save = True
+save_nc = True
 dpi = 300
+plot = False
 ################################################################################
 # rutas segun criterio del DMI
 if DMIbase:
@@ -28,6 +30,7 @@ if DMIbase:
 
     # salidas
     out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/snr/dmi_standard/'
+    out_dir2 = '/pikachu/datos/luciano.andrian/esquemas/'
 
     aux_name = 'DMI_standard'
 else:
@@ -36,7 +39,8 @@ else:
                   'nc_composites_dates/'
     # salidas
     out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/snr/dmi_true_dipole/'
-
+    print('set save_nc = False')
+    save_nc = False
     aux_name = 'DMI_true_dipole'
 
 # T y PP
@@ -140,24 +144,30 @@ for s, s_count in zip(seasons, range(0, len(seasons))):
             snr, case_num = CaseSNR(data, s, min_max_months[s_count],
                                     c, nc_date_dir)
 
-            PlotComposite_wWAF(comp=snr, cmap=cbar_snr_hgt, step1=1,
-                               levels =
-                               [-1,-.8,-.6,-.5,-.1,0,0.1,0.5,0.6,0.8,1],
-                               contour1=True, two_variables=False,
-                               mapa='hs', significance=False,
+            if save_nc & (s=='SON') & (hpalevel==200):
+                snr.to_netcdf(out_dir2 + v.split('_')[0] + s + '_' +
+                              cases[c_count] + '_mer_d_w_' + aux_name + '.nc')
+            if plot:
+                PlotComposite_wWAF(comp=snr, cmap=cbar_snr_hgt, step1=1,
+                                   levels=
+                                   [-1, -.8, -.6, -.5, -.1, 0, 0.1, 0.5, 0.6,
+                                    0.8, 1],
+                                   contour1=True, two_variables=False,
+                                   mapa='hs', significance=False,
 
-                               title='Signal-to-Noise ratio ' +
-                                     v.split('_')[0] + ' - ' +
-                                     title_case[c_count] +
-                                     '\n' + s + ' - Events: ' +
-                                     str(case_num),
+                                   title='Signal-to-Noise ratio ' +
+                                         v.split('_')[0] + ' - ' +
+                                         title_case[c_count] +
+                                         '\n' + s + ' - Events: ' +
+                                         str(case_num),
 
-                               name_fig=v.split('_')[0] + s + '_' +
-                                        cases[c_count] + '_mer_d_w_' +
-                                        aux_name,
+                                   name_fig=v.split('_')[0] + s + '_' +
+                                            cases[c_count] + '_mer_d_w_' +
+                                            aux_name,
 
-                               out_dir=out_dir, dpi=dpi, save=save,
-                               color_map='grey')
+                                   out_dir=out_dir, dpi=dpi, save=save,
+                                   color_map='grey')
+
 print('Done HGT')
 ################################################################################
 print('PP y T')
