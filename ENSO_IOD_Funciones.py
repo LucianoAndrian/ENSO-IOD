@@ -2546,6 +2546,8 @@ def PlotComposite_wWAF(comp, levels, cmap, step1, contour1=True,
                        edgecolor=color_map)
     # ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
     ax.coastlines(color=color_map, linestyle='-', alpha=1)
+    if mapa.lower() == 'sa':
+        ax.add_feature(cartopy.feature.BORDERS, alpha=0.7)
 
     if proj == 'eq':
         ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')

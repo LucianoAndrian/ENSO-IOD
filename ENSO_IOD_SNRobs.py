@@ -89,7 +89,17 @@ cbar_snr_t.set_under('#003069')
 cbar_snr_t.set_over('#710733')
 cbar_snr_t.set_bad(color='white')
 
-cbars = [cbar_snr, cbar_snr_t]
+
+cbar_snr_pp = colors.ListedColormap(['#1E6D5A' ,'#52C39D',
+                                     '#6FFE9B','#FFFFFF',
+                                  '#FFFFFF','#FFFFFF',
+                                  '#DCBC75', '#995D13','#6A3D07'][::-1])
+cbar_snr_pp.set_under('#6A3D07')
+cbar_snr_pp.set_over('#1E6D5A')
+cbar_snr_pp.set_bad(color='white')
+
+
+cbars = [cbar_snr_pp, cbar_snr_t]
 ################################################################################
 # general
 cases = ['N34_pos', 'N34_neg', 'DMI_pos', 'DMI_neg',
@@ -174,6 +184,7 @@ print('PP y T')
 # PP y T
 variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
 title_var = ['PP GPCC', 'T Cru']
+scales = [[-1,-.5,-.25,0,0.25,0.5,1], [-1,-.8,-.6,-.5,-.1,0,0.1,0.5,0.6,0.8,1]]
 
 # seasons
 for s, s_count in zip(seasons, range(0, len(seasons))):
@@ -191,8 +202,7 @@ for s, s_count in zip(seasons, range(0, len(seasons))):
             snr = snr*MakeMask(snr, 'var')
 
             PlotComposite_wWAF(comp=snr, cmap=cbars[v_count], step1=1,
-                               levels =
-                               [-1,-.8,-.6,-.5,-.1,0,0.1,0.5,0.6,0.8,1],
+                               levels =scales[v_count],
                                contour1=True, two_variables=False,
                                mapa='sa', significance=False,
 
