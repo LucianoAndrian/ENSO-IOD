@@ -184,7 +184,7 @@ data = data.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
 data = data.sel(L=[0.5, 1.5, 2.5, 3.5]) # Solo leads 0 1 2 3
 data['L'] = [0,1,2,3]
 data = xr.decode_cf(fix_calendar(data)) # corrigiendo fechas
-data = data.sel(lon=slice(50, 300), lat=slice(-20, 20))
+data = data.sel(lat=slice(-20, 80))
 
 #media movil de 3 meses para separar en estaciones
 data = data.rolling(time=3, center=True).mean()
