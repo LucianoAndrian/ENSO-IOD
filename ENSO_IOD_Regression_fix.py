@@ -20,11 +20,15 @@ from ENSO_IOD_Funciones import DMI
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
 from ENSO_IOD_Funciones import ComputeWithEffect, ComputeWithoutEffect, WAF
+
+from shapely.errors import ShapelyDeprecationWarning
+warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
+warnings.filterwarnings("ignore")
 ################################################################################
 #era5_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/mer_d_w/'
 era5_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/1940_2020/' \
-          'regression/nosig_aux/'
+          'regression/'
 out_dir2 = '/pikachu/datos/luciano.andrian/esquemas/'
 ################################################################################
 save = True
@@ -42,7 +46,7 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
             levels2 = np.linspace(-100,100,2), sig2=True, step=1,SA=False,
             color_map = '#d9d9d9', color_sig='magenta', sig_point=False,
             r_crit=1, waf=False, data_waf=None, px=None, py=False,
-            waf_scale=1 / 1000, step_waf=10):
+            waf_scale=1 / 1000, step_waf=10, hs_ex = False):
 
 
     from numpy import ma
@@ -58,6 +62,11 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
         fig = plt.figure(figsize=(5, 6), dpi=dpi)
         ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
         ax.set_extent([270,330, -60,20], crs=crs_latlon)
+        hs_ex = False
+    elif hs_ex:
+        fig = plt.figure(figsize=(9, 3), dpi=dpi)
+        ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+        ax.set_extent([0, 359, -60, -20], crs=crs_latlon)
     else:
         fig = plt.figure(figsize=(9, 3.5), dpi=dpi)
         ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
@@ -148,7 +157,11 @@ def PlotReg(data, data_cor, levels=np.linspace(-100,100,2), cmap='RdBu_r'
         ax2 = ax.twinx()
         ax2.set_yticks([])
         #ax2.set_xticks([])
-
+    elif hs_ex:
+        ax.set_xticks(np.arange(0, 360, 30), crs=crs_latlon)
+        ax.set_yticks(np.arange(-60, -20, 10), crs=crs_latlon)
+        ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+        ax.coastlines(color=color_map, linestyle='-', alpha=1)
     else:
         ax.set_xticks(np.arange(0, 360, 30), crs=crs_latlon)
         ax.set_yticks(np.arange(-80, 20, 10), crs=crs_latlon)
@@ -225,7 +238,9 @@ def ComputeWaf(reg_output, data_clim, hpalevel):
                  reshape=True, variable='var',
                  hpalevel=hpalevel)
 
-    weights = np.transpose(np.tile(-2 * np.cos(data_clim.lat.values * 1 * np.pi / 180) + 2.1, (359, 1)))
+    weights = np.transpose(
+        np.tile(-2 *
+                np.cos(data_clim.lat.values * 1 * np.pi / 180) + 2.1, (359, 1)))
     weights_arr = np.zeros_like(px)
     weights_arr[0, :, :] = weights
     px *= weights_arr
@@ -280,11 +295,11 @@ cmap = [cbar, cbar]
 plt.rcParams['hatch.linewidth'] = 0.5
 
 
-
-
 dmi_or = DMI(filter_bwa=False, start_per='1920', end_per='2020')[2]
-n34_or = Nino34CPC(xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc"),
-                   start=1920, end=2020)[0]
+n34_or = Nino34CPC(
+    xr.open_dataset(
+        "/pikachu/datos/luciano.andrian/verif_2019_2023/sst.mnmean.nc"),
+    start=1920, end=2020)[0]
 
 periodos = [[1940,2020]]
 t_critic = 1.66 # es MUY similar (2 digitos) para ambos períodos
@@ -492,6 +507,11 @@ seasons_name = ['JJA', 'SON']
 SA = [True, False]
 aux_name = ['HS', 'SA'] # esto funciona con sa, [True] = 'SA'
 
+SA=[False]
+hs_ex = True
+aux_name = ['hs_ex']
+
+
 scales = [np.linspace(-15, 15, 13),   #pp
           [-.6,-.4,-.2,-.1,-.05,0,0.05,0.1,0.2,0.4,0.6]] #t
 cmap = [cbar_pp, cbar]
@@ -534,8 +554,8 @@ for v, v_count in zip(variables_tpp, [0,1]):
                     name_fig=v + '_' + s + '_' + str(p[0] + y1) +
                              '_' + str(p[1]) + '_N34_' + aux_name[sa],
                     save=save, sig=True, sig_point=True,
-                    two_variables=False,
-                    SA=sa, step=1,
+                    two_variables=False, r_crit=r_crit,
+                    SA=sa, step=1, hs_ex=hs_ex,
                     color_map='k', color_sig='k')
 
             PlotReg(data=aux_dmi, data_cor=aux_corr_dmi,
@@ -545,7 +565,7 @@ for v, v_count in zip(variables_tpp, [0,1]):
                     name_fig=v + '_' + s + '_' + str(p[0] + y1) +
                              '_' + str(p[1]) + '_DMI_' + aux_name[sa],
                     save=save, sig=True, sig_point=True,
-                    two_variables=False,
+                    two_variables=False, hs_ex=hs_ex, r_crit=r_crit,
                     SA=sa, step=1, color_map='k', color_sig='k')
 
             del aux_n34, aux_dmi, aux_n34_2, aux_dmi_2, aux_corr_dmi, \
@@ -571,7 +591,7 @@ for v, v_count in zip(variables_tpp, [0,1]):
                     name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(
                         p[1]) + '_N34_wodmi_' + aux_name[sa],
                     save=save, sig=True, sig_point=True,
-                    two_variables=False,
+                    two_variables=False, hs_ex=hs_ex, r_crit=r_crit,
                     SA=sa, step=1, color_map='k', color_sig='k')
 
             PlotReg(data=aux_dmi_won34, data_cor=aux_corr_dmi,
@@ -582,6 +602,6 @@ for v, v_count in zip(variables_tpp, [0,1]):
                     name_fig=v + '_' + s + str(p[0] + y1) + '_' + str(
                         p[1]) + '_DMI_woN34_' + aux_name[sa],
                     save=save, sig=True, sig_point=True,
-                    two_variables=False,
+                    two_variables=False, hs_ex=hs_ex, r_crit=r_crit,
                     SA=sa, step=1, color_map='k', color_sig='k')
 ################################################################################

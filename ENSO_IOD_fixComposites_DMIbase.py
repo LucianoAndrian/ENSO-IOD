@@ -2,7 +2,7 @@
 Composites OBSERVADOS
 DMI standard
 """
-########################################################################################################################
+################################################################################
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from ENSO_IOD_Funciones import WAF, CaseComp, PlotComposite_wWAF
-########################################################################################################################
+################################################################################
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
               'nc_composites_dates_no_ind_sst_anom/' #fechas
 data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
@@ -72,8 +72,8 @@ cbar_sst.set_bad(color='white')
 
 cmap_t_pp = [cbar_pp, cbar_t]
 cmap_era5 = [cbar_t, cbar_t_r]
-########################################################################################################################
-# HGT + WAF -----------------------------------------------------------------------------------------------------------#
+################################################################################
+# HGT + WAF --------------------------------------------------------------------
 plt.rcParams['hatch.linewidth'] = 1.5
 tw=[False, False] # por ahora sin vp
 sig2 = [True, False]
@@ -275,7 +275,7 @@ title_case = ['DMI-ENSO simultaneous positive phase ',
               'ENSO pure positive phase ',
               'ENSO pure negative phase ']
 
-scales = [np.linspace(-45, 45, 15), # pp
+scales = [np.linspace(-30, 30, 13), # pp
           [-1, -.75, -.5, -.25, -.1, 0, .1, .25, .5, .75, 1]] #t
 #seasons = [7, 10] # main month
 # min_max_months = [[6,8],[9,11]]
@@ -284,9 +284,10 @@ scales = [np.linspace(-45, 45, 15), # pp
 
 min_max_months = [[9,11]]
 seasons_name = ['SON']
-SA = borders = [True]
+SA = borders = [False]
 
 aux_name = ['HS', 'SA'] # esto funciona con sa, [True] = 'SA'
+aux_name=['hs_ex']
 
 
 for v, v_count in zip(variables_tpp, [0,1]):

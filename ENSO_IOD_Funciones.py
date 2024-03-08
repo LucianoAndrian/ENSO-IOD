@@ -235,7 +235,7 @@ def DMI(per = 0, filter_bwa = True, filter_harmonic = True,
 
     ##################################### DATA #####################################
     # ERSSTv5
-    sst = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
+    sst = xr.open_dataset("/pikachu/datos/luciano.andrian/verif_2019_2023/sst.mnmean.nc")
     dataname = 'ERSST'
     ##################################### Pre-processing #####################################
     iodw = sst.sel(lat=slice(10.0, -10.0), lon=western_io,
@@ -408,7 +408,7 @@ def DMI2(end_per=1920, start_per=2020, filter_harmonic=True, filter_bwa=False,
     end_year = end_per
     ####################################################################################################################
     # DATA - ERSSTv5 --------------------------------------------------------------------------------------------------#
-    sst = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
+    sst = xr.open_dataset("/pikachu/datos/luciano.andrian/verif_2019_2023/sst.mnmean.nc")
 
     # Pre-processing --------------------------------------------------------------------------------------------------#
     iodw = sst.sel(lat=slice(10.0, -10.0), lon=western_io,
@@ -2115,12 +2115,24 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr,
                                              levels=levels_main, transform=crs_latlon,
                                              cmap=cbar_main, extend='both')
 
+                        levels_contour = levels_main.copy()
+                        if isinstance(levels_main, np.ndarray):
+                            levels_contour = levels_main[levels_main != 0]
+                        else:
+                            levels_contour.remove(0)
+
+                        axs[n].contour(aux.lon, aux.lat, comp_case,
+                                        levels=levels_contour,
+                                        transform=crs_latlon,
+                                        colors='k', linewidths=1)
+
                         axs[n].add_feature(cartopy.feature.LAND, facecolor='lightgrey')
                         axs[n].add_feature(cartopy.feature.COASTLINE)
                         if proj == 'eq':
                             axs[n].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-', color='gray')
                             axs[n].set_xticks([])
                             axs[n].set_yticks([])
+                            axs[n].set_extent([270,330,-60,20])
                             # axs[n].set_xticks(x_lon, crs=crs_latlon)
                             # axs[n].set_yticks(x_lat, crs=crs_latlon)
                             # lon_formatter = LongitudeFormatter(zero_direction_label=True)
@@ -2192,6 +2204,7 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr,
         aux0 = aux.sel(r=1, time='1982-10-01').drop(['r', 'L', 'time'])
         im2 = axs[12].contourf(aux.lon, aux.lat, aux0['var'][0, :, :],
                                levels=levels_clim, transform=crs_latlon, cmap=cbar_clim, extend='max')
+        axs[12].set_extent([270, 330, -60, 20])
         # --------------------------------------------------------------------------------------------------------------#
         axs[12].add_feature(cartopy.feature.LAND, facecolor='grey')
         axs[12].add_feature(cartopy.feature.COASTLINE)
@@ -2232,7 +2245,7 @@ def ComputeFieldsByCases(v, v_name, fix_factor, snr,
 
         cbar.ax.tick_params(labelsize=18)
         if snr:
-            fig.suptitle('SNR:' + title_var + ' - ' + s, fontsize=20)
+            fig.suptitle('Signal-to-Noise ratio:' + title_var + ' - ' + s, fontsize=20)
         else:
             fig.suptitle(title_var + ' - ' + s, fontsize=20)
         # fig.tight_layout() #BUG matplotlib 3.5.0 #Solucionado definitivamnete en 3.6 ?
@@ -2453,6 +2466,13 @@ def PlotComposite_wWAF(comp, levels, cmap, step1, contour1=True,
         yticks = np.arange(-80, 20, 10)
         if proj != 'eq':
             fig_size = (5, 5)
+
+    elif mapa.lower() == 'hs_ex':
+        fig_size = (9, 3)
+        extent = [0, 359, -60, -20]
+        xticks = np.arange(0, 360, 30)
+        yticks = np.arange(-60, -20, 10)
+
     else:
         fig_size = (8, 3)
         extent = [30, 330, -80, 20]
