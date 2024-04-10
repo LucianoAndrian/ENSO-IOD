@@ -78,7 +78,7 @@ dmi, dmi_2, dmi_3 = DMI2(filter_bwa=False, start_per=str(i), end_per=str(end),
 dmi_td, dmi_2, dmi_3_td = DMI2(filter_bwa=False, start_per=str(i), end_per=str(end),
                          sst_anom_sd=True, opposite_signs_criteria=True)
 
-aux = xr.open_dataset("/pikachu/datos4/Obs/sst/sst.mnmean_2020.nc")
+aux = xr.open_dataset("/pikachu/datos/luciano.andrian/verif_2019_2023/sst.mnmean.nc")
 n34, n34_2, n34_3 = Nino34CPC(aux, start=i)
 
 dmi_3 = dmi_3.sel(time=slice('1940-01-01', '2020-12-01'))
@@ -135,24 +135,24 @@ for s in seasons_n:
     plt.scatter(x=dmi_neg_n34_pos.values, y=n34_sim_pos.values, marker='s', s=50,
                 edgecolor='gold', color='gold', alpha=1, label='Niño & IOD-')
 
-    plt.scatter(x=dmi_sim_pos_td.values, y=n34_sim_pos_td.values, marker='+',
-                s=70,
-                color='k', alpha=1)
-    plt.scatter(x=dmi_sim_neg_td.values, y=n34_sim_neg_td.values, marker='+',
-                s=70,
-                color='k', alpha=1)
-    plt.scatter(x=dmi_pos_n34_neg_td.values, y=n34_sim_neg_td.values, marker='+',
-                s=70,
-                color='k', alpha=1)
-    plt.scatter(x=dmi_neg_n34_pos_td.values, y=n34_sim_neg_td.values, marker='+',
-                s=70,
-                color='k', alpha=1)
-    plt.scatter(x=dmi_un_pos_td.values, y=dmi_un_pos_n34_values_td.values,
-                marker='+',
-                s=70, color='k', alpha=1)
-    plt.scatter(x=dmi_un_neg_td.values, y=dmi_un_neg_n34_values_td.values,
-                marker='+',
-                s=70, color='k', alpha=1)
+    # plt.scatter(x=dmi_sim_pos_td.values, y=n34_sim_pos_td.values, marker='+',
+    #             s=70,
+    #             color='k', alpha=1)
+    # plt.scatter(x=dmi_sim_neg_td.values, y=n34_sim_neg_td.values, marker='+',
+    #             s=70,
+    #             color='k', alpha=1)
+    # plt.scatter(x=dmi_pos_n34_neg_td.values, y=n34_sim_neg_td.values, marker='+',
+    #             s=70,
+    #             color='k', alpha=1)
+    # plt.scatter(x=dmi_neg_n34_pos_td.values, y=n34_sim_neg_td.values, marker='+',
+    #             s=70,
+    #             color='k', alpha=1)
+    # plt.scatter(x=dmi_un_pos_td.values, y=dmi_un_pos_n34_values_td.values,
+    #             marker='+',
+    #             s=70, color='k', alpha=1)
+    # plt.scatter(x=dmi_un_neg_td.values, y=dmi_un_neg_n34_values_td.values,
+    #             marker='+',
+    #             s=70, color='k', alpha=1)
 
     plt.legend(loc=(.01,.55))
 

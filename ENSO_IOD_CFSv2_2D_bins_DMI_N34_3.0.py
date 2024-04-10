@@ -13,7 +13,7 @@ from threadpoolctl import threadpool_limits
 from ENSO_IOD_Funciones import SelectNMMEFiles
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
-dates_dir = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/' # índices por estaciones
+dates_dir = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/' # campos de las variables PP  ( y T cuando ande)
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/RegionsAnoms/'
 save = False

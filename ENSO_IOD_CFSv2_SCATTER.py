@@ -3,7 +3,7 @@ import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 ########################################################################################################################
-index_dir = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/'
+index_dir = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
 cases_dir = "/pikachu/datos/luciano.andrian/cases_fields/"
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Scatter/'
 

@@ -13,7 +13,7 @@ from threadpoolctl import threadpool_limits
 from ENSO_IOD_Funciones import SelectNMMEFiles
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
-dates_dir = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/' # índices por estaciones
+dates_dir = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/' # campos de las variables PP  ( y T cuando ande)
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/RegionsAnoms/'
 save = True
@@ -336,12 +336,15 @@ levels = np.arange(-44, 44, 8)
 seasons = ['JJA', 'SON']
 mmonth = [7,10]
 
+seasons = ['SON']
+mmonth = [10]
+
 from ENSO_IOD_Funciones import MakeMask
 
 # cajas ------------------------------------------------------------------------
-box_name = ['S_SESA', 'N-SESA', 'SESA', 'Patagonia']
-box_lats = [[-39,-29], [-29,-17], [-39,-17], [-55,-40]]
-box_lons = [[296, 315], [296, 315], [296,315], [288,300]]
+box_name = ['S-SESA', 'N-SESA', 'NeB', 'Chile-Cuyo']# 'Patagonia']
+box_lats = [[-39,-25], [-29,-17], [-15,2], [-40,-30]]
+box_lons = [[296, 306], [305, 315], [311,325], [285,293]]#, [288,300]]
 #------------------------------------------------------------------------------#
 v_count = 0
 for v in variables:

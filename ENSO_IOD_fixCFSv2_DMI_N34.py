@@ -103,6 +103,7 @@ def Anom_Detrend_SeasonRealTime(data_realtime, season_clim_1999_2011, main_month
 dir_hc = '/pikachu/datos/luciano.andrian/hindcast/'
 dir_rt = '/pikachu/datos/luciano.andrian/real_time/'
 out_dir = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/'
+out_dir = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
 v = 'sst'
 ########################################################################################################################
 # Climatologias 1982-1998 1999-2011 del Hindcast ----------------------------------------------------------------------#

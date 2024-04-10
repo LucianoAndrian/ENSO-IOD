@@ -10,13 +10,13 @@ from matplotlib import colors
 from ENSO_IOD_Funciones import SelectNMMEFiles, fix_calendar, ComputeFieldsByCases
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ########################################################################################################################
-dates_dir = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/' # índices por estaciones
+dates_dir = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/' # campos de las variables PP  ( y T cuando ande)
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/cfsv2/'
 out_data_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 
 save = True
-dpi = 500
+dpi = 600
 ########################################################################################################################
 cases = ['dmi_puros_pos', 'dmi_puros_neg',
         'n34_puros_pos', 'n34_puros_neg',
@@ -87,8 +87,8 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=False,
                      cases_dir=cases_dir, dates_dir=dates_dir,
                      levels_main=levels, cbar_main=cbar_hgt,
                      levels_clim=levels_clim, cbar_clim='Spectral',
-                     title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=dpi,
-                     figsize=[20,10], usemask=False, hcolorbar=True, save=save,
+                     title_var='z 200hPa', name_fig='hgt200_bymagnitude_SA', dpi=dpi,
+                     figsize=[15,16], usemask=False, hcolorbar=False, save=save,
                      out_dir=out_dir)
 #----------------------------------------------------------------------------------------------------------------------#
 # Signal-to-Noise ratio
@@ -106,11 +106,11 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=True,
                      cases_dir=cases_dir, dates_dir=dates_dir,
                      levels_main=levels, cbar_main=cbar_snr_t,
                      levels_clim=levels_clim, cbar_clim='YlGnBu',
-                     title_var='HGT200_NC', name_fig='hgt200_neutro_clim', dpi=dpi,
-                     figsize=[20, 10], usemask=False, hcolorbar=True, save=save,
+                     title_var='z 200hPa', name_fig='hgt200_bymagnitude_SA_snr', dpi=dpi,
+                     figsize=[15,16], usemask=False, hcolorbar=False, save=save,
                      out_dir=out_dir)
 ########################################################################################################################
-#
+# #
 # # Prec #################################################################################################################
 # # HINDCAST para climatología ------------------------------------------------------------------------------------------#
 # try:
@@ -138,14 +138,14 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=True,
 # levels_clim = np.linspace(0,150,11)
 #
 # ComputeFieldsByCases(v='prec', v_name='prec', fix_factor=30, snr=False,
-#                      data=data,
 #                      cases=cases, bin_limits=bin_limits,
 #                      bins_by_cases_dmi=bins_by_cases_dmi,
 #                      bins_by_cases_n34=bins_by_cases_n34,
 #                      cases_dir=cases_dir, dates_dir=dates_dir,
 #                      levels_main=levels, cbar_main=cbar_pp,
 #                      levels_clim=levels_clim, cbar_clim='terrain_r',
-#                      title_var='Prec', name_fig='prec', dpi=dpi, save=save,
+#                      title_var='Prec', name_fig='prec_neutro_clim', dpi=dpi,
+#                      figsize=[,10], usemask=False, hcolorbar=True, save=save,
 #                      out_dir=out_dir)
 #
 # # Signal-to-Noise ratio
@@ -161,7 +161,7 @@ ComputeFieldsByCases(v='hgt', v_name='hgt', fix_factor=9.8, snr=True,
 #                      levels_clim=levels_clim, cbar_clim='terrain_r',
 #                      title_var='Prec', name_fig='prec', dpi=dpi, save=save,
 #                      out_dir=out_dir)
-#
+
 # ########################################################################################################################
 # # Temp #################################################################################################################
 # # HINDCAST para climatología ------------------------------------------------------------------------------------------#

@@ -182,7 +182,7 @@ else:
 # cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg', 'sim_pos', 'sim_neg',
 #          'neutros', 'dmi_neg_n34_pos', 'dmi_pos_n34_neg','dmi_pos', 'dmi_neg', 'n34_pos', 'n34_neg']
 # # DMI ##################################################################################################################
-# cases_data_dir_dmi = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/'
+# cases_data_dir_dmi = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
 # def SelectEventsDMI(s):
 #     for c in cases:
 #         try:

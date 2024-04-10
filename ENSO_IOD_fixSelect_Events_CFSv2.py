@@ -5,7 +5,7 @@ Selección y clasificación de los eventos IOD y ENSO
 import xarray as xr
 import numpy as np
 ########################################################################################################################
-dates_dir = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/DMI_N34_Leads_r/'
+dates_dir = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
 dir_leads = '/datos/luciano.andrian/ncfiles/NMME_CFSv2/'
 out_dir = '/pikachu/datos/luciano.andrian/cases_dates/'
 

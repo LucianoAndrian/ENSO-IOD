@@ -138,8 +138,8 @@ cases = ['dmi_puros_pos', 'dmi_puros_neg',
 positive_cases = ['dmi_puros_pos', 'n34_puros_pos', 'sim_pos']
 negative_cases = ['dmi_puros_neg', 'n34_puros_neg', 'sim_neg']
 
-positive_cases_names = ['IOD pos.', 'El Niño', 'El Niño + IOD pos.']
-negative_cases_names = ['IOD neg.', 'La Niña', 'La Niña + IOD neg.']
+positive_cases_names = ['pIOD', 'El Niño', 'El Niño + pIOD']
+negative_cases_names = ['nIOD', 'La Niña', 'La Niña + nIOD']
 
 title_case = ['DMI pure - positive',
               'DMI pure - negative',
@@ -147,9 +147,9 @@ title_case = ['DMI pure - positive',
               'DMI positive - El Niño',
               'DMI negative - La Niña']
 # cajas ------------------------------------------------------------------------
-box_name = ['S_SESA', 'N-SESA', 'SESA', 'Patagonia']
-box_lats = [[-39,-29], [-29,-17], [-39,-17], [-55,-40]]
-box_lons = [[296, 315], [296, 315], [296,315], [288,300]]
+box_name = ['S-SESA', 'N-SESA', 'NeB', 'Chile-Cuyo']# 'Patagonia']
+box_lats = [[-39,-25], [-29,-17], [-15,2], [-40,-30]]
+box_lons = [[296, 306], [305, 315], [311,325], [285,293]]#, [288,300]]
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 v = 'prec' # <<<<<<solo precpitacion>>>>>>
@@ -166,6 +166,8 @@ for s in seasons:
     for bl, bt, name in zip(box_lons, box_lats, box_name):
         if name == 'Patagonia':
             startend = -30
+        elif name == 'N-SESA':
+            startend = -80
         else:
             startend = -60
         # Climatologia
@@ -205,14 +207,14 @@ for s in seasons:
         # ax[1].set_ylim(0, ylim)
         ax[0].set_xlabel(v + '- anomaly ' + units)
         ax[1].set_xlabel(v + '- anomaly ' + units)
-        ax[0].set_title('Fases positivas', color='firebrick')
-        ax[1].set_title('Fases negativas', color='navy')
+        ax[0].set_title('Positive Phases', color='firebrick')
+        ax[1].set_title('Negative Phases', color='navy')
 
-        cases_color = ['darkorange', 'blue', 'firebrick', 'cyan', 'forestgreen',
-                       'purple']
+        cases_color = ['darkorange', '#3EB6FE', 'firebrick', 'cyan', 'forestgreen',
+                       '#FF1E7F']
 
         positive_cases_colors = ['red', '#F47B00', 'forestgreen']
-        negative_cases_colors = ['blue', '#55F400', 'magenta']
+        negative_cases_colors = ['#509DFE', '#00E071', '#FF3AA0']
 
         aux_clim_full = clim_full - clim_full.mean('time')
         aux_clim_full = aux_clim_full['var'].values
@@ -270,8 +272,8 @@ for s in seasons:
         ax[1].grid(alpha=0.5)
         ax[0].legend(loc='best')
         ax[1].legend(loc='best')
-        ax[0].set_ylim(0, max(max_y))
-        ax[1].set_ylim(0, max(max_y))
+        ax[0].set_ylim(0, max(max_y)+0.0025)
+        ax[1].set_ylim(0, max(max_y)+0.0025)
 
         fig.suptitle('PDFs precipitación - ' + name + ' - ' + s)
         # fig.legend(bbox_to_anchor=(1, 0.5), loc="center right")  # , bbox_transform=fig.transFigure, ncol=len(cases2))
@@ -281,7 +283,7 @@ for s in seasons:
         # plt.tight_layout(rect=[0, 0, 0.7, 0])
         if save:
             plt.savefig(
-                out_dir + v + '_PDF_' + name + '_box' + '_' + s + '.jpg',
+                out_dir + v + '_PDF_' + name + '_box_WCRP_' + '_' + s + '.jpg',
                 box_inches="tight")
         else:
             plt.show()
