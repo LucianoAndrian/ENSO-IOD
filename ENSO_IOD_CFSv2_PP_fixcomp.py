@@ -18,9 +18,13 @@ from ENSO_IOD_Funciones import MakeMask
 ################################################################################
 cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/PP/'
+out_dir2 = '/pikachu/datos/luciano.andrian/esquemas/'
+
 save = True
 dpi = 300
 detrend = True
+save_nc = True
+plot = False
 # Funciones ####################################################################
 def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
          dpi=100, save=True, step=1,
@@ -149,13 +153,14 @@ for s in seasons:
             comp = case.mean('time') - neutro.mean('time')
             mask = MakeMask(comp, 'var')
             # comp *= mask
-
-            Plot(comp, levels=scale_signal, cmap=cbar_pp, dpi=dpi, step=1,
-                 name_fig='prec_comp_' + c + '_' + s + name_fig_end,
-                 title='Mean Composite - CFSv2 - ' + s + '\n'
-                       + title_case[c_count] + '\n' + ' ' + 'PREC'
-                       + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
-                 save=save)
+            if plot:
+                Plot(comp, levels=scale_signal, cmap=cbar_pp, dpi=dpi, step=1,
+                     name_fig='prec_comp_' + c + '_' + s + name_fig_end,
+                     title='Mean Composite - CFSv2 - ' + s + '\n'
+                           + title_case[c_count] + '\n' + ' ' + 'PREC'
+                           + ' - ' + 'Cases: ' + str(
+                         num_case) + ' ' + name_fig_end,
+                     save=save)
 
             # # spread
             spread = case - comp
@@ -164,23 +169,30 @@ for s in seasons:
 
             # snr
             snr = comp/spread
-            Plot(snr, levels=scale_snr, cmap=cbar_Prueba, dpi=dpi, step=1,
-                 name_fig='prec_SNR_' + c + '_' + s + '_' + name_fig_end,
-                 title='Singal-to-noise ratio - CFSv2 - ' + s + '\n'
-                       + title_case[c_count] + '\n' + ' ' + 'PREC'
-                       + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
-                 save=save)
+            if save_nc:
+                if save_nc & (s == 'SON'):
+                    snr.to_netcdf(
+                        out_dir2 + 'SNR_prec_CFSv2' + c + '_' + s + '.nc')
 
-            #prob
-            comp_prob = case - neutro.mean('time')
-            aux = xr.where(comp_prob > 0, comp_prob, np.nan)
-            prob = SpatialProbability(aux, mask)
-            Plot(prob, levels=scale_prob,cmap=cbar_Prueba, dpi=dpi, step=1,
-                 name_fig='prec_prob_' + c + '_' + s + '_' + name_fig_end,
-                 title='Probability of PP>0' + '- CFSv2 - ' + s + '\n'
-                       + title_case[c_count] + '\n' + ' ' + 'PREC'
-                       + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
-                 save=save)
+            if plot:
+                Plot(snr, levels=scale_snr, cmap=cbar_Prueba, dpi=dpi, step=1,
+                     name_fig='prec_SNR_' + c + '_' + s + '_' + name_fig_end,
+                     title='Singal-to-noise ratio - CFSv2 - ' + s + '\n'
+                           + title_case[c_count] + '\n' + ' ' + 'PREC'
+                           + ' - ' + 'Cases: ' + str(
+                         num_case) + ' ' + name_fig_end,
+                     save=save)
+
+            # #prob
+            # comp_prob = case - neutro.mean('time')
+            # aux = xr.where(comp_prob > 0, comp_prob, np.nan)
+            # prob = SpatialProbability(aux, mask)
+            # Plot(prob, levels=scale_prob,cmap=cbar_Prueba, dpi=dpi, step=1,
+            #      name_fig='prec_prob_' + c + '_' + s + '_' + name_fig_end,
+            #      title='Probability of PP>0' + '- CFSv2 - ' + s + '\n'
+            #            + title_case[c_count] + '\n' + ' ' + 'PREC'
+            #            + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
+            #      save=save)
 
         except:
             print('Error in ' + c + ' - ' + s)

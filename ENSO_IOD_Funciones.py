@@ -2570,7 +2570,7 @@ def PlotComposite_wWAF(comp, levels, cmap, step1, contour1=True,
         ax.add_feature(cartopy.feature.BORDERS, alpha=0.7)
 
     if proj == 'eq':
-        ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+        ax.gridlines(crs=crs_latlon, linewidth=0, linestyle='-')
         ax.set_xticks(xticks, crs=crs_latlon)
         ax.set_yticks(yticks, crs=crs_latlon)
         lon_formatter = LongitudeFormatter(zero_direction_label=True)

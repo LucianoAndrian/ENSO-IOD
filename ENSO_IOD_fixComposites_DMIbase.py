@@ -25,9 +25,9 @@ out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/1940_2020/' \
           'composite/dmi_standard/'
 
 #Plot
-save = True
-dpi = 300
-sig = True
+save = False
+dpi = 70
+sig = False
 waf = True
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' \
           'DMIbase/' # resultados de MC
@@ -79,7 +79,7 @@ tw=[False, False] # por ahora sin vp
 sig2 = [True, False]
 steps = [1, 1]
 contours1 = [True, False]
-sig_v = [True, True]
+sig_v = [False, False]
 
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos',
          'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
@@ -266,6 +266,9 @@ def OpenObsDataSet(name, sa=True,
 variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
 title_var = ['PP GPCC', 'T Cru']
 
+variables_tpp = ['ppgpcc_w_c_d_1']
+title_var = ['PP GPCC']
+
 cases = ['DMI_sim_pos', 'DMI_sim_neg', 'DMI_un_pos',
          'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
 title_case = ['DMI-ENSO simultaneous positive phase ',
@@ -284,10 +287,10 @@ scales = [np.linspace(-30, 30, 13), # pp
 
 min_max_months = [[9,11]]
 seasons_name = ['SON']
-SA = borders = [False]
+SA = borders = [True]
 
 aux_name = ['HS', 'SA'] # esto funciona con sa, [True] = 'SA'
-aux_name=['hs_ex']
+aux_name=['hs_ex', 'sa']
 
 
 for v, v_count in zip(variables_tpp, [0,1]):
@@ -332,7 +335,7 @@ for v, v_count in zip(variables_tpp, [0,1]):
                                          ' - Events: ' + str(num_case) ,
                                    name_fig=v + '_' + s + '_' +
                                             cases[c_count] + '_mer_d_w_' +
-                                            aux_name[sa] + '_DMIST',
+                                            aux_name[sa] + 'AAGG_DMIST',
                                    dpi=dpi, save=save, comp_sig=sig,
                                    color_sig=color_sig, color_map='k',
                                    borders=sa, hatches=hatches,

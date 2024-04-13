@@ -199,25 +199,30 @@ for s, s_count in zip(seasons, range(0, len(seasons))):
             snr, case_num = CaseSNR(data, s, min_max_months[s_count],
                                     c, nc_date_dir)
 
-            snr = snr*MakeMask(snr, 'var')
+            snr = snr#*MakeMask(snr, 'var')
 
-            PlotComposite_wWAF(comp=snr, cmap=cbars[v_count], step1=1,
-                               levels =scales[v_count],
-                               contour1=True, two_variables=False,
-                               mapa='sa', significance=False,
+            if save_nc & (s=='SON'):
+                snr.to_netcdf(out_dir2 + v.split('_')[0] + s + '_' +
+                              cases[c_count] + '_mer_d_w_' + aux_name + '.nc')
+            if plot:
+                PlotComposite_wWAF(comp=snr, cmap=cbars[v_count], step1=1,
+                                   levels=scales[v_count],
+                                   contour1=True, two_variables=False,
+                                   mapa='sa', significance=False,
 
-                               title='Signal-to-Noise ratio ' +
-                                     title_var[v_count] + ' - ' +
-                                     title_case[c_count] +
-                                     '\n' + s + ' - Events: ' +
-                                     str(case_num),
+                                   title='Signal-to-Noise ratio ' +
+                                         title_var[v_count] + ' - ' +
+                                         title_case[c_count] +
+                                         '\n' + s + ' - Events: ' +
+                                         str(case_num),
 
-                               name_fig=v.split('_')[0] + s + '_' +
-                                        cases[c_count] + '_mer_d_w_' +
-                                        aux_name,
+                                   name_fig=v.split('_')[0] + s + '_' +
+                                            cases[c_count] + '_mer_d_w_' +
+                                            aux_name,
 
-                               out_dir=out_dir, dpi=dpi, save=save,
-                               color_map='grey')
+                                   out_dir=out_dir, dpi=dpi, save=save,
+                                   color_map='grey')
+
 print('Done PP y T')
 
 ################################################################################
