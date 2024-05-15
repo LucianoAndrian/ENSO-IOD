@@ -2692,39 +2692,52 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
         ax.text(-0.005, 1.025, f"{string.ascii_lowercase[i]}.",
                 transform=ax.transAxes, size=12)
 
-        aux = data.sel(plots=plot)
-        aux_var = aux.values
-
         if data_ctn is not None:
             if levels_ctn is None:
                 levels_ctn = levels.copy()
+            try:
                 if isinstance(levels_ctn, np.ndarray):
                     levels_ctn = levels_ctn[levels_ctn != 0]
                 else:
                     levels_ctn.remove(0)
-
+            except:
+                pass
             aux_ctn = data_ctn.sel(plots=plot)
-            aux_ctn_var = aux_ctn.values
+            try:
+                aux_ctn_var = aux_ctn['var'].values
+            except:
+                aux_ctn_var = aux_ctn.values
             ax.contour(data_ctn.lon.values, data_ctn.lat.values,
                        aux_ctn_var, linewidths=1,
                        levels=levels_ctn, transform=crs_latlon,
                        colors=color_ctn)
 
         if data_ctn2 is not None:
-            if levels_ctn is None:
-                levels_ctn = levels.copy()
-                if isinstance(levels_ctn, np.ndarray):
-                    levels_ctn = levels_ctn[levels_ctn != 0]
-                else:
-                    levels_ctn.remove(0)
+            if levels_ctn2 is None:
+                levels_ctn2 = levels.copy()
 
+            try:
+                if isinstance(levels_ctn2, np.ndarray):
+                    levels_ctn2 = levels_ctn2[levels_ctn != 0]
+                else:
+                    levels_ctn2.remove(0)
+            except:
+                pass
             aux_ctn = data_ctn2.sel(plots=plot)
-            aux_ctn_var = aux_ctn.values
+            try:
+                aux_ctn_var = aux_ctn['var'].values
+            except:
+                aux_ctn_var = aux_ctn.values
             ax.contour(data_ctn2.lon.values[::2], data_ctn2.lat.values[::2],
                        aux_ctn_var[::2, ::2], linewidths=1.5,
                        levels=levels_ctn2, transform=crs_latlon,
                        colors=color_ctn2)
 
+        aux = data.sel(plots=plot)
+        try:
+            aux_var = aux['var'].values
+        except:
+            aux_var = aux.values
         im = ax.contourf(aux.lon.values, aux.lat.values, aux_var,
                          levels=levels,
                          transform=crs_latlon, cmap=cmap, extend='both')
