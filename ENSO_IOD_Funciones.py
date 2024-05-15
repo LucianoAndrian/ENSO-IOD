@@ -2616,3 +2616,189 @@ def DirAndFile(out_dir, dir_results, common_name, names):
     file_name = f"{'_'.join(names)}_{common_name}.jpg"
     path = os.path.join(out_dir, dir_results, file_name)
     return path
+
+################################################################################
+# PlotFinal
+"""
+Grafico de contourf
+args: data, levels, cbar, title, namefig, map
+
+Grafico de contour
+args: data_ctn, levels_ctn, color_ctn = 'k', title, namefig, map
+
+Grafico contour 2
+args: data_ctn2, levels_ctn2, color_ctn2 = 'k', title, namefig, map
+
+Add WAF
+args: waf = True, wafx, wafy, otros seteos?
+
+Otros seteos:
+- tamaño de la figura o mejor tener en cuenta un ratio? 
+(depende de la revista)
+
+"""
+
+# fig = plt.figure(figsize=(9, 3.5), dpi=dpi)
+# ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
+# ax.set_extent([0, 359, -80, 20], crs=crs_latlon)
+# def SetDataToPlotFinal(*args):
+#     data = xr.concat(args, dim='plots')
+#     data = data.assign_coords(plots=range(len(args)))
+#     return data
+
+def SetDataToPlotFinal(*args):
+    data_arrays = []
+    for arg in args:
+        if not isinstance(arg, xr.DataArray):
+            arg = xr.DataArray(arg, dims=['lat', 'lon'])
+        data_arrays.append(arg)
+
+    data = xr.concat(data_arrays, dim='plots')
+    data = data.assign_coords(plots=range(data.shape[0]))
+
+    return data
+
+def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
+              data_ctn=None, levels_ctn=None, color_ctn=None,
+              data_ctn2=None, levels_ctn2=None, color_ctn2=None,
+              data_waf=None, wafx=None, wafy=None, waf_scale=None,
+              waf_step=None, waf_label=None):
+
+    import matplotlib.gridspec as gridspec
+    # cantidad de filas necesarias
+    num_cols = 2
+    plots = data.plots.values
+    num_plots = len(plots)
+    num_rows = np.ceil(num_plots / num_cols).astype(int)
+
+    crs_latlon = ccrs.PlateCarree()
+
+    if map.upper() == 'HS':
+        extent = [0, 359, -80, 20]
+    elif map.upper() == 'TR':
+        extent = [0, 359, -80, 20]
+    else:
+        print(f"Mapa {map} no seteado")
+        return
+
+    fig, axes = plt.subplots(
+        num_rows, num_cols, figsize=(22, 3.5 * num_rows),
+        subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
+        gridspec_kw={'wspace': 0.05, 'hspace': 0.05})
+
+    import string
+
+    for i, (ax, plot) in enumerate(zip(axes.flatten(), plots)):
+        ax.text(-0.005, 1.025, f"{string.ascii_lowercase[i]}.",
+                transform=ax.transAxes, size=12)
+
+        aux = data.sel(plots=plot)
+        aux_var = aux.values
+
+        if data_ctn is not None:
+            if levels_ctn is None:
+                levels_ctn = levels.copy()
+                if isinstance(levels_ctn, np.ndarray):
+                    levels_ctn = levels_ctn[levels_ctn != 0]
+                else:
+                    levels_ctn.remove(0)
+
+            aux_ctn = data_ctn.sel(plots=plot)
+            aux_ctn_var = aux_ctn.values
+            ax.contour(data_ctn.lon.values, data_ctn.lat.values,
+                       aux_ctn_var, linewidths=1,
+                       levels=levels_ctn, transform=crs_latlon,
+                       colors=color_ctn)
+
+        if data_ctn2 is not None:
+            if levels_ctn is None:
+                levels_ctn = levels.copy()
+                if isinstance(levels_ctn, np.ndarray):
+                    levels_ctn = levels_ctn[levels_ctn != 0]
+                else:
+                    levels_ctn.remove(0)
+
+            aux_ctn = data_ctn2.sel(plots=plot)
+            aux_ctn_var = aux_ctn.values
+            ax.contour(data_ctn2.lon.values[::2], data_ctn2.lat.values[::2],
+                       aux_ctn_var[::2, ::2], linewidths=1.5,
+                       levels=levels_ctn2, transform=crs_latlon,
+                       colors=color_ctn2)
+
+        im = ax.contourf(aux.lon.values, aux.lat.values, aux_var,
+                         levels=levels,
+                         transform=crs_latlon, cmap=cmap, extend='both')
+
+        if data_waf is not None:
+            wafx_aux = wafx.sel(plots=plot)
+            wafy_aux = wafy.sel(plots=plot)
+
+            from numpy import ma
+            Q60 = np.nanpercentile(np.sqrt(np.add(np.power(wafx_aux, 2),
+                                                  np.power(wafy_aux, 2))), 60)
+            M = np.sqrt(np.add(np.power(wafx_aux, 2), np.power(wafy_aux, 2))) < Q60
+            # mask array
+            wafx_mask = ma.array(wafx_aux, mask=M)
+            wafy_mask = ma.array(wafy_aux, mask=M)
+            Q99 = np.nanpercentile(np.sqrt(np.add(np.power(wafx_aux, 2),
+                                                  np.power(wafy_aux, 2))), 99)
+            M = np.sqrt(np.add(np.power(wafx_aux, 2), np.power(wafy_aux, 2))) > Q99
+            # mask array
+            wafx_mask = ma.array(wafx_mask, mask=M)
+            wafy_mask = ma.array(wafy_mask, mask=M)
+
+            # plot vectors
+            lons, lats = np.meshgrid(data_waf.lon.values, data_waf.lat.values)
+            Q = ax.quiver(lons[::waf_step, ::waf_step],
+                      lats[::waf_step, ::waf_step],
+                      wafx_mask[::waf_step, ::waf_step],
+                      wafy_mask[::waf_step, ::waf_step],
+                      transform=crs_latlon, pivot='tail',
+                          width=1.5e-3, headwidth=3, alpha=1, headlength=2.5,
+                          color='k',
+                          scale=waf_scale,
+                          angles='xy', scale_units='xy')
+
+            ax.quiverkey(Q, 0.85, 0.05, waf_label,
+                         rf'{waf_label:.1e} $\frac{{m^2}}{{s^2}}$',
+                         labelpos='E', coordinates='figure')
+
+        ax.add_feature(cartopy.feature.LAND, facecolor='white')
+
+        ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+        ax.coastlines(color='grey', linestyle='-', alpha=1)
+        ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
+                     zorder=20)
+        ax.set_xticks(np.arange(0, 360, 60), crs=crs_latlon)
+        ax.set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+        lon_formatter = LongitudeFormatter(zero_direction_label=True)
+        lat_formatter = LatitudeFormatter()
+        ax.xaxis.set_major_formatter(lon_formatter)
+        ax.yaxis.set_major_formatter(lat_formatter)
+        ax.tick_params(labelsize=7)
+        ax.set_extent(extent, crs=crs_latlon)
+
+        ax.set_aspect('equal')
+        ax.set_title(titles[plot], fontsize=12)
+
+    # Eliminar los lugares en blanco que existan
+    # for i in range(num_plots, num_rows * num_cols):
+    #     fig.delaxes(axes.flatten()[i])
+
+    cbar_pos = 'H'
+    if cbar_pos.upper() == 'H':
+        pos = fig.add_axes([0.261, 0.03, 0.5, 0.02])
+        cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
+        cb.ax.tick_params(labelsize=12)
+    elif cbar_pos.upper() == 'V':
+        pos = fig.add_axes([0.2, 0.05, 0.6, 0.02])
+        cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
+        cb.ax.tick_params(labelsize=12)
+
+    #fig.suptitle(title, fontsize=16, y=0.98)
+    fig.subplots_adjust(bottom=0.05)  # , top=1.01, left=0.03, right=0.97 )
+    if save:
+        plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
+        plt.close()
+    else:
+        plt.show()
