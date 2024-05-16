@@ -2675,14 +2675,16 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
 
     if map.upper() == 'HS':
         extent = [0, 359, -80, 20]
+        high = 3.5
     elif map.upper() == 'TR':
-        extent = [0, 359, -80, 20]
+        extent = [45, 270, -20, 20]
+        high = 2.5
     else:
         print(f"Mapa {map} no seteado")
         return
 
     fig, axes = plt.subplots(
-        num_rows, num_cols, figsize=(22, 3.5 * num_rows),
+        num_rows, num_cols, figsize=(22, high * num_rows),
         subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
         gridspec_kw={'wspace': 0.05, 'hspace': 0.05})
 

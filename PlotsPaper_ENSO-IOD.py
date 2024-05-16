@@ -2,7 +2,7 @@
 Figuras paper ENSO-IOD
 """
 ################################################################################
-save = False
+save = True
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/figuras_final/'
 # import #######################################################################
 import os
@@ -20,16 +20,90 @@ from shapely.errors import ShapelyDeprecationWarning
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 warnings.filterwarnings("ignore")
 
-from ENSO_IOD_Funciones import (Nino34CPC, DMI, ComputeWithEffect, WAF,
+from ENSO_IOD_Funciones import (Nino34CPC, DMI, DMI2, ComputeWithEffect, WAF,
                                 ComputeWithoutEffect, SetDataToPlotFinal,
                                 PlotFinal, CaseComp)
 ################################################################################
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
+index_dir = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
+
+nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
+              'nc_composites_dates_no_ind_sst_anom/' #fechas
+data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
+                'data_obs_d_w_c/' #T y PP ya procesados
+sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' \
+          'DMIbase/' # resultados de MC
+
+cases_dir = "/pikachu/datos/luciano.andrian/cases_fields/"
+
 if save:
     dpi = 300
 else:
     dpi = 100
 # Funciones ####################################################################
+
+def auxScatter(n34, n34_3, dmi, dmi_3, s):
+    dmi_todos = dmi_3.sel(time=dmi_3.time.dt.month.isin([s]))
+    dmi_criteria_y = dmi.where((dmi.Mes == s)).Años.dropna().values
+
+    n34_todos = n34.sel(time=n34.time.dt.month.isin([s]))
+    n34_criteria_y = n34_3.where((n34_3.Mes == s)).Años.dropna().values
+
+    sim_y = np.intersect1d(n34_criteria_y, dmi_criteria_y)
+
+    dmi_sim = dmi_todos.sel(time=dmi_todos.time.dt.year.isin(sim_y))
+    n34_sim = n34_todos.sel(time=n34_todos.time.dt.year.isin(sim_y))
+
+    dmi_sim_pos = dmi_sim.where(dmi_sim > 0)
+    n34_sim_pos = n34_sim.where(n34_sim > 0)
+
+    dmi_sim_neg = dmi_sim.where(dmi_sim < 0)
+    n34_sim_neg = n34_sim.where(n34_sim < 0)
+
+    dmi_pos_n34_neg = dmi_sim_pos.where(~np.isnan(n34_sim_neg.values))
+    dmi_neg_n34_pos = dmi_sim_neg.where(~np.isnan(n34_sim_pos.values))
+
+    dmi_dates_ref = dmi_todos.time.dt.year
+    mask = np.in1d(dmi_dates_ref, dmi_criteria_y)
+    aux_dmi = dmi_todos.sel(
+        time=dmi_todos.time.dt.year.isin(dmi_dates_ref[mask]))
+
+    n34_dates_ref = n34_todos.time.dt.year
+    mask = np.in1d(n34_dates_ref, n34_criteria_y)
+    aux_n34 = n34_todos.sel(
+        time=n34_todos.time.dt.year.isin(n34_dates_ref[mask]))
+
+    aux_dates_ref = aux_dmi.time.dt.year
+    mask = np.in1d(aux_dates_ref, sim_y, invert=True)
+    dmi_un = aux_dmi.sel(
+        time=aux_dmi.time.dt.year.isin(aux_dates_ref[mask]))
+
+    dmi_un_pos = dmi_un.where(dmi_un > 0)
+    dmi_un_pos_n34_values = n34_todos.sel(
+        time=n34_todos.time.isin(dmi_un_pos.time))
+
+    dmi_un_neg = dmi_un.where(dmi_un < 0)
+    dmi_un_neg_n34_values = n34_todos.sel(
+        time=n34_todos.time.isin(dmi_un_neg.time))
+
+    aux_dates_ref = aux.time.dt.year
+    mask = np.in1d(aux_dates_ref, sim_y, invert=True)
+    n34_un = aux_n34.sel(
+        time=aux_n34.time.dt.year.isin(aux_dates_ref[mask]))
+
+    n34_un_pos = n34_un.where(n34_un > 0)
+    n34_un_pos_dmi_values = dmi_todos.sel(
+        time=dmi_todos.time.isin(n34_un_pos.time))
+    n34_un_neg = n34_un.where(n34_un < 0)
+    n34_un_neg_dmi_values = dmi_todos.sel(
+        time=dmi_todos.time.isin(n34_un_neg.time))
+
+    return dmi_un_pos, dmi_un_pos_n34_values, dmi_un_neg, \
+           dmi_un_neg_n34_values, n34_un_pos, n34_un_pos_dmi_values,\
+           n34_un_neg, n34_un_neg_dmi_values, dmi_sim_pos, n34_sim_pos, \
+           dmi_sim_neg, n34_sim_neg, dmi_todos, n34_todos, dmi_pos_n34_neg, \
+           dmi_neg_n34_pos
+
 def Detrend(xrda, dim):
     aux = xrda.polyfit(dim=dim, deg=1)
     try:
@@ -117,6 +191,56 @@ def OrdenarNC_wTime_fromW(data):
         )
     )
     return newdata
+
+def SelectParIndex(dmi_case, n34_case, sd_dmi_s, sd_n34_s, s, by_r=True,
+                   open_n34=True, open_dmi=False):
+    aux = xr.open_dataset(
+        cases_dir + 'dmi_values_' + dmi_case + '_' + s + '.nc')\
+        .__mul__(1 / sd_dmi_s)
+    aux2 = xr.open_dataset(
+        cases_dir + 'N34_values_' + n34_case + '_' + s + '.nc')\
+        .__mul__(1 / sd_n34_s)
+
+    if by_r:
+        if open_n34:
+            n34_s = xr.open_dataset(
+                index_dir + 'N34_' + s + '_Leads_r_CFSv2.nc')\
+                .__mul__(1/sd_n34_s)
+            aux3 = n34_s.sel(r=aux.r, time=aux.time)
+
+            if len(np.where(aux3.L.values==aux.L.values)[0]):
+                #return aux.sst.values, aux3.sst.values
+                return aux.sst.values.round(2), aux3.sst.values.round(2)
+            else:
+                print('Error: CASES')
+                return [], []
+
+        if open_dmi:
+            dmi_s = xr.open_dataset(
+                index_dir + 'DMI_' + s + '_Leads_r_CFSv2.nc')\
+                .__mul__(1/sd_dmi_s)
+            aux3 = dmi_s.sel(r=aux2.r, time=aux2.time)
+
+            if len(np.where(aux3.L.values == aux2.L.values)[0]):
+                return aux3.sst.values.round(2), aux2.sst.values.round(2)
+            else:
+                print('Error: CASES')
+                return [], []
+    else:
+        aux2 = aux2.sel(time=aux2.time.isin([aux.time.values]))
+
+        if len(aux2.time) == len(aux.time):
+            return aux.sst.values.round(2), aux2.sst.values.round(2)
+        else:
+            print('Error: CASES')
+            return [], []
+
+def Weights(data):
+    weights = np.transpose(np.tile(np.cos(data.lat * np.pi / 180),
+                                   (len(data.lon), 1)))
+    data_w = data * weights
+    return data_w
+
 # Escalas y barras de colores ##################################################
 # Regresion ------------------------------------------------------------------ #
 scale_vp = [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, 0, 0.5e6, 1e6, 1.5e6,
@@ -131,6 +255,8 @@ scale_div_comp = [-1.6e-06, 1.6e-06]
 scale_sst_comp = [-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5]
 scale_hgt_comp = [-375, -275, -175, -75, -25, 0, 25, 75, 175, 275, 375]
 
+# CFSv2
+scale_hgt_snr = [-1, -.8, -.6, -.5, -.1, 0, 0.1, 0.5, 0.6, 0.8, 1]
 # ---------------------------------------------------------------------------- #
 cbar_sst = colors.ListedColormap(['#B9391B', '#CD4838', '#E25E55', '#F28C89',
                                   '#FFCECC', 'white', '#B3DBFF', '#83B9EB',
@@ -149,6 +275,14 @@ cbar.set_over('#641B00')
 cbar.set_under('#012A52')
 cbar.set_bad(color='white')
 
+cbar_snr = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#6FFE9B',
+                                  '#FFFFFF',
+                                  '#FFFFFF', '#FFFFFF',
+                                  '#FEB77E','#CA3E72','#782281','#251255'])
+cbar_snr.set_over('#251255')
+cbar_snr.set_under('#070B4F')
+cbar_snr.set_bad(color='white')
+
 # Variables comunes ---------------------------------------------------------- #
 #sig = True
 periodos = [[1940, 2020]]
@@ -156,7 +290,113 @@ y1 = 0
 p = periodos[0]
 s = 'SON'
 s_count = 0
+
+# scatter
+in_label_size = 18
+label_legend_size = 18
+tick_label_size = 15
+scatter_size_fix = 3
+
 ################################################################################
+subtitulos_regre = [r"$Ni\tilde{n}o\ 3.4$",  r"$DMI$",
+                    r"$Ni\tilde{n}o\ 3.4|_{DMI}$",
+                    r"$DMI|_{Ni\tilde{n}o\ 3.4}$"]
+
+# En orden de ploteo
+cases = ['N34_un_pos', 'N34_un_neg', 'DMI_un_pos', 'DMI_un_neg',
+         'DMI_sim_pos', 'DMI_sim_neg']
+
+cases_cfsv2 =['n34_puros_pos', 'n34_puros_neg',
+              'dmi_puros_pos', 'dmi_puros_neg',
+              'sim_pos', 'sim_neg']
+
+title_case = ['Pure El Niño', 'Pure La Niña',
+              'Pure positive IOD ', 'Pure negative IOD',
+              'El Niño - positive IOD', 'La Niña - negative IOD']
+################################################################################
+print('#######################################################################')
+print('Figure1')
+print('#######################################################################')
+dmi, dmi_2, dmi_3 = DMI2(filter_bwa=False, start_per='1920', end_per='2020',
+                         sst_anom_sd=False, opposite_signs_criteria=False)
+dmi_3 = dmi_3.sel(time=slice('1940-01-01', '2020-12-01'))
+dmi = dmi.where(dmi.Años>=1940).dropna()
+dmi_3 = dmi_3 / dmi_3.std('time')
+
+aux = xr.open_dataset("/pikachu/datos/luciano.andrian/verif_2019_2023/"
+                      "sst.mnmean.nc")
+n34, n34_2, n34_3 = Nino34CPC(aux, start=1920)
+n34 = n34.sel(time=slice('1940-01-01', '2020-12-01'))
+n34_3 = n34_3.where(n34_3.Años>=1940).dropna()
+n34 = n34 / n34.std('time')
+
+dmi_un_pos, dmi_un_pos_n34_values, dmi_un_neg, dmi_un_neg_n34_values, \
+n34_un_pos, n34_un_pos_dmi_values, n34_un_neg, n34_un_neg_dmi_values, \
+dmi_sim_pos, n34_sim_pos, dmi_sim_neg, n34_sim_neg, dmi_todos, n34_todos, \
+dmi_pos_n34_neg, dmi_neg_n34_pos = auxScatter(n34, n34_3, dmi, dmi_3, 10)
+
+in_label_size = 18
+label_legend_size = 18
+tick_label_size = 15
+scatter_size_fix = 3
+
+# ---------------------------------------------------------------------------- #
+fig, ax = plt.subplots(dpi=dpi, figsize=(10, 10))
+# todos
+ax.scatter(x=dmi_todos, y=n34_todos, marker='o', label='Niño3.4 vs DMI',
+           s=50*scatter_size_fix, edgecolor='k', color='dimgray', alpha=1)
+# dmi puros
+ax.scatter(x=dmi_un_pos.values, y=dmi_un_pos_n34_values.values, marker='o',
+           s=70*scatter_size_fix, edgecolor='k', facecolor='firebrick',
+           alpha=1, label='IOD+')
+ax.scatter(x=dmi_un_neg.values, y=dmi_un_neg_n34_values.values, marker='o',
+           s=70*scatter_size_fix, facecolor='limegreen', edgecolor='k',
+           alpha=1, label='IOD-')
+# n34 puros
+ax.scatter(y=n34_un_pos.values, x=n34_un_pos_dmi_values.values, marker='o',
+           s=70*scatter_size_fix, edgecolors='k', facecolor='navy', alpha=1,
+           label='El Niño')
+ax.scatter(y=n34_un_neg.values, x=n34_un_neg_dmi_values.values, marker='o',
+           s=70*scatter_size_fix, edgecolors='k', facecolor='deeppink',
+           alpha=1, label='La Niña')
+# sim
+ax.scatter(x=dmi_sim_pos.values, y=n34_sim_pos.values, marker='o',
+           s=50*scatter_size_fix, edgecolor='k', color='#FF5B12', alpha=1,
+           label='El Niño & IOD+')
+ax.scatter(x=dmi_sim_neg.values, y=n34_sim_neg.values, marker='o',
+           s=50*scatter_size_fix, edgecolor='k', color='deepskyblue',
+           alpha=1, label='La Niña & IOD-')
+# sim opp. sing
+ax.scatter(x=dmi_pos_n34_neg.values, y=n34_sim_neg.values, marker='o',
+           s=50*scatter_size_fix, edgecolor='k', color='orange', alpha=1,
+           label='La Niña & IOD+')
+ax.scatter(x=dmi_neg_n34_pos.values, y=n34_sim_pos.values, marker='o',
+           s=50*scatter_size_fix, edgecolor='k', color='gold', alpha=1,
+           label='El Niño & IOD-')
+
+ax.legend(loc=(.01, .57), fontsize=label_legend_size)
+ax.tick_params(axis='both', which='major', labelsize=tick_label_size)
+ax.set_ylim((-5, 5))
+ax.set_xlim((-5, 5))
+ax.axhspan(-.5, .5, alpha=0.2, color='black', zorder=0)
+ax.axvspan(-.5, .5, alpha=0.2, color='black', zorder=0)
+ax.set_xlabel('DMI', size=in_label_size)
+ax.set_ylabel('Niño 3.4', size=in_label_size)
+ax.text(-4.9, 4.6, 'EN/IOD-', dict(size=in_label_size))
+ax.text(-.2, 4.6, 'EN', dict(size=in_label_size))
+ax.text(+3.7, 4.6, 'EN/IOD+', dict(size=in_label_size))
+ax.text(+4.2, -.1, 'IOD+', dict(size=in_label_size))
+ax.text(+3.78, -4.9, 'LN/IOD+', dict(size=in_label_size))
+ax.text(-.2, -4.9, 'LN', dict(size=in_label_size))
+ax.text(-4.9, -4.9, ' LN/IOD-', dict(size=in_label_size))
+ax.text(-4.9, -.1, 'IOD-', dict(size=in_label_size))
+plt.tight_layout()
+
+if save:
+    plt.savefig(out_dir + 'figure1.jpg')
+else:
+    plt.show()
+
 print('#######################################################################')
 print('Figure2')
 print('#######################################################################')
@@ -245,11 +485,8 @@ aux_vp = SetDataToPlotFinal(vp_n34 * MakerMaskSig(vp_corr_n34),
 
 aux_div = SetDataToPlotFinal(div_n34, div_dmi, div_n34_wodmi, div_dmi_won34)
 
-subtitulos = [r"$Ni\tilde{n}o\ 3.4$",  r"$DMI$", r"$Ni\tilde{n}o\ 3.4|_{DMI}$",
-              r"$DMI|_{Ni\tilde{n}o\ 3.4}$"]
-
 PlotFinal(data=aux_sst, levels=scale_sst, cmap=cbar_sst,
-          titles=subtitulos, namefig='figure2', map='hs',
+          titles=subtitulos_regre, namefig='figure2', map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
           data_ctn=aux_vp, levels_ctn=scale_vp, color_ctn='k',
           data_ctn2=aux_div, levels_ctn2=scale_div,
@@ -340,12 +577,9 @@ for v, v_count, hpalevel in zip(variables, [0, 1], [200, 750]):
     wafy = SetDataToPlotFinal(py_n34[0, :, :], py_dmi[0, :, :],
                               py_n34_wodmi[0, :, :], py_dmi_won34[0, :, :])
 
-    subtitulos = [r"$Ni\tilde{n}o\ 3.4$", r"$DMI$",
-                  r"$Ni\tilde{n}o\ 3.4|_{DMI}$",
-                  r"$DMI|_{Ni\tilde{n}o\ 3.4}$"]
     # ------------------------------------------------------------------------ #
     PlotFinal(data=aux_hgt, levels=scale_hgt, cmap=cbar,
-              titles=subtitulos, namefig=f"figure{v_count+3}", map='hs',
+              titles=subtitulos_regre, namefig=f"figure{v_count+3}", map='hs',
               save=save, dpi=dpi, out_dir=out_dir,
               data_ctn=aux_hgt_wo_corr, levels_ctn=None, color_ctn='k',
               data_waf=data_sf, wafx=wafx, wafy=wafy,
@@ -357,21 +591,9 @@ for v, v_count, hpalevel in zip(variables, [0, 1], [200, 750]):
 print('#######################################################################')
 print('Figure 5')
 print('#######################################################################')
-nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
-              'nc_composites_dates_no_ind_sst_anom/' #fechas
-data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
-                'data_obs_d_w_c/' #T y PP ya procesados
-sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' \
-          'DMIbase/' # resultados de MC
-
 plt.rcParams['hatch.linewidth'] = 1.5
 
-# En orden de ploteo
-cases = ['N34_un_pos', 'N34_un_neg', 'DMI_un_pos', 'DMI_un_neg',
-         'DMI_sim_pos', 'DMI_sim_neg']
-title_case = ['Pure El Niño', 'Pure La Niña',
-              'Pure positive IOD ', 'Pure negative IOD',
-              'El Niño - positive IOD', 'La Niña - negative IOD']
+
 # Vp y Div ------------------------------------------------------------------- #
 #----------------------------------------------------------------------------- #
 v_from_w = ['div_UV200', 'vp_from_UV200_w'] # creadas a partir de windphsere
@@ -489,11 +711,173 @@ for v, hpalevel, f_count in zip(['HGT200_SON_mer_d_w', 'HGT750_SON_mer_d_w'],
               data_waf=data_sf, wafx=aux_wafx, wafy=aux_wafy,
               waf_scale=None, waf_label=10e-5, waf_step=4)
 ################################################################################
+print('#######################################################################')
+print('Figure8')
+print('#######################################################################')
+
+sd_dmi_s = xr.open_dataset(index_dir + 'DMI_' + s + '_Leads_r_CFSv2.nc').std()
+sd_n34_s = xr.open_dataset(index_dir + 'N34_' + s + '_Leads_r_CFSv2.nc').std()
+
+# Sim_pos
+c = 'sim_pos'
+dmi_sim_pos, n34_sim_pos = SelectParIndex(c, c, sd_dmi_s, sd_n34_s, s)
+# sim_neg
+c = 'sim_neg'
+dmi_sim_neg, n34_sim_neg = SelectParIndex(c, c, sd_dmi_s, sd_n34_s, s)
+# dmi_puros_pos
+dmi_puros_pos, n34_in_dmi_puros_pos = SelectParIndex('dmi_puros_pos', 'neutros',
+                                                     sd_dmi_s, sd_n34_s, s,
+                                                     by_r=True, open_dmi=False,
+                                                     open_n34=True)
+# dmi_puros_neg
+dmi_puros_neg, n34_in_dmi_puros_neg = SelectParIndex('dmi_puros_neg', 'neutros',
+                                                     sd_dmi_s, sd_n34_s, s,
+                                                     by_r=True, open_dmi=False,
+                                                     open_n34=True)
+# n34_puros_pos
+dmi_in_n34_puros_pos, n34_puros_pos = SelectParIndex('neutros', 'n34_puros_pos',
+                                                     sd_dmi_s, sd_n34_s, s,
+                                                     by_r=True, open_dmi=True,
+                                                     open_n34=False)
+# n34_puros_neg
+dmi_in_n34_puros_neg, n34_puros_neg = SelectParIndex('neutros', 'n34_puros_neg',
+                                                     sd_dmi_s, sd_n34_s, s,
+                                                     by_r=True, open_dmi=True,
+                                                     open_n34=False)
+# dmi_pos_n34_neg
+dmi_pos_n34_neg, n34_in_dmi_pos_n34_neg = SelectParIndex('dmi_pos_n34_neg',
+                                                         'dmi_pos_n34_neg',
+                                                         sd_dmi_s, sd_n34_s, s,
+                                                         by_r=False,
+                                                         open_dmi=False,
+                                                         open_n34=False)
+# dmi_neg_n34_pos
+dmi_neg_n34_pos, n34_in_dmi_neg_n34_pos = SelectParIndex('dmi_neg_n34_pos',
+                                                         'dmi_neg_n34_pos',
+                                                         sd_dmi_s, sd_n34_s, s,
+                                                         by_r=False,
+                                                         open_dmi=False,
+                                                         open_n34=False)
+# neutros
+dmi_neutro, n34_neutro = SelectParIndex('neutros', 'neutros',
+                                        sd_dmi_s, sd_n34_s, s,
+                                        by_r=False)
 
 
+fig, ax = plt.subplots(dpi=dpi, figsize=(10, 10))
 
+# todos
+ax.scatter(y=n34_neutro, x=dmi_neutro, marker='o', label='Niño3.4 vs DMI',
+           s=50*scatter_size_fix, edgecolor='k', color='dimgray', alpha=1)
 
+# dmi puros
+ax.scatter(x=dmi_puros_pos, y=n34_in_dmi_puros_pos, marker='o',
+           s=70*scatter_size_fix, edgecolor='k', color='firebrick',
+           alpha=1, label='IOD+')
+ax.scatter(x=dmi_puros_neg, y=n34_in_dmi_puros_neg, marker='o',
+           s=70*scatter_size_fix, edgecolor='k', color='limegreen',
+           alpha=1, label='IOD-')
 
+# n34 puros
+ax.scatter(x=dmi_in_n34_puros_pos, y=n34_puros_pos, marker='o',
+            s=70*scatter_size_fix, edgecolor='k', color='navy', alpha=1,
+           label='El Niño')
+ax.scatter(x=dmi_in_n34_puros_neg, y=n34_puros_neg, marker='o',
+           s=70*scatter_size_fix, edgecolor='k', color='deeppink',
+           alpha=1, label='La Niña')
 
+# sim
+ax.scatter(x=dmi_sim_pos, y=n34_sim_pos, marker='o', s=50*scatter_size_fix,
+           edgecolor='k', color='#FF5B12', alpha=1, label='El Niño & IOD+')
+ax.scatter(x=dmi_sim_neg, y=n34_sim_neg, marker='o', s=50*scatter_size_fix,
+           edgecolor='k', color='deepskyblue', alpha=1,
+           label='La Niña & IOD-')
 
+# sim opp. sing
+ax.scatter(x=dmi_pos_n34_neg, y=n34_in_dmi_pos_n34_neg, marker='o',
+           s=50*scatter_size_fix, edgecolor='k', color='orange', alpha=1,
+           label='La Niña & IOD+')
+ax.scatter(x=dmi_neg_n34_pos, y=n34_in_dmi_neg_n34_pos, marker='o',
+            s=50*scatter_size_fix, edgecolor='k', color='gold', alpha=1,
+           label='El Niño & IOD-')
 
+ax.legend(loc=(.01, .57), fontsize=label_legend_size)
+ax.tick_params(axis='both', which='major', labelsize=tick_label_size)
+ax.set_ylim((-5, 5))
+ax.set_xlim((-5, 5))
+ax.axhspan(-.5, .5, alpha=0.2, color='black', zorder=0)
+ax.axvspan(-.5, .5, alpha=0.2, color='black', zorder=0)
+ax.set_xlabel('DMI', size=in_label_size)
+ax.set_ylabel('Niño 3.4', size=in_label_size)
+ax.text(-4.9, 4.6, 'EN/IOD-', dict(size=in_label_size))
+ax.text(-.2, 4.6, 'EN', dict(size=in_label_size))
+ax.text(+3.7, 4.6, 'EN/IOD+', dict(size=in_label_size))
+ax.text(+4.2, -.1, 'IOD+', dict(size=in_label_size))
+ax.text(+3.78, -4.9, 'LN/IOD+', dict(size=in_label_size))
+ax.text(-.2, -4.9, 'LN', dict(size=in_label_size))
+ax.text(-4.9, -4.9, ' LN/IOD-', dict(size=in_label_size))
+ax.text(-4.9, -.1, 'IOD-', dict(size=in_label_size))
+plt.tight_layout()
+
+if save:
+    plt.savefig(out_dir + 'figure8.jpg')
+else:
+    plt.show()
+################################################################################
+print('#######################################################################')
+print('Figure 9')
+print('#######################################################################')
+neutro = xr.open_dataset(cases_dir + 'neutros_SON.nc').rename({'sst': 'var'})
+
+aux_sst = []
+for c in cases_cfsv2:
+    case = xr.open_dataset(cases_dir + c + '_SON.nc').rename({'sst': 'var'})
+    #num_case = len(case.time)
+    comp = case.mean('time') - neutro.mean('time')
+    aux_sst.append(comp)
+
+aux_sst = xr.concat(aux_sst, dim='plots')
+
+PlotFinal(data=aux_sst, levels=scale_sst_comp, cmap=cbar_sst,
+          titles=title_case, namefig=f"figure9", map='tr',
+          save=save, dpi=dpi, out_dir=out_dir)
+################################################################################
+print('#######################################################################')
+print('Figure 10-11')
+print('#######################################################################')
+neutro = xr.open_dataset(cases_dir + 'hgt_neutros_SON.nc')\
+    .rename({'hgt': 'var'})
+neutro = Weights(neutro.__mul__(9.80665))
+
+aux_hgt = []
+aux_hgt_snr = []
+for c in cases_cfsv2:
+    case = xr.open_dataset(cases_dir + 'hgt_' + c + '_SON.nc').\
+        rename({'hgt': 'var'})
+    case = Weights(case.__mul__(9.80665))
+    #num_case = len(case.time)
+    comp = case.mean('time') - neutro.mean('time')
+
+    spread = case - comp
+    spread = spread.std('time')
+    snr = comp / spread
+
+    aux_hgt.append(comp)
+    aux_hgt_snr.append(snr)
+
+aux_hgt = xr.concat(aux_hgt, dim='plots')
+aux_hgt_snr = xr.concat(aux_hgt_snr, dim='plots')
+
+PlotFinal(data=aux_hgt, levels=scale_hgt_comp, cmap=cbar,
+          titles=title_case, namefig=f"figure10", map='hs',
+          save=save, dpi=dpi, out_dir=out_dir,
+          data_ctn=aux_hgt, color_ctn='k')
+
+PlotFinal(data=aux_hgt_snr, levels=scale_hgt_snr, cmap=cbar_snr,
+          titles=title_case, namefig=f"figure11", map='hs',
+          save=save, dpi=dpi, out_dir=out_dir,
+          data_ctn=aux_hgt_snr, color_ctn='k')
+################################################################################
+print('#######################################################################')
+print('Figure 14')
+print('#######################################################################')
