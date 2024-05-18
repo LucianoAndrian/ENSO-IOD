@@ -2662,11 +2662,19 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
               data_ctn=None, levels_ctn=None, color_ctn=None,
               data_ctn2=None, levels_ctn2=None, color_ctn2=None,
               data_waf=None, wafx=None, wafy=None, waf_scale=None,
-              waf_step=None, waf_label=None):
+              waf_step=None, waf_label=None, sig_points=None, hatches=None,
+              num_cols=None):
 
     import matplotlib.gridspec as gridspec
     # cantidad de filas necesarias
-    num_cols = 2
+    if num_cols is None:
+        num_cols = 2
+
+    width = 22
+    # if num_cols == 2:
+    #     width = 22
+    # else:
+
     plots = data.plots.values
     num_plots = len(plots)
     num_rows = np.ceil(num_plots / num_cols).astype(int)
@@ -2679,12 +2687,15 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
     elif map.upper() == 'TR':
         extent = [45, 270, -20, 20]
         high = 2.5
+    elif map.upper() == 'HS_EX':
+        extent = [0, 359, -65, -20]
+        high = 2
     else:
         print(f"Mapa {map} no seteado")
         return
 
     fig, axes = plt.subplots(
-        num_rows, num_cols, figsize=(22, high * num_rows),
+        num_rows, num_cols, figsize=(width, high * num_rows),
         subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
         gridspec_kw={'wspace': 0.05, 'hspace': 0.05})
 
@@ -2778,10 +2789,26 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
                          rf'{waf_label:.1e} $\frac{{m^2}}{{s^2}}$',
                          labelpos='E', coordinates='figure')
 
+        if sig_points is not None:
+            aux_sig_points = sig_points.sel(plots=plot)
+            #hatches = '....'
+            colors_l = ['k', 'k']
+            comp_sig_var = aux_sig_points['var']
+            cs = ax.contourf(aux_sig_points.lon, aux_sig_points.lat,
+                             comp_sig_var, transform=crs_latlon,
+                             colors='none', hatches=[hatches, hatches],
+                             extend='lower')
+
+            for i, collection in enumerate(cs.collections):
+                collection.set_edgecolor(colors_l[i % len(colors_l)])
+
+            for collection in cs.collections:
+                collection.set_linewidth(0.)
+
         ax.add_feature(cartopy.feature.LAND, facecolor='white')
 
         ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-        ax.coastlines(color='grey', linestyle='-', alpha=1)
+        ax.coastlines(color='dimgrey', linestyle='-', alpha=1)
         ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
                      zorder=20)
         ax.set_xticks(np.arange(0, 360, 60), crs=crs_latlon)

@@ -241,6 +241,21 @@ def Weights(data):
     data_w = data * weights
     return data_w
 
+def OpenObsDataSet(name, sa=True, dir='/pikachu/datos/luciano.andrian/'
+                                      'observado/ncfiles/data_obs_d_w_c/'):
+
+    aux = xr.open_dataset(dir + name + '.nc')
+
+    if sa:
+        aux2 = aux.sel(lon=slice(270, 330), lat=slice(15, -60))
+        if len(aux2.lat) > 0:
+            return aux2
+        else:
+            aux2 = aux.sel(lon=slice(270, 330), lat=slice(-60, 15))
+            return aux2
+    else:
+        return aux
+
 # Escalas y barras de colores ##################################################
 # Regresion ------------------------------------------------------------------ #
 scale_vp = [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, 0, 0.5e6, 1e6, 1.5e6,
@@ -257,6 +272,9 @@ scale_hgt_comp = [-375, -275, -175, -75, -25, 0, 25, 75, 175, 275, 375]
 
 # CFSv2
 scale_hgt_snr = [-1, -.8, -.6, -.5, -.1, 0, 0.1, 0.5, 0.6, 0.8, 1]
+
+# iods neg
+scale_ks = [2, 3, 4]
 # ---------------------------------------------------------------------------- #
 cbar_sst = colors.ListedColormap(['#B9391B', '#CD4838', '#E25E55', '#F28C89',
                                   '#FFCECC', 'white', '#B3DBFF', '#83B9EB',
@@ -282,6 +300,21 @@ cbar_snr = colors.ListedColormap(['#070B4F','#2E07AC', '#387AE4' ,'#6FFE9B',
 cbar_snr.set_over('#251255')
 cbar_snr.set_under('#070B4F')
 cbar_snr.set_bad(color='white')
+
+cbar_pp = colors.ListedColormap(['#003C30', '#004C42', '#0C7169', '#79C8BC',
+                                 '#B4E2DB',
+                                 'white',
+                                '#F1DFB3', '#DCBC75', '#995D13', '#6A3D07',
+                                 '#543005', ][::-1])
+cbar_pp.set_under('#3F2404')
+cbar_pp.set_over('#00221A')
+cbar_pp.set_bad(color='white')
+
+cbar_ks = colors.ListedColormap(['#C2FAB6', '#FAC78F'])
+
+cbar_ks.set_under('#5DCCBF')
+cbar_ks.set_over('#FA987C')
+cbar_ks.set_bad(color='white')
 
 # Variables comunes ---------------------------------------------------------- #
 #sig = True
@@ -347,17 +380,17 @@ ax.scatter(x=dmi_todos, y=n34_todos, marker='o', label='Niño3.4 vs DMI',
            s=50*scatter_size_fix, edgecolor='k', color='dimgray', alpha=1)
 # dmi puros
 ax.scatter(x=dmi_un_pos.values, y=dmi_un_pos_n34_values.values, marker='o',
-           s=70*scatter_size_fix, edgecolor='k', facecolor='firebrick',
+           s=50*scatter_size_fix, edgecolor='k', facecolor='firebrick',
            alpha=1, label='IOD+')
 ax.scatter(x=dmi_un_neg.values, y=dmi_un_neg_n34_values.values, marker='o',
-           s=70*scatter_size_fix, facecolor='limegreen', edgecolor='k',
+           s=50*scatter_size_fix, facecolor='limegreen', edgecolor='k',
            alpha=1, label='IOD-')
 # n34 puros
 ax.scatter(y=n34_un_pos.values, x=n34_un_pos_dmi_values.values, marker='o',
-           s=70*scatter_size_fix, edgecolors='k', facecolor='navy', alpha=1,
+           s=50*scatter_size_fix, edgecolors='k', facecolor='navy', alpha=1,
            label='El Niño')
 ax.scatter(y=n34_un_neg.values, x=n34_un_neg_dmi_values.values, marker='o',
-           s=70*scatter_size_fix, edgecolors='k', facecolor='deeppink',
+           s=50*scatter_size_fix, edgecolors='k', facecolor='deeppink',
            alpha=1, label='La Niña')
 # sim
 ax.scatter(x=dmi_sim_pos.values, y=n34_sim_pos.values, marker='o',
@@ -772,18 +805,18 @@ ax.scatter(y=n34_neutro, x=dmi_neutro, marker='o', label='Niño3.4 vs DMI',
 
 # dmi puros
 ax.scatter(x=dmi_puros_pos, y=n34_in_dmi_puros_pos, marker='o',
-           s=70*scatter_size_fix, edgecolor='k', color='firebrick',
+           s=50*scatter_size_fix, edgecolor='k', color='firebrick',
            alpha=1, label='IOD+')
 ax.scatter(x=dmi_puros_neg, y=n34_in_dmi_puros_neg, marker='o',
-           s=70*scatter_size_fix, edgecolor='k', color='limegreen',
+           s=50*scatter_size_fix, edgecolor='k', color='limegreen',
            alpha=1, label='IOD-')
 
 # n34 puros
 ax.scatter(x=dmi_in_n34_puros_pos, y=n34_puros_pos, marker='o',
-            s=70*scatter_size_fix, edgecolor='k', color='navy', alpha=1,
+            s=50*scatter_size_fix, edgecolor='k', color='navy', alpha=1,
            label='El Niño')
 ax.scatter(x=dmi_in_n34_puros_neg, y=n34_puros_neg, marker='o',
-           s=70*scatter_size_fix, edgecolor='k', color='deeppink',
+           s=50*scatter_size_fix, edgecolor='k', color='deeppink',
            alpha=1, label='La Niña')
 
 # sim
@@ -881,3 +914,110 @@ PlotFinal(data=aux_hgt_snr, levels=scale_hgt_snr, cmap=cbar_snr,
 print('#######################################################################')
 print('Figure 14')
 print('#######################################################################')
+# regre PP y T en la misma figura
+variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
+# Va ser necesario otra función o agregar varias cosas a la actual
+# dos data, dos paletas de colores y sus colorbar horizontales y abajo
+# de cada columna
+
+print('#######################################################################')
+print('Figure 15-16')
+print('#######################################################################')
+variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
+
+scale_t = [-1.5, -1, -.5, -.25, -.1, 0, .1, .25, .5, 1, 1.5]
+scale_pp = [-40, -30, -20, -10, -5, 0, 5, 10, 20, 30, 40]
+
+aux_scales = [scale_pp, scale_t]
+aux_cbar = [cbar_pp, cbar]
+
+for v_count, v in enumerate(variables_tpp):
+    aux_var = []
+    aux_var_no_sig = []
+    aux_sig = []
+    data = OpenObsDataSet(name=v + '_SON', sa=False)
+    data = data.sel(time=slice('1940-01-01', '2020-12-31'))
+
+    for c_count, c in enumerate(cases):
+
+        comp1, num_case = CaseComp(data, s, mmonth=[9, 11], c=c,
+                                   nc_date_dir=nc_date_dir)
+
+        data_sig = xr.open_dataset(sig_dir + v.split('_')[0] + '_' + c +
+                                   '1940_2020_SON.nc')
+
+        comp1_i = comp1.interp(lon=data_sig.lon.values,
+                               lat=data_sig.lat.values)
+
+        # ver esto
+        sig = comp1_i.where((comp1_i < data_sig['var'][0]) |
+                            (comp1_i > data_sig['var'][1]))
+        sig = sig.where(np.isnan(sig['var']), 1)
+
+        aux_var.append(comp1_i*sig)
+        aux_var_no_sig.append(comp1)
+        aux_sig.append(sig)
+
+    aux_var = xr.concat(aux_var, dim='plots')
+    aux_var_no_sig = xr.concat(aux_var_no_sig, dim='plots')
+    aux_sig = xr.concat(aux_sig, dim='plots')
+
+
+    PlotFinal(data=aux_var_no_sig, levels=aux_scales[v_count],
+              cmap=aux_cbar[v_count], titles=title_case,
+              namefig=f"figure{v_count+15}", map='hs_ex', save=save, dpi=dpi,
+              out_dir=out_dir,sig_points=aux_sig, hatches='//////')
+
+print('#######################################################################')
+print('Figure sup. 1-2')
+print('#######################################################################')
+c = 'DMI_un_neg'
+variables = ['HGT200', 'HGT750']
+
+aux = xr.open_dataset(nc_date_dir + '1920_2020_SON.nc')
+data_hgt = xr.open_dataset(data_dir + 'HGT200_SON_mer_d_w.nc')
+
+neutro = data_hgt.sel(time=data_hgt.time.dt.year.isin(aux.Neutral)).mean('time')
+data_case = data_hgt.sel(time=data_hgt.time.dt.year.isin(aux[c]))
+data_hgt = data_case - neutro
+
+years = data_hgt.time.dt.year.values
+title_years = [str(year) for year in years]
+data_hgt = data_hgt.rename({'time':'plots'})
+data_hgt['plots'] = range(0, len(years))
+
+PlotFinal(data=data_hgt, levels=scale_hgt_comp, cmap=cbar,
+          titles=title_years, namefig=f"s-figure1", map='hs',
+          save=save, dpi=dpi, out_dir=out_dir,
+          data_ctn=data_hgt, color_ctn='k')
+
+# Ks ------------------------------------------------------------------------- #
+u = xr.open_dataset(data_dir + 'u_UV200_w_detrend.nc')
+eta_grad_y = xr.open_dataset(data_dir + 'etay_UV200.nc')
+eta_grad_y = eta_grad_y.rename(
+    {'meridional_gradient_of_absolute_vorticity': 'var'})
+
+u = u.interp(lon=eta_grad_y.lon.values, lat=eta_grad_y.lat.values)
+ntime, nlats, nlons = u['var'].shape
+data_y_eta = eta_grad_y.sel(time=eta_grad_y.time.dt.year.isin(aux[c]))
+data_y_u = u.sel(time=u.time.dt.year.isin(aux[c]))
+
+Rt2 = np.transpose(np.tile(6.378e6 * np.cos(u.lat.values * np.pi / 180),
+                           [359, 1]), [1, 0])
+ks = np.sqrt(data_y_eta['var'][0, :, :] / data_y_u['var']) * Rt2
+ks = xr.where(ks < 0, np.nan, ks)
+
+ks = ks.to_dataset()
+ks = ks.rename({'time':'plots'})
+ks['plots'] = range(0, len(years))
+
+
+
+PlotFinal(data=ks, levels=scale_ks, cmap=cbar_ks,
+          titles=title_years, namefig=f"s-figure2", map='hs',
+          save=save, dpi=dpi, out_dir=out_dir)
+
+print('#######################################################################')
+print('Figure sup. 3')
+print('#######################################################################')
+
