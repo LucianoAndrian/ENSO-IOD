@@ -2844,3 +2844,134 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
         plt.close()
     else:
         plt.show()
+
+def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
+                        out_dir, data_ctn=None, levels_ctn=None,
+                        color_ctn=None, row_titles=None, col_titles=None,
+                        clim_plot=None, clim_levels=None,clim_cbar=None):
+    num_cols = 5
+    width = 42
+    num_rows = 5
+
+    plots = data.plots.values
+    crs_latlon = ccrs.PlateCarree()
+
+    if map.upper() == 'HS':
+        extent = [0, 359, -80, 20]
+        high = 3
+    elif map.upper() == 'TR':
+        extent = [45, 270, -20, 20]
+        high = 2.5
+    elif map.upper() == 'HS_EX':
+        extent = [0, 359, -65, -20]
+        high = 2
+    else:
+        print(f"Mapa {map} no seteado")
+        return
+
+    fig, axes = plt.subplots(
+        num_rows, num_cols, figsize=(width, high * num_rows),
+        subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
+        gridspec_kw={'wspace': 0.04, 'hspace': 0.01})
+
+    import string
+    i2 = 0
+    for i, (ax, plot) in enumerate(zip(axes.flatten(), plots)):
+        remove_axes = False
+
+        if i == 2 or i == 10:
+            ax.set_title(col_titles[i], fontsize=18)
+            ax.yaxis.set_label_position('left')
+            ax.text(-0.05, 0.5, row_titles[i], rotation=90,
+                    transform=ax.transAxes, fontsize=18,
+                    verticalalignment='center')
+        elif i == 3 or i == 4 or i == 11:
+            ax.set_title(col_titles[i], fontsize=18)
+        elif i == 7 or i == 15 or i == 20:
+            ax.yaxis.set_label_position('left')
+            ax.text(-0.05, 0.5, row_titles[i], rotation=90,
+                    transform=ax.transAxes, fontsize=18,
+                    verticalalignment='center')
+
+        if plot == 12:
+            cp = ax.contour(clim_plot.lon.values, clim_plot.lat.values,
+                            clim_plot['var'], linewidths=1,
+                            levels=clim_levels, transform=crs_latlon,
+                            cmap=clim_cbar)
+            # cp = ax.contourf(clim_plot.lon.values, clim_plot.lat.values,
+            #                 clim_plot['var'], levels=clim_levels,
+            #                 transform=crs_latlon, cmap=clim_cbar,
+            #                  extend='both')
+
+            ax.add_feature(cartopy.feature.LAND, facecolor='white')
+
+            ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+            ax.coastlines(color='dimgrey', linestyle='-', alpha=1)
+            ax.set_title('Climatology', fontsize=18)
+        else:
+
+            if data_ctn is not None:
+                if levels_ctn is None:
+                    levels_ctn = levels.copy()
+                try:
+                    if isinstance(levels_ctn, np.ndarray):
+                        levels_ctn = levels_ctn[levels_ctn != 0]
+                    else:
+                        levels_ctn.remove(0)
+                except:
+                    pass
+                aux_ctn = data_ctn.sel(plots=plot)
+
+                if aux_ctn.mean().values != 0:
+
+                    ax.text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}. "
+                                           f"$\\bf{{N={titles[plot]}}}$",
+                            transform=ax.transAxes, size=15)
+                    i2 += 1
+
+                    try:
+                        aux_ctn_var = aux_ctn['var'].values
+                    except:
+                        aux_ctn_var = aux_ctn.values
+
+                    ax.contour(data_ctn.lon.values, data_ctn.lat.values,
+                               aux_ctn_var, linewidths=1,
+                               levels=levels_ctn, transform=crs_latlon,
+                               colors=color_ctn)
+                else:
+                    remove_axes = True
+
+            aux = data.sel(plots=plot)
+            try:
+                aux_var = aux['var'].values
+            except:
+                aux_var = aux.values
+
+            if aux.mean().values != 0:
+                im = ax.contourf(aux.lon.values, aux.lat.values, aux_var,
+                                 levels=levels,
+                                 transform=crs_latlon, cmap=cmap, extend='both')
+
+                ax.add_feature(cartopy.feature.LAND, facecolor='white')
+
+                ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+                ax.coastlines(color='dimgrey', linestyle='-', alpha=1)
+
+            else:
+                remove_axes = True
+
+            if remove_axes:
+                ax.axis('off')
+
+    # cbar_pos = 'H'
+    # if cbar_pos == 'H':
+    pos = fig.add_axes([0.261, 0.03, 0.5, 0.02])
+    cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
+    cb.ax.tick_params(labelsize=15)
+
+    fig.subplots_adjust(bottom=0.05)
+    if save:
+        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
+        plt.close()
+    else:
+        plt.show()

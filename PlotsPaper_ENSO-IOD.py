@@ -931,6 +931,8 @@ scale_pp = [-40, -30, -20, -10, -5, 0, 5, 10, 20, 30, 40]
 aux_scales = [scale_pp, scale_t]
 aux_cbar = [cbar_pp, cbar]
 
+lons_cont = [[0,60], [100,160], [270,330]]
+
 for v_count, v in enumerate(variables_tpp):
     aux_var = []
     aux_var_no_sig = []
@@ -954,19 +956,157 @@ for v_count, v in enumerate(variables_tpp):
                             (comp1_i > data_sig['var'][1]))
         sig = sig.where(np.isnan(sig['var']), 1)
 
-        aux_var.append(comp1_i*sig)
-        aux_var_no_sig.append(comp1)
-        aux_sig.append(sig)
+        for l in lons_cont:
+            aux_comp1 = comp1.sel(lon=slice(l[0], l[1]))
+            aux_sig_l = sig.sel(lon=slice(l[0], l[1]))
 
-    aux_var = xr.concat(aux_var, dim='plots')
+            aux_var_no_sig.append(aux_comp1)
+            aux_sig.append(aux_sig_l)
+
     aux_var_no_sig = xr.concat(aux_var_no_sig, dim='plots')
     aux_sig = xr.concat(aux_sig, dim='plots')
 
+# va ser necesario hacer otra funcion ploteando de manera defirente
+# usando gridspect. De paso sirve para el plot de la fig sup 3
 
-    PlotFinal(data=aux_var_no_sig, levels=aux_scales[v_count],
+    # la idea
+    # _____________
+    # |_|_|_| |_|_|_|
+    # |_|_|_| |_|_|_|
+
+    # hacer funcion con esto
+
+    fig = plt.figure(figsize=(30, 20), constrained_layout=True)
+    subfigs = fig.subfigures(1, 2, width_ratios=[1, 1], wspace=.1)
+    axs0 = subfigs[0].subplots(3, 3)
+    axs0 = axs0.flatten()
+    subfigs[0].suptitle('Positive Phase', fontsize=20)
+
+    axs1 = subfigs[1].subplots(3, 3)
+    axs1 = axs1.flatten()
+    subfigs[1].suptitle('Negative Phase', fontsize=20)
+
+    axs = [axs0[0], axs0[1], axs0[2],
+           axs1[0], axs1[1], axs1[2],
+           axs0[3], axs0[4], axs0[5],
+           axs1[3], axs1[4], axs1[5],
+           axs0[6], axs0[7], axs0[8],
+           axs1[6], axs1[7], axs1[8]]
+
+    for i in aux_var_no_sig.plots.values:
+        aux_plot = aux_var_no_sig.sel(plots=i)
+        axs[i].contourf(aux_plot.lon.values,
+                        aux_plot.lat.values,
+                        aux_plot['var'],
+                        levels=scale_t,
+                        cmap=cbar,
+                        extend='both')
+
+    plt.show()
+
+
+    def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi,
+                       out_dir, sig_points=None, hatches=None, num_cols=None,
+                       lons=None):
+
+        import matplotlib.gridspec as gridspec
+        # cantidad de filas necesarias
+        if num_cols is None:
+            num_cols = 2
+
+        width = 22
+        # if num_cols == 2:
+        #     width = 22
+        # else:
+
+        plots = data.plots.values
+        num_plots = len(plots)
+        num_rows = np.ceil(num_plots / num_cols).astype(int)
+
+        crs_latlon = ccrs.PlateCarree()
+
+        high = 5
+
+        fig, axes = plt.subplots(
+            num_rows, num_cols, figsize=(25, 18),
+            subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
+            gridspec_kw={'wspace': 0, 'hspace': 0})
+
+        import string
+
+        i2 = 0
+        for i, (ax, plot) in enumerate(zip(axes.flatten(), plots)):
+
+            if i == 0 or i == 3 or i == 6 or i == 9 \
+                    or i == 12 or i == 15 or i == 18 or i == 21:
+                ax.text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}.",
+                        transform=ax.transAxes, size=12)
+                i2 += 1
+
+            aux = data.sel(plots=plot)
+            try:
+                aux_var = aux['var'].values
+            except:
+                aux_var = aux.values
+            im = ax.contourf(aux.lon.values, aux.lat.values, aux_var,
+                             levels=levels,
+                             transform=crs_latlon, cmap=cmap, extend='both')
+
+            if sig_points is not None:
+                aux_sig_points = sig_points.sel(plots=plot)
+                # hatches = '....'
+                colors_l = ['k', 'k']
+                comp_sig_var = aux_sig_points['var']
+                cs = ax.contourf(aux_sig_points.lon, aux_sig_points.lat,
+                                 comp_sig_var, transform=crs_latlon,
+                                 colors='none', hatches=[hatches, hatches],
+                                 extend='lower')
+
+                for i3, collection in enumerate(cs.collections):
+                    collection.set_edgecolor(colors_l[i3 % len(colors_l)])
+
+                for collection in cs.collections:
+                    collection.set_linewidth(0.)
+
+            ax.add_feature(cartopy.feature.LAND, facecolor='white')
+            ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+            ax.coastlines(color='dimgrey', linestyle='-', alpha=1)
+            ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
+                         zorder=20)
+            ax.set_xticks(np.arange(0, 360, 10), crs=crs_latlon)
+            ax.set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+            lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            lat_formatter = LatitudeFormatter()
+            ax.xaxis.set_major_formatter(lon_formatter)
+            ax.yaxis.set_major_formatter(lat_formatter)
+            ax.tick_params(labelsize=7)
+            extent = [lons[i][0], lons[i][1], -60, -20]
+            ax.set_extent(extent, crs=crs_latlon)
+            ax.set_aspect('equal')
+
+            if i == 1 or i == 4 or i == 7 or i == 10 \
+                    or i == 13 or i == 16 or i == 19 or i == 22:
+                ax.set_title(titles[plot], fontsize=12)
+
+        cbar_pos = 'H'
+        if cbar_pos.upper() == 'H':
+            pos = fig.add_axes([0.261, 0.03, 0.5, 0.02])
+            cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
+            cb.ax.tick_params(labelsize=12)
+
+        fig.subplots_adjust(bottom=0.05)
+        if save:
+            plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
+            plt.close()
+        else:
+            plt.show()
+
+
+    PlotFinal15_16(data=aux_var_no_sig, levels=aux_scales[v_count],
               cmap=aux_cbar[v_count], titles=title_case,
-              namefig=f"figure{v_count+15}", map='hs_ex', save=save, dpi=dpi,
-              out_dir=out_dir,sig_points=aux_sig, hatches='//////')
+              namefig=f"figure{v_count+15}", save=save, dpi=dpi,
+              out_dir=out_dir,sig_points=aux_sig, hatches='//////',
+                   lons=lons_cont*len(aux_var_no_sig.plots), num_cols=6)
 
 print('#######################################################################')
 print('Figure sup. 1-2')
@@ -1020,4 +1160,5 @@ PlotFinal(data=ks, levels=scale_ks, cmap=cbar_ks,
 print('#######################################################################')
 print('Figure sup. 3')
 print('#######################################################################')
+
 
