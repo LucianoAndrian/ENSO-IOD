@@ -2837,8 +2837,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
         cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
         cb.ax.tick_params(labelsize=12)
 
-    #fig.suptitle(title, fontsize=16, y=0.98)
-    fig.subplots_adjust(bottom=0.05)  # , top=1.01, left=0.03, right=0.97 )
+    fig.subplots_adjust(bottom=0.05)
     if save:
         plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
         plt.close()
@@ -2975,3 +2974,254 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
         plt.close()
     else:
         plt.show()
+
+
+def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
+                   sig_points=None, lons=None, levels2=None, cmap2=None):
+
+    hatches='//////'
+
+    plots = data.plots.values
+    num_plots = len(plots)
+
+    crs_latlon = ccrs.PlateCarree()
+
+    fig = plt.figure(figsize=(22, 15), constrained_layout=True)
+    subfigs = fig.subfigures(1, 2, width_ratios=[1, 1], wspace=0, hspace=.05)
+
+    axs0 = subfigs[0].subplots(4, 3,
+                               subplot_kw={'projection': ccrs.PlateCarree(
+                                   central_longitude=180)})
+    axs0 = axs0.flatten()
+    #subfigs[0].suptitle('Positive Phase', fontsize=20)
+
+    axs1 = subfigs[1].subplots(4, 3,
+                               subplot_kw={'projection': ccrs.PlateCarree(
+                                   central_longitude=180)})
+    axs1 = axs1.flatten()
+    #subfigs[1].suptitle('Negative Phase', fontsize=20)
+
+    axs = [axs0[0], axs0[1], axs0[2],
+           axs1[0], axs1[1], axs1[2],
+           axs0[3], axs0[4], axs0[5],
+           axs1[3], axs1[4], axs1[5],
+           axs0[6], axs0[7], axs0[8],
+           axs1[6], axs1[7], axs1[8],
+           axs0[9], axs0[10], axs0[11],
+           axs1[9], axs1[10], axs1[11]]
+
+    import string
+    i2 = 0
+    for i in plots:
+        if i == 0 or i == 3 or i == 6 or i == 9 \
+                or i == 12 or i == 15 or i == 18 or i == 21:
+            axs[i].text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}.",
+                    transform=axs[i].transAxes, size=12)
+            i2 += 1
+
+        aux = data.sel(plots=i)
+        try:
+            aux_var = aux['var'].values
+        except:
+            aux_var = aux.values
+
+        if i in [0, 1, 2, 6, 7, 8, 12, 13, 14, 18, 19, 20]:
+            im0 = axs[i].contourf(aux.lon.values, aux.lat.values, aux_var,
+                                 levels=levels, cmap=cmap, extend='both',
+                                 transform=ccrs.PlateCarree())
+        else:
+            im1 = axs[i].contourf(aux.lon.values, aux.lat.values, aux_var,
+                                  levels=levels2, cmap=cmap2, extend='both',
+                                  transform=ccrs.PlateCarree())
+
+
+        if sig_points is not None:
+            aux_sig_points = sig_points.sel(plots=i)
+            colors_l = ['k', 'k']
+            try:
+                comp_sig_var = aux_sig_points['var'].values
+            except:
+                comp_sig_var = aux_sig_points.values
+
+            cs = axs[i].contourf(aux_sig_points.lon, aux_sig_points.lat,
+                                 comp_sig_var, transform=ccrs.PlateCarree(),
+                                 colors='none', hatches=['//////', '//////'],
+                                 extend='lower')
+
+            for i3, collection in enumerate(cs.collections):
+                collection.set_edgecolor(colors_l[i3 % len(colors_l)])
+
+            for collection in cs.collections:
+                collection.set_linewidth(0.)
+
+        axs[i].add_feature(cartopy.feature.LAND, facecolor='white')
+        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1)
+        axs[i].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
+                     zorder=20)
+
+        if i in [1, 4, 7, 10, 13, 16, 19, 22]:
+            axs[i].set_title(titles[i], fontsize=13)
+            axs[i].set_xticks(np.arange(110, 160, 10), crs=crs_latlon)
+            lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            axs[i].xaxis.set_major_formatter(lon_formatter)
+            extent = [lons[i][0], lons[i][1], -60, -20]
+            axs[i].tick_params(labelsize=7)
+            axs[i].set_extent(extent, crs=crs_latlon)
+            axs[i].set_aspect('equal')
+
+        elif i in [2, 5, 8, 11, 14, 17, 20, 23]:
+            axs[i].set_xticks(np.arange(280, 340, 10), crs=crs_latlon)
+            lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            axs[i].xaxis.set_major_formatter(lon_formatter)
+            axs[i].tick_params(labelsize=7)
+            extent = [lons[i][0], lons[i][1], -60, -20]
+            axs[i].set_extent(extent, crs=crs_latlon)
+            axs[i].set_aspect('equal')
+
+        else:
+            axs[i].set_xticks(np.arange(0, 60, 10), crs=crs_latlon)
+            axs[i].set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+            lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            lat_formatter = LatitudeFormatter()
+            axs[i].xaxis.set_major_formatter(lon_formatter)
+            axs[i].yaxis.set_major_formatter(lat_formatter)
+            axs[i].tick_params(labelsize=7)
+            extent = [lons[i][0], lons[i][1], -60, -20]
+            axs[i].set_extent(extent, crs=crs_latlon)
+            axs[i].set_aspect('equal')
+
+    pos = subfigs[0].add_axes([0.261, 0.03, 0.5, 0.02])
+    cb0 = subfigs[0].colorbar(im0, cax=pos, pad=0.1, orientation='horizontal')
+    cb0.ax.tick_params(labelsize=12)
+
+    pos = subfigs[1].add_axes([0.261, 0.03, 0.5, 0.02])
+    cb1 = subfigs[1].colorbar(im1, cax=pos, pad=0.1, orientation='horizontal')
+    cb1.ax.tick_params(labelsize=12)
+
+
+    fig.subplots_adjust(bottom=0.1, wspace=0.02, hspace=0.2, left=0)
+
+    if save:
+        plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
+        plt.close()
+    else:
+        plt.show()
+
+
+
+def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
+                   sig_points=None, lons=None):
+
+    hatches='//////'
+
+    plots = data.plots.values
+    num_plots = len(plots)
+
+    crs_latlon = ccrs.PlateCarree()
+
+    fig = plt.figure(figsize=(22, 10), constrained_layout=True)
+    subfigs = fig.subfigures(1, 2, width_ratios=[1, 1], wspace=0, hspace=.05)
+
+    axs0 = subfigs[0].subplots(3, 3,
+                               subplot_kw={'projection': ccrs.PlateCarree(
+                                   central_longitude=180)})
+    axs0 = axs0.flatten()
+    #subfigs[0].suptitle('Positive Phase', fontsize=20)
+
+    axs1 = subfigs[1].subplots(3, 3,
+                               subplot_kw={'projection': ccrs.PlateCarree(
+                                   central_longitude=180)})
+    axs1 = axs1.flatten()
+    #subfigs[1].suptitle('Negative Phase', fontsize=20)
+
+    axs = [axs0[0], axs0[1], axs0[2],
+           axs1[0], axs1[1], axs1[2],
+           axs0[3], axs0[4], axs0[5],
+           axs1[3], axs1[4], axs1[5],
+           axs0[6], axs0[7], axs0[8],
+           axs1[6], axs1[7], axs1[8]]
+
+    import string
+    i2 = 0
+    for i in plots:
+        if i in [0, 3, 6, 9, 12, 15, 18, 21]:
+            axs[i].text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}.",
+                    transform=axs[i].transAxes, size=12)
+            i2 += 1
+
+        aux = data.sel(plots=i)
+        try:
+            aux_var = aux['var'].values
+        except:
+            aux_var = aux.values
+
+        im = axs[i].contourf(aux.lon.values, aux.lat.values, aux_var,
+                             levels=levels, cmap=cmap, extend='both',
+                             transform=ccrs.PlateCarree())
+
+        if sig_points is not None:
+            aux_sig_points = sig_points.sel(plots=i)
+            colors_l = ['k', 'k']
+            comp_sig_var = aux_sig_points['var']
+            cs = axs[i].contourf(aux_sig_points.lon, aux_sig_points.lat,
+                                 comp_sig_var, transform=ccrs.PlateCarree(),
+                                 colors='none', hatches=['//////', '//////'],
+                                 extend='lower')
+
+            for i3, collection in enumerate(cs.collections):
+                collection.set_edgecolor(colors_l[i3 % len(colors_l)])
+
+            for collection in cs.collections:
+                collection.set_linewidth(0.)
+
+        axs[i].add_feature(cartopy.feature.LAND, facecolor='white')
+        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1)
+        axs[i].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
+                     zorder=20)
+        if i in [1, 4, 7, 10, 13, 16, 19, 22]:
+
+            axs[i].set_title(titles[i], fontsize=13)
+            axs[i].set_xticks(np.arange(110, 160, 10), crs=crs_latlon)
+            lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            axs[i].xaxis.set_major_formatter(lon_formatter)
+            extent = [lons[i][0], lons[i][1], -60, -20]
+            axs[i].tick_params(labelsize=7)
+            axs[i].set_extent(extent, crs=crs_latlon)
+            axs[i].set_aspect('equal')
+
+        elif i in [2, 5, 8, 11, 14, 17, 20, 23]:
+
+            axs[i].set_xticks(np.arange(280, 340, 10), crs=crs_latlon)
+            lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            axs[i].xaxis.set_major_formatter(lon_formatter)
+            axs[i].tick_params(labelsize=7)
+            extent = [lons[i][0], lons[i][1], -60, -20]
+            axs[i].set_extent(extent, crs=crs_latlon)
+            axs[i].set_aspect('equal')
+
+        else:
+            axs[i].set_xticks(np.arange(0, 60, 10), crs=crs_latlon)
+            axs[i].set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+            lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            lat_formatter = LatitudeFormatter()
+            axs[i].xaxis.set_major_formatter(lon_formatter)
+            axs[i].yaxis.set_major_formatter(lat_formatter)
+            axs[i].tick_params(labelsize=7)
+            extent = [lons[i][0], lons[i][1], -60, -20]
+            axs[i].set_extent(extent, crs=crs_latlon)
+            axs[i].set_aspect('equal')
+
+    pos = subfigs[1].add_axes([-.56, 0.03, 1, 0.02])
+    cb = subfigs[1].colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
+    cb.ax.tick_params(labelsize=12)
+
+    fig.subplots_adjust(bottom=0.1, wspace=0.02, hspace=0.2, left=0)
+
+    if save:
+        plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
+        plt.close()
+    else:
+        plt.show()
+

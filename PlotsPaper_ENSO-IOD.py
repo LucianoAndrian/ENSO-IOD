@@ -22,7 +22,8 @@ warnings.filterwarnings("ignore")
 
 from ENSO_IOD_Funciones import (Nino34CPC, DMI, DMI2, ComputeWithEffect, WAF,
                                 ComputeWithoutEffect, SetDataToPlotFinal,
-                                PlotFinal, CaseComp)
+                                PlotFinal, CaseComp, PlotFinal14,
+                                PlotFinal15_16)
 ################################################################################
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 index_dir = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
@@ -113,20 +114,6 @@ def Detrend(xrda, dim):
     dt = xrda - trend
     return dt
 
-def OrdenarNC_wTime_fromW(data):
-    newdata = xr.Dataset(
-        data_vars=dict(
-            var=(['time', 'lat', 'lon'], data['var'][0, :, :, :].values)
-
-        ),
-        coords=dict(
-            lon=(['lon'], data.lon),
-            lat=(['lat'], data.lat),
-            time=(['time'], data.time)
-        )
-    )
-    return newdata
-
 def SigDivMask(data, thr):
     return xr.where(np.abs(data) < thr, np.nan, 1)
 
@@ -177,20 +164,6 @@ def ComputeWaf(reg_output, data_clim, hpalevel):
     py *= weights_arr
 
     return px, py
-
-
-def OrdenarNC_wTime_fromW(data):
-    newdata = xr.Dataset(
-        data_vars=dict(
-            var=(['time', 'lat', 'lon'], data['var'][0, :, :, :].values)
-        ),
-        coords=dict(
-            lon=(['lon'], data.lon),
-            lat=(['lat'], data.lat),
-            time=(['time'], data.time)
-        )
-    )
-    return newdata
 
 def SelectParIndex(dmi_case, n34_case, sd_dmi_s, sd_n34_s, s, by_r=True,
                    open_n34=True, open_dmi=False):
@@ -263,18 +236,26 @@ scale_vp = [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, 0, 0.5e6, 1e6, 1.5e6,
 scale_sst = [-1, -.5, -.1, 0, .1, .5, 1]
 scale_div = [-4.33e-07, 4.33e-07]
 scale_hgt = [-150, -100, -75, -50, -25, -15, 0, 15, 25, 50, 75, 100, 150]
+scale_pp = np.linspace(-15, 15, 13)
+scale_t = [-.6,-.4,-.2,-.1,-.05,0,0.05,0.1,0.2,0.4,0.6]
 
 # Composite ------------------------------------------------------------------ #
 scale_vp_comp = np.linspace(-4.5e6, 4.5e6, 13)
 scale_div_comp = [-1.6e-06, 1.6e-06]
 scale_sst_comp = [-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5]
 scale_hgt_comp = [-375, -275, -175, -75, -25, 0, 25, 75, 175, 275, 375]
+scale_t_comp = [-1.5, -1, -.5, -.25, -.1, 0, .1, .25, .5, 1, 1.5]
+scale_pp_comp = [-40, -30, -20, -10, -5, 0, 5, 10, 20, 30, 40]
+
 
 # CFSv2
 scale_hgt_snr = [-1, -.8, -.6, -.5, -.1, 0, 0.1, 0.5, 0.6, 0.8, 1]
 
 # iods neg
+scale_hgt_ind = [-575,-475, -375, -275, -175, -75,0,
+                 75, 175, 275, 375, 475, 575]
 scale_ks = [2, 3, 4]
+
 # ---------------------------------------------------------------------------- #
 cbar_sst = colors.ListedColormap(['#B9391B', '#CD4838', '#E25E55', '#F28C89',
                                   '#FFCECC', 'white', '#B3DBFF', '#83B9EB',
@@ -916,22 +897,165 @@ print('Figure 14')
 print('#######################################################################')
 # regre PP y T en la misma figura
 variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
-# Va ser necesario otra función o agregar varias cosas a la actual
-# dos data, dos paletas de colores y sus colorbar horizontales y abajo
-# de cada columna
+plt.rcParams['hatch.linewidth'] = 2
+lons_cont = [[0,60], [100,160], [270,330]]
+
+dmi = dmi_or.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
+n34 = n34_or.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
+
+aux_data = {}
+aux_sig = {}
+for v_count, v in enumerate(variables_tpp):
+    data = OpenObsDataSet(name=v + '_' + s, sa=False)
+    if v == variables_tpp[0]:
+        data = data.reindex(lat=list(reversed(data.lat)))
+        lon = data.lon.values
+        lat = data.lat.values
+    else:
+        data = data.interp(lon=lon, lat=lat)
+
+    data = data.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-31'))
+
+    time_original = data.time
+
+    aux_n34, aux_corr_n34, aux_dmi, aux_corr_dmi, aux, aux, aux, aux = \
+        ComputeWithEffect(data=data, data2=None,
+                          n34=n34.sel(time=n34.time.dt.month.isin(10)),
+                          dmi=dmi.sel(time=dmi.time.dt.month.isin(10)),
+                          two_variables=False, m=10,
+                          full_season=False,
+                          time_original=time_original)
+
+    aux_n34_wodmi, aux_corr_n34_wodmi, aux_dmi_won34, aux_corr_dmi_won34 = \
+        ComputeWithoutEffect(data,
+                             n34.sel(time=n34.time.dt.month.isin(10)),
+                             dmi.sel(time=dmi.time.dt.month.isin(10)),
+                             10, time_original)
+
+    aux_n34_afr = aux_n34.sel(lon=slice(lons_cont[0][0], lons_cont[0][1]))
+    aux_n34_wodmi_afr = aux_n34_wodmi.sel(
+        lon=slice(lons_cont[0][0], lons_cont[0][1]))
+    aux_corr_n34_afr = aux_corr_n34.sel(
+        lon=slice(lons_cont[0][0], lons_cont[0][1]))
+    aux_corr_n34_wodmi_afr = aux_corr_n34_wodmi.sel(
+        lon=slice(lons_cont[0][0], lons_cont[0][1]))
+
+    aux_n34_aus = aux_n34.sel(lon=slice(lons_cont[1][0], lons_cont[1][1]))
+    aux_n34_wodmi_aus = aux_n34_wodmi.sel(
+        lon=slice(lons_cont[1][0], lons_cont[1][1]))
+    aux_corr_n34_aus = aux_corr_n34.sel(
+        lon=slice(lons_cont[1][0], lons_cont[1][1]))
+    aux_corr_n34_wodmi_aus = aux_corr_n34_wodmi.sel(
+        lon=slice(lons_cont[1][0], lons_cont[1][1]))
+
+    aux_n34_sam = aux_n34.sel(lon=slice(lons_cont[2][0], lons_cont[2][1]))
+    aux_n34_wodmi_sam = aux_n34_wodmi.sel(
+        lon=slice(lons_cont[2][0], lons_cont[2][1]))
+    aux_corr_n34_sam = aux_corr_n34.sel(
+        lon=slice(lons_cont[2][0], lons_cont[2][1]))
+    aux_corr_n34_wodmi_sam = aux_corr_n34_wodmi.sel(
+        lon=slice(lons_cont[2][0], lons_cont[2][1]))
+
+    aux_dmi_afr = aux_dmi.sel(lon=slice(lons_cont[0][0], lons_cont[0][1]))
+    aux_dmi_won34_afr = aux_dmi_won34.sel(
+        lon=slice(lons_cont[0][0], lons_cont[0][1]))
+    aux_corr_dmi_afr = aux_corr_dmi.sel(
+        lon=slice(lons_cont[0][0], lons_cont[0][1]))
+    aux_corr_dmi_won34_afr = aux_corr_dmi_won34.sel(
+        lon=slice(lons_cont[0][0], lons_cont[0][1]))
+
+    aux_dmi_aus = aux_dmi.sel(lon=slice(lons_cont[1][0], lons_cont[1][1]))
+    aux_dmi_won34_aus = aux_dmi_won34.sel(
+        lon=slice(lons_cont[1][0], lons_cont[1][1]))
+    aux_corr_dmi_aus = aux_corr_dmi.sel(
+        lon=slice(lons_cont[1][0], lons_cont[1][1]))
+    aux_corr_dmi_won34_aus = aux_corr_dmi_won34.sel(
+        lon=slice(lons_cont[1][0], lons_cont[1][1]))
+
+    aux_dmi_sam = aux_dmi.sel(lon=slice(lons_cont[2][0], lons_cont[2][1]))
+    aux_dmi_won34_sam = aux_dmi_won34.sel(
+        lon=slice(lons_cont[2][0], lons_cont[2][1]))
+    aux_corr_dmi_sam = aux_corr_dmi.sel(
+        lon=slice(lons_cont[2][0], lons_cont[2][1]))
+    aux_corr_dmi_won34_sam = aux_corr_dmi_won34.sel(
+        lon=slice(lons_cont[2][0], lons_cont[2][1]))
+
+    aux_data[v] = SetDataToPlotFinal(aux_n34_afr, aux_n34_aus, aux_n34_sam,
+                                     aux_n34_wodmi_afr, aux_n34_wodmi_aus,
+                                     aux_n34_wodmi_sam,
+                                     aux_dmi_won34_afr, aux_dmi_won34_aus,
+                                     aux_dmi_won34_sam,
+                                     aux_dmi_afr, aux_dmi_aus, aux_dmi_sam)
+
+
+    aux_sig[v] = SetDataToPlotFinal(aux_corr_n34_afr, aux_corr_n34_aus,
+                                    aux_corr_n34_sam, aux_corr_n34_wodmi_afr,
+                                    aux_corr_n34_wodmi_aus,
+                                    aux_corr_n34_wodmi_sam,
+                                    aux_corr_dmi_won34_afr,
+                                    aux_corr_dmi_won34_aus,
+                                    aux_corr_dmi_won34_sam,
+                                    aux_corr_dmi_afr, aux_corr_dmi_aus,
+                                    aux_corr_dmi_sam)
+
+    aux_sig[v] = aux_sig[v].where(np.isnan(aux_sig[v]), 1)
+
+aux_data_f = SetDataToPlotFinal(
+    aux_data['tcru_w_c_d_0.25'].sel(plots=[0, 1, 2]),
+    aux_data['ppgpcc_w_c_d_1'].sel(plots=[0, 1, 2]),
+    aux_data['tcru_w_c_d_0.25'].sel(plots=[3, 4, 5]),
+    aux_data['ppgpcc_w_c_d_1'].sel(plots=[3, 4, 5]),
+    aux_data['tcru_w_c_d_0.25'].sel(plots=[6, 7, 8]),
+    aux_data['ppgpcc_w_c_d_1'].sel(plots=[6, 7, 8]),
+    aux_data['tcru_w_c_d_0.25'].sel(plots=[9, 10, 11]),
+    aux_data['ppgpcc_w_c_d_1'].sel(plots=[9, 10, 11]))
+
+aux_sig_f = SetDataToPlotFinal(
+    aux_sig['tcru_w_c_d_0.25'].sel(plots=[0, 1, 2]),
+    aux_sig['ppgpcc_w_c_d_1'].sel(plots=[0, 1, 2]),
+    aux_sig['tcru_w_c_d_0.25'].sel(plots=[3, 4, 5]),
+    aux_sig['ppgpcc_w_c_d_1'].sel(plots=[3, 4, 5]),
+    aux_sig['tcru_w_c_d_0.25'].sel(plots=[6, 7, 8]),
+    aux_sig['ppgpcc_w_c_d_1'].sel(plots=[6, 7, 8]),
+    aux_sig['tcru_w_c_d_0.25'].sel(plots=[9, 10, 11]),
+    aux_sig['ppgpcc_w_c_d_1'].sel(plots=[9, 10, 11]))
+
+subtitulos_regre = [None, r"$Ni\tilde{n}o\ 3.4$ - Temperature",  None,
+                    None, r"$Ni\tilde{n}o\ 3.4$ - Precipitation",  None,
+                    None, r"$DMI$", None,
+                    None, r"$DMI$", None,
+                    None, r"$Ni\tilde{n}o\ 3.4|_{DMI}$",None,
+                    None, r"$Ni\tilde{n}o\ 3.4|_{DMI}$",None,
+                    None, r"$DMI|_{Ni\tilde{n}o\ 3.4}$", None,
+                    None, r"$DMI|_{Ni\tilde{n}o\ 3.4}$", None]
+
+# murio red cima...
+# TERMINAR DE REVISAR FIGURA, MARGENES Y DIMENCIONES
+
+PlotFinal14(data=aux_data_f, levels=scale_t, cmap=cbar,
+            titles=subtitulos_regre,
+            namefig=f"figure14", save=save, dpi=dpi,
+            out_dir=out_dir, sig_points=aux_sig_f,
+            lons=lons_cont*len(aux_data_f.plots), levels2=scale_pp,
+            cmap2=cbar_pp)
 
 print('#######################################################################')
 print('Figure 15-16')
 print('#######################################################################')
 variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
 
-scale_t = [-1.5, -1, -.5, -.25, -.1, 0, .1, .25, .5, 1, 1.5]
-scale_pp = [-40, -30, -20, -10, -5, 0, 5, 10, 20, 30, 40]
-
-aux_scales = [scale_pp, scale_t]
-aux_cbar = [cbar_pp, cbar]
-
+# hacer funcion con esto
 lons_cont = [[0,60], [100,160], [270,330]]
+
+title_case = [None, 'Pure El Niño', None,
+              None, 'Pure La Niña', None,
+              None, 'Pure positive IOD', None,
+              None, 'Pure negative IOD', None,
+              None, 'El Niño - positive IOD', None,
+              None, 'La Niña - negative IOD', None, ]
+
+aux_scales = [scale_pp_comp, scale_t_comp]
+aux_cbar = [cbar_pp, cbar]
 
 for v_count, v in enumerate(variables_tpp):
     aux_var = []
@@ -966,147 +1090,13 @@ for v_count, v in enumerate(variables_tpp):
     aux_var_no_sig = xr.concat(aux_var_no_sig, dim='plots')
     aux_sig = xr.concat(aux_sig, dim='plots')
 
-# va ser necesario hacer otra funcion ploteando de manera defirente
-# usando gridspect. De paso sirve para el plot de la fig sup 3
-
-    # la idea
-    # _____________
-    # |_|_|_| |_|_|_|
-    # |_|_|_| |_|_|_|
-
-    # hacer funcion con esto
-
-    fig = plt.figure(figsize=(30, 20), constrained_layout=True)
-    subfigs = fig.subfigures(1, 2, width_ratios=[1, 1], wspace=.1)
-    axs0 = subfigs[0].subplots(3, 3)
-    axs0 = axs0.flatten()
-    subfigs[0].suptitle('Positive Phase', fontsize=20)
-
-    axs1 = subfigs[1].subplots(3, 3)
-    axs1 = axs1.flatten()
-    subfigs[1].suptitle('Negative Phase', fontsize=20)
-
-    axs = [axs0[0], axs0[1], axs0[2],
-           axs1[0], axs1[1], axs1[2],
-           axs0[3], axs0[4], axs0[5],
-           axs1[3], axs1[4], axs1[5],
-           axs0[6], axs0[7], axs0[8],
-           axs1[6], axs1[7], axs1[8]]
-
-    for i in aux_var_no_sig.plots.values:
-        aux_plot = aux_var_no_sig.sel(plots=i)
-        axs[i].contourf(aux_plot.lon.values,
-                        aux_plot.lat.values,
-                        aux_plot['var'],
-                        levels=scale_t,
-                        cmap=cbar,
-                        extend='both')
-
-    plt.show()
-
-
-    def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi,
-                       out_dir, sig_points=None, hatches=None, num_cols=None,
-                       lons=None):
-
-        import matplotlib.gridspec as gridspec
-        # cantidad de filas necesarias
-        if num_cols is None:
-            num_cols = 2
-
-        width = 22
-        # if num_cols == 2:
-        #     width = 22
-        # else:
-
-        plots = data.plots.values
-        num_plots = len(plots)
-        num_rows = np.ceil(num_plots / num_cols).astype(int)
-
-        crs_latlon = ccrs.PlateCarree()
-
-        high = 5
-
-        fig, axes = plt.subplots(
-            num_rows, num_cols, figsize=(25, 18),
-            subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
-            gridspec_kw={'wspace': 0, 'hspace': 0})
-
-        import string
-
-        i2 = 0
-        for i, (ax, plot) in enumerate(zip(axes.flatten(), plots)):
-
-            if i == 0 or i == 3 or i == 6 or i == 9 \
-                    or i == 12 or i == 15 or i == 18 or i == 21:
-                ax.text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}.",
-                        transform=ax.transAxes, size=12)
-                i2 += 1
-
-            aux = data.sel(plots=plot)
-            try:
-                aux_var = aux['var'].values
-            except:
-                aux_var = aux.values
-            im = ax.contourf(aux.lon.values, aux.lat.values, aux_var,
-                             levels=levels,
-                             transform=crs_latlon, cmap=cmap, extend='both')
-
-            if sig_points is not None:
-                aux_sig_points = sig_points.sel(plots=plot)
-                # hatches = '....'
-                colors_l = ['k', 'k']
-                comp_sig_var = aux_sig_points['var']
-                cs = ax.contourf(aux_sig_points.lon, aux_sig_points.lat,
-                                 comp_sig_var, transform=crs_latlon,
-                                 colors='none', hatches=[hatches, hatches],
-                                 extend='lower')
-
-                for i3, collection in enumerate(cs.collections):
-                    collection.set_edgecolor(colors_l[i3 % len(colors_l)])
-
-                for collection in cs.collections:
-                    collection.set_linewidth(0.)
-
-            ax.add_feature(cartopy.feature.LAND, facecolor='white')
-            ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-            ax.coastlines(color='dimgrey', linestyle='-', alpha=1)
-            ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
-                         zorder=20)
-            ax.set_xticks(np.arange(0, 360, 10), crs=crs_latlon)
-            ax.set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
-            lon_formatter = LongitudeFormatter(zero_direction_label=True)
-            lat_formatter = LatitudeFormatter()
-            ax.xaxis.set_major_formatter(lon_formatter)
-            ax.yaxis.set_major_formatter(lat_formatter)
-            ax.tick_params(labelsize=7)
-            extent = [lons[i][0], lons[i][1], -60, -20]
-            ax.set_extent(extent, crs=crs_latlon)
-            ax.set_aspect('equal')
-
-            if i == 1 or i == 4 or i == 7 or i == 10 \
-                    or i == 13 or i == 16 or i == 19 or i == 22:
-                ax.set_title(titles[plot], fontsize=12)
-
-        cbar_pos = 'H'
-        if cbar_pos.upper() == 'H':
-            pos = fig.add_axes([0.261, 0.03, 0.5, 0.02])
-            cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
-            cb.ax.tick_params(labelsize=12)
-
-        fig.subplots_adjust(bottom=0.05)
-        if save:
-            plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
-            plt.close()
-        else:
-            plt.show()
-
+    lons = lons_cont * len(aux_var_no_sig.plots)
 
     PlotFinal15_16(data=aux_var_no_sig, levels=aux_scales[v_count],
-              cmap=aux_cbar[v_count], titles=title_case,
-              namefig=f"figure{v_count+15}", save=save, dpi=dpi,
-              out_dir=out_dir,sig_points=aux_sig, hatches='//////',
-                   lons=lons_cont*len(aux_var_no_sig.plots), num_cols=6)
+                   cmap=aux_cbar[v_count], titles=title_case,
+                   namefig=f"figure{v_count+15}", save=save, dpi=dpi,
+                   out_dir=out_dir, sig_points=aux_sig,
+                   lons=lons_cont*len(aux_var_no_sig.plots))
 
 print('#######################################################################')
 print('Figure sup. 1-2')
@@ -1126,7 +1116,7 @@ title_years = [str(year) for year in years]
 data_hgt = data_hgt.rename({'time':'plots'})
 data_hgt['plots'] = range(0, len(years))
 
-PlotFinal(data=data_hgt, levels=scale_hgt_comp, cmap=cbar,
+PlotFinal(data=data_hgt, levels=scale_hgt_ind, cmap=cbar,
           titles=title_years, namefig=f"s-figure1", map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
           data_ctn=data_hgt, color_ctn='k')
@@ -1150,7 +1140,6 @@ ks = xr.where(ks < 0, np.nan, ks)
 ks = ks.to_dataset()
 ks = ks.rename({'time':'plots'})
 ks['plots'] = range(0, len(years))
-
 
 
 PlotFinal(data=ks, levels=scale_ks, cmap=cbar_ks,
