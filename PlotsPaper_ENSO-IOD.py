@@ -897,7 +897,16 @@ print('Figure 14')
 print('#######################################################################')
 # regre PP y T en la misma figura
 variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
-plt.rcParams['hatch.linewidth'] = 2
+plt.rcParams['hatch.linewidth'] = 1
+
+t_critic = 1.66 # es MUY similar (2 digitos) para ambos períodos
+dmi_or = DMI(filter_bwa=False, start_per='1920', end_per='2020')[2]
+n34_or = Nino34CPC(xr.open_dataset(
+    "/pikachu/datos/luciano.andrian/verif_2019_2023/sst.mnmean.nc"),
+                   start=1920, end=2020)[0]
+
+r_crit = np.sqrt(1 / (((np.sqrt((p[1] - p[0]) - 2) / t_critic) ** 2) + 1))
+
 lons_cont = [[0,60], [100,160], [270,330]]
 
 dmi = dmi_or.sel(time=slice(str(p[0]) + '-01-01', str(p[1]) + '-12-01'))
@@ -987,18 +996,20 @@ for v_count, v in enumerate(variables_tpp):
                                      aux_dmi_won34_sam,
                                      aux_dmi_afr, aux_dmi_aus, aux_dmi_sam)
 
+    aux_sig[v] = SetDataToPlotFinal(MakerMaskSig(aux_corr_n34_afr),
+                                    MakerMaskSig(aux_corr_n34_aus),
+                                    MakerMaskSig(aux_corr_n34_sam),
+                                    MakerMaskSig(aux_corr_n34_wodmi_afr),
+                                    MakerMaskSig(aux_corr_n34_wodmi_aus),
+                                    MakerMaskSig(aux_corr_n34_wodmi_sam),
+                                    MakerMaskSig(aux_corr_dmi_won34_afr),
+                                    MakerMaskSig(aux_corr_dmi_won34_aus),
+                                    MakerMaskSig(aux_corr_dmi_won34_sam),
+                                    MakerMaskSig(aux_corr_dmi_afr),
+                                    MakerMaskSig(aux_corr_dmi_aus),
+                                    MakerMaskSig(aux_corr_dmi_sam))
 
-    aux_sig[v] = SetDataToPlotFinal(aux_corr_n34_afr, aux_corr_n34_aus,
-                                    aux_corr_n34_sam, aux_corr_n34_wodmi_afr,
-                                    aux_corr_n34_wodmi_aus,
-                                    aux_corr_n34_wodmi_sam,
-                                    aux_corr_dmi_won34_afr,
-                                    aux_corr_dmi_won34_aus,
-                                    aux_corr_dmi_won34_sam,
-                                    aux_corr_dmi_afr, aux_corr_dmi_aus,
-                                    aux_corr_dmi_sam)
-
-    aux_sig[v] = aux_sig[v].where(np.isnan(aux_sig[v]), 1)
+    #aux_sig[v] = aux_sig[v].where(np.isnan(aux_sig[v]), 1)
 
 aux_data_f = SetDataToPlotFinal(
     aux_data['tcru_w_c_d_0.25'].sel(plots=[0, 1, 2]),
@@ -1020,17 +1031,14 @@ aux_sig_f = SetDataToPlotFinal(
     aux_sig['tcru_w_c_d_0.25'].sel(plots=[9, 10, 11]),
     aux_sig['ppgpcc_w_c_d_1'].sel(plots=[9, 10, 11]))
 
-subtitulos_regre = [None, r"$Ni\tilde{n}o\ 3.4$ - Temperature",  None,
-                    None, r"$Ni\tilde{n}o\ 3.4$ - Precipitation",  None,
-                    None, r"$DMI$", None,
-                    None, r"$DMI$", None,
-                    None, r"$Ni\tilde{n}o\ 3.4|_{DMI}$",None,
-                    None, r"$Ni\tilde{n}o\ 3.4|_{DMI}$",None,
+subtitulos_regre = [None, r"$Ni\tilde{n}o\ 3.4$",  None,
+                    None, r"$Ni\tilde{n}o\ 3.4$",  None,
+                    None, r"$Ni\tilde{n}o\ 3.4|_{DMI}$", None,
+                    None, r"$Ni\tilde{n}o\ 3.4|_{DMI}$", None,
                     None, r"$DMI|_{Ni\tilde{n}o\ 3.4}$", None,
-                    None, r"$DMI|_{Ni\tilde{n}o\ 3.4}$", None]
-
-# murio red cima...
-# TERMINAR DE REVISAR FIGURA, MARGENES Y DIMENCIONES
+                    None, r"$DMI|_{Ni\tilde{n}o\ 3.4}$", None,
+                    None, r"$DMI$", None,
+                    None, r"$DMI$", None]
 
 PlotFinal14(data=aux_data_f, levels=scale_t, cmap=cbar,
             titles=subtitulos_regre,
@@ -1043,7 +1051,7 @@ print('#######################################################################')
 print('Figure 15-16')
 print('#######################################################################')
 variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
-
+plt.rcParams['hatch.linewidth'] = 1
 # hacer funcion con esto
 lons_cont = [[0,60], [100,160], [270,330]]
 
@@ -1150,4 +1158,63 @@ print('#######################################################################')
 print('Figure sup. 3')
 print('#######################################################################')
 
+dif_cfsv2_clim = '/pikachu/datos/luciano.andrian/val_clim_cfsv2/'
+son_hindcast_detrend = \
+    xr.open_dataset(dif_cfsv2_clim + 'hindcast_cfsv2_meanclim_detrend_son.nc')
+son_realtime_detrend = \
+    xr.open_dataset(dif_cfsv2_clim + 'realtime_cfsv2_meanclim_detrend_son.nc')
 
+# ERA5
+data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/' \
+                        'downloaded/'
+data = xr.open_dataset(data_dir_era5 + 'ERA5_HGT200_40-20.nc')
+data = data.sel(time=data.time.dt.year.isin(range(1981, 2012)))
+data = data.rolling(time=3, center=True).mean()
+data = data.sel(time=data.time.dt.month.isin(10)) #son
+data = data.rename({'z':'hgt', 'longitude':'lon', 'latitude':'lat'})
+data = data.sel(time=data.time.dt.year.isin(range(1982, 2020)))
+era_clim = data.interp(lat=np.arange(-80,21)[::-1], lon=np.arange(0,360))
+era_clim = era_clim.mean('time').__mul__(1/9.8)
+
+era_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
+data = xr.open_dataset(era_dir + 'HGT200_SON_mer_d_w.nc')
+data = data.rename({'var':'hgt'})
+data = data.sel(time=data.time.dt.year.isin(range(1981, 2021)))
+
+era_full = data.sel(time=data.time.dt.year.isin(range(1982, 2021)))
+era_full = era_full.interp(
+    lat=np.arange(-80,21)[::-1], lon=np.arange(0,360))
+era_full = era_full.__mul__(1/9.8)
+
+aux_hind = son_hindcast_detrend + hindcast2
+aux_hind = Weights(aux_hind.sel(P=200))
+
+aux_real = son_realtime_detrend.sel(P=200) + real_time2
+aux_real = Weights(aux_real)
+
+cfsv2 = xr.concat([aux_hind, aux_real], dim='time')
+era = era_full + Weights(era_clim)
+
+dif = cfsv2.mean(['time','r']) - era.mean('time')
+# Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
+#      'CFSv2 hindcast + real time - ERA5 (detrended)', 'dif_hind_real_d.jpg',
+#      out_dir, 'k', 'RdBu_r')
+
+
+from scipy.stats import ttest_ind
+pvalue = []
+for m in [7, 8, 9, 10]:
+    cfsv2_monthly_mean = cfsv2.sel(
+        time=cfsv2.time.dt.month.isin(m)).mean('r').hgt
+    era_inverted = era.isel(lat=slice(None, None, -1)).hgt
+    # test
+    pvalue.append(
+        ttest_ind(cfsv2_monthly_mean, era_inverted, equal_var=False)[1])
+
+# promedio de pvalue por leadtime
+pvalue = sum(pvalue) / len(pvalue)
+
+# Plot(dif, dif.where(pvalue<0.05).hgt, np.arange(-100, 120, 20), save, dpi,
+#      'CFSv2 hindcast + real time - ERA5 (detrended)',
+#      'dif_hind_real_d_tested.jpg',
+#      out_dir, 'k', 'RdBu_r')
