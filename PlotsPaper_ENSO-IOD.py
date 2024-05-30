@@ -13,6 +13,8 @@ import pandas as pd
 pd.options.mode.chained_assignment = None
 from matplotlib import colors
 import matplotlib.pyplot as plt
+from scipy.stats import ttest_ind
+import matplotlib.path as mpath
 
 import warnings
 warnings.filterwarnings( "ignore", module = "matplotlib\..*" )
@@ -23,7 +25,7 @@ warnings.filterwarnings("ignore")
 from ENSO_IOD_Funciones import (Nino34CPC, DMI, DMI2, ComputeWithEffect, WAF,
                                 ComputeWithoutEffect, SetDataToPlotFinal,
                                 PlotFinal, CaseComp, PlotFinal14,
-                                PlotFinal15_16)
+                                PlotFinal15_16, PlotFinalFigS3)
 ################################################################################
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
 index_dir = '/pikachu/datos/luciano.andrian/DMI_N34_Leads_r/'
@@ -34,7 +36,10 @@ data_dir_t_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
                 'data_obs_d_w_c/' #T y PP ya procesados
 sig_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/nc_quantiles/' \
           'DMIbase/' # resultados de MC
-
+data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/' \
+                        'downloaded/'
+data_dir_era5_2 = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
+                'ERA5/1940_2020/'
 cases_dir = "/pikachu/datos/luciano.andrian/cases_fields/"
 
 if save:
@@ -229,6 +234,76 @@ def OpenObsDataSet(name, sa=True, dir='/pikachu/datos/luciano.andrian/'
     else:
         return aux
 
+def CompositeSimple_Validation(original_data, index, mmin, mmax, mean=True):
+    def is_months(month, mmin, mmax):
+        return (month >= mmin) & (month <= mmax)
+
+    if len(index) != 0:
+        comp_field = original_data.sel(
+            time=original_data.time.dt.year.isin([index]))
+        comp_field = comp_field.sel(
+            time=is_months(month=comp_field['time.month'],
+                           mmin=mmin, mmax=mmax))
+
+        if len(comp_field.time) != 0:
+            if mean:
+                comp_field = comp_field.mean(['time'], skipna=True)
+            else:
+                pass
+        else:  # si sólo hay un año
+            comp_field = comp_field.drop_dims(['time'])
+
+        return comp_field
+    else:
+        print(' len index = 0')
+
+def CaseComp_Validation(data, s, mmonth, c, two_variables=False, data2=None):
+    """
+    Las fechas se toman del periodo 1920-2020 basados en el DMI y N34 con
+    ERSSTv5 Cuando se toman los periodos 1920-1949 y 1950_2020 las fechas que
+    no pertencen se excluyen de los composites en CompositeSimple()
+    """
+    mmin = mmonth[0]
+    mmax = mmonth[-1]
+
+    aux = xr.open_dataset(nc_date_dir + '1920_2020' + '_' + s + '.nc')
+    neutro = aux.Neutral
+
+    try:
+        case = aux[c]
+        case = case.where(case >= 1982)
+        neutro = neutro.where(neutro>=1982)
+        aux.close()
+
+        case_num = len(case.values[np.where(~np.isnan(case.values))])
+
+        neutro_comp = CompositeSimple_Validation(original_data=data,
+                                                 index=neutro, mmin=mmin,
+                                                 mmax=mmax, mean=True)
+        data_comp = CompositeSimple_Validation(original_data=data, index=case,
+                                    mmin=mmin, mmax=mmax, mean=False)
+
+        comp = data_comp - neutro_comp
+
+        if two_variables:
+            neutro_comp2 = CompositeSimple_Validation(original_data=data2,
+                                                      index=neutro, mmin=mmin,
+                                                      mmax=mmax)
+            data_comp2 = CompositeSimple_Validation(original_data=data2,
+                                                    index=case, mmin=mmin,
+                                                    mmax=mmax)
+
+            comp2 = data_comp2 - neutro_comp2
+        else:
+            comp2 = None
+    except:
+        print('Error en ' + s + c)
+
+    if two_variables:
+        return comp, case_num, comp2
+    else:
+        return comp, case_num, data_comp
+
 # Escalas y barras de colores ##################################################
 # Regresion ------------------------------------------------------------------ #
 scale_vp = [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, 0, 0.5e6, 1e6, 1.5e6,
@@ -247,7 +322,6 @@ scale_hgt_comp = [-375, -275, -175, -75, -25, 0, 25, 75, 175, 275, 375]
 scale_t_comp = [-1.5, -1, -.5, -.25, -.1, 0, .1, .25, .5, 1, 1.5]
 scale_pp_comp = [-40, -30, -20, -10, -5, 0, 5, 10, 20, 30, 40]
 
-
 # CFSv2
 scale_hgt_snr = [-1, -.8, -.6, -.5, -.1, 0, 0.1, 0.5, 0.6, 0.8, 1]
 
@@ -255,7 +329,6 @@ scale_hgt_snr = [-1, -.8, -.6, -.5, -.1, 0, 0.1, 0.5, 0.6, 0.8, 1]
 scale_hgt_ind = [-575,-475, -375, -275, -175, -75,0,
                  75, 175, 275, 375, 475, 575]
 scale_ks = [2, 3, 4]
-
 # ---------------------------------------------------------------------------- #
 cbar_sst = colors.ListedColormap(['#B9391B', '#CD4838', '#E25E55', '#F28C89',
                                   '#FFCECC', 'white', '#B3DBFF', '#83B9EB',
@@ -407,7 +480,7 @@ ax.text(-4.9, -.1, 'IOD-', dict(size=in_label_size))
 plt.tight_layout()
 
 if save:
-    plt.savefig(out_dir + 'figure1.jpg')
+    plt.savefig(out_dir + 'figure1.png')
 else:
     plt.show()
 
@@ -606,7 +679,6 @@ print('#######################################################################')
 print('Figure 5')
 print('#######################################################################')
 plt.rcParams['hatch.linewidth'] = 1.5
-
 
 # Vp y Div ------------------------------------------------------------------- #
 #----------------------------------------------------------------------------- #
@@ -834,7 +906,7 @@ ax.text(-4.9, -.1, 'IOD-', dict(size=in_label_size))
 plt.tight_layout()
 
 if save:
-    plt.savefig(out_dir + 'figure8.jpg')
+    plt.savefig(out_dir + 'figure8.png')
 else:
     plt.show()
 ################################################################################
@@ -1157,16 +1229,25 @@ PlotFinal(data=ks, levels=scale_ks, cmap=cbar_ks,
 print('#######################################################################')
 print('Figure sup. 3')
 print('#######################################################################')
+# ClimValidation ------------------------------------------------------------- #
+dir_hc = '/pikachu/datos/luciano.andrian/hindcast/'
+dir_rt = '/pikachu/datos/luciano.andrian/real_time/'
+aux_dir = '/pikachu/datos/luciano.andrian/val_clim_cfsv2/'
+v = 'hgt'
 
-dif_cfsv2_clim = '/pikachu/datos/luciano.andrian/val_clim_cfsv2/'
+hindcast2 = xr.open_dataset(aux_dir + 'hindcast_cfsv2_meanclim_son.nc')
+son_hindcast_detrend_meanclim = \
+    xr.open_dataset(aux_dir + 'hindcast_cfsv2_meanclim_detrend_son.nc')
 son_hindcast_detrend = \
-    xr.open_dataset(dif_cfsv2_clim + 'hindcast_cfsv2_meanclim_detrend_son.nc')
-son_realtime_detrend = \
-    xr.open_dataset(dif_cfsv2_clim + 'realtime_cfsv2_meanclim_detrend_son.nc')
+    xr.open_dataset(aux_dir + 'hindcast_cfsv2_detrend_son.nc')
 
+real_time2 = xr.open_dataset(aux_dir + 'real_time_cfsv2_meanclim_son.nc')
+son_realtime_detrend_meanclim = \
+    xr.open_dataset(aux_dir + 'realtime_cfsv2_meanclim_detrend_son.nc')
+son_realtime_detrend = \
+    xr.open_dataset(aux_dir + 'realtime_cfsv2_detrend_son.nc')
+# ---------------------------------------------------------------------------- #
 # ERA5
-data_dir_era5 = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/' \
-                        'downloaded/'
 data = xr.open_dataset(data_dir_era5 + 'ERA5_HGT200_40-20.nc')
 data = data.sel(time=data.time.dt.year.isin(range(1981, 2012)))
 data = data.rolling(time=3, center=True).mean()
@@ -1185,7 +1266,7 @@ era_full = data.sel(time=data.time.dt.year.isin(range(1982, 2021)))
 era_full = era_full.interp(
     lat=np.arange(-80,21)[::-1], lon=np.arange(0,360))
 era_full = era_full.__mul__(1/9.8)
-
+# ---------------------------------------------------------------------------- #
 aux_hind = son_hindcast_detrend + hindcast2
 aux_hind = Weights(aux_hind.sel(P=200))
 
@@ -1196,12 +1277,7 @@ cfsv2 = xr.concat([aux_hind, aux_real], dim='time')
 era = era_full + Weights(era_clim)
 
 dif = cfsv2.mean(['time','r']) - era.mean('time')
-# Plot(dif, dif.hgt, np.arange(-100, 120, 20), save, dpi,
-#      'CFSv2 hindcast + real time - ERA5 (detrended)', 'dif_hind_real_d.jpg',
-#      out_dir, 'k', 'RdBu_r')
-
-
-from scipy.stats import ttest_ind
+# ---------------------------------------------------------------------------- #
 pvalue = []
 for m in [7, 8, 9, 10]:
     cfsv2_monthly_mean = cfsv2.sel(
@@ -1210,11 +1286,98 @@ for m in [7, 8, 9, 10]:
     # test
     pvalue.append(
         ttest_ind(cfsv2_monthly_mean, era_inverted, equal_var=False)[1])
-
 # promedio de pvalue por leadtime
 pvalue = sum(pvalue) / len(pvalue)
+# ---------------------------------------------------------------------------- #
+dif_f = dif.where(pvalue<0.05).hgt
+# ---------------------------------------------------------------------------- #
+# ---------------------------------------------------------------------------- #
 
-# Plot(dif, dif.where(pvalue<0.05).hgt, np.arange(-100, 120, 20), save, dpi,
-#      'CFSv2 hindcast + real time - ERA5 (detrended)',
-#      'dif_hind_real_d_tested.jpg',
-#      out_dir, 'k', 'RdBu_r')
+cases =  ['DMI_pos', 'DMI_neg', 'N34_pos', 'N34_neg']
+cases_cfs = ['dmi_pos', 'dmi_neg', 'n34_pos', 'n34_neg']
+
+data = xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/' \
+                'ERA5/1940_2020/HGT200_SON_mer_d_w.nc')
+s = 'SON'
+#s_count = 1
+#v_count = 0
+
+# ENSO_CFSv2 ----------------------------------------------------------------- #
+en_cfs = Weights(xr.open_dataset(
+    cases_dir + 'hgt_' + cases_cfs[2] + '_' + s + '.nc') \
+                 .rename({'hgt': 'var'}).__mul__(9.8))
+ln_cfs = Weights(xr.open_dataset(
+    cases_dir + 'hgt_' + cases_cfs[3] + '_' + s + '.nc') \
+                 .rename({'hgt': 'var'}).__mul__(9.8))
+
+enso_cfs_test = ttest_ind(
+    en_cfs['var'].values, ln_cfs['var'].values, equal_var=False)[1]
+
+enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
+
+# IOD_CFSv2 ------------------------------------------------------------------ #
+iodp_cfs = Weights(xr.open_dataset(
+    cases_dir + 'hgt_' + cases_cfs[0] + '_' + s + '.nc') \
+                   .rename({'hgt': 'var'}).__mul__(9.8))
+iodn_cfs = Weights(xr.open_dataset(
+    cases_dir + 'hgt_' + cases_cfs[1] + '_' + s + '.nc') \
+                   .rename({'hgt': 'var'}).__mul__(9.8))
+
+iod_cfs_test = ttest_ind(
+    iodp_cfs['var'].values, iodn_cfs['var'].values, equal_var=False)[1]
+iod_dif_cfs = iodp_cfs.mean('time') - iodn_cfs.mean('time')
+
+# ENSO_obs ------------------------------------------------------------------- #
+x, y, en_obs = CaseComp_Validation(
+    data, s, mmonth=[9,11], c=cases[2],
+    two_variables=False)
+en_obs = en_obs.interp(lon=enso_dif_cfs.lon.values,
+                       lat=enso_dif_cfs.lat.values)
+
+x, y, ln_obs = CaseComp_Validation(
+    data, s, mmonth=[9,11], c=cases[3],
+    two_variables=False)
+ln_obs = ln_obs.interp(lon=enso_dif_cfs.lon.values,
+                       lat=enso_dif_cfs.lat.values)
+enso_obs_test = ttest_ind(
+    en_obs['var'].values, ln_obs['var'].values, equal_var=False)[1]
+
+enso_dif_obs = en_obs.mean('time') - ln_obs.mean('time')
+
+# IOD_obs -------------------------------------------------------------------- #
+x, y, iodp_obs = CaseComp_Validation(data, s, mmonth=[9,11],
+                          c=cases[0], two_variables=False)
+iodp_obs = iodp_obs.interp(lon=enso_dif_cfs.lon.values,
+                           lat=enso_dif_cfs.lat.values)
+
+x, y, iodn_obs = CaseComp_Validation(data, s, mmonth=[9,11],
+                          c=cases[1], two_variables=False)
+iodn_obs = iodn_obs.interp(lon=enso_dif_cfs.lon.values,
+                           lat=enso_dif_cfs.lat.values)
+
+iod_obs_test = ttest_ind(
+    iodp_obs['var'].values, iodn_obs['var'].values, equal_var=False)[1]
+
+iod_dif_obs = iodp_obs.mean('time') - iodn_obs.mean('time')
+# ---------------------------------------------------------------------------- #
+aux_events_dif = [enso_dif_obs, iod_dif_obs, enso_dif_cfs, iod_dif_cfs]
+aux_events_dif = xr.concat(aux_events_dif, dim='plots')
+aux_events_dif_test = SetDataToPlotFinal(enso_obs_test, iod_obs_test,
+                                 enso_cfs_test, iod_cfs_test)
+
+PlotFinalFigS3(dif_f, dif.rename({'hgt':'var'}), scale_hgt, cbar,
+               'Seasonal mean climatological differences',
+               's-figure3', save, dpi, out_dir,
+               data2=aux_events_dif.where(aux_events_dif_test<0.05),
+               levels2=scale_hgt_comp, cmap2=cbar, data2_ctn=aux_events_dif,
+               titles2=['Composites differences ERA5 El Niño - La Niña',
+                        'Composites differences ERA5 positive IOD - '
+                        'negative IOD',
+                        'Composites differences CFSv2 El Niño - La Niña',
+                        'Composites differences CFSv2 positive IOD - '
+                        'negative IOD'])
+print('########################################################################'
+      '##########')
+print(f"Done: out_dir:{out_dir}")
+print('########################################################################'
+      '##########')

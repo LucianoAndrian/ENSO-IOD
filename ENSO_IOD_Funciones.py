@@ -2617,6 +2617,22 @@ def DirAndFile(out_dir, dir_results, common_name, names):
     path = os.path.join(out_dir, dir_results, file_name)
     return path
 
+# Esto era de los esquemas pero por alguna razon se borro parte de ese codigo
+from scipy.signal import convolve2d
+def moving_average_2d(data, window):
+    """Moving average on two-dimensional data.
+    """
+    # Makes sure that the window function is normalized.
+    window /= window.sum()
+    # Makes sure data array is a numpy array or masked array.
+    if type(data).__name__ not in ['ndarray', 'MaskedArray']:
+        data = np.asarray(data)
+
+    # The output array has the same dimensions as the input data
+    # (mode='same') and symmetrical boundary conditions are assumed
+    # (boundary='symm').
+    return convolve2d(data, window, mode='same', boundary='symm')
+
 ################################################################################
 # PlotFinal
 """
@@ -2702,7 +2718,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
     import string
 
     for i, (ax, plot) in enumerate(zip(axes.flatten(), plots)):
-        ax.text(-0.005, 1.025, f"{string.ascii_lowercase[i]}.",
+        ax.text(-0.005, 1.025, f"({string.ascii_lowercase[i]})",
                 transform=ax.transAxes, size=12)
 
         if data_ctn is not None:
@@ -2786,7 +2802,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
                           angles='xy', scale_units='xy')
 
             ax.quiverkey(Q, 0.85, 0.05, waf_label,
-                         rf'{waf_label:.1e} $\frac{{m^2}}{{s^2}}$',
+                         rf'{waf_label:.1e} $\{{m^2}}{{s^2}}$',
                          labelpos='E', coordinates='figure')
 
         if sig_points is not None:
@@ -2839,7 +2855,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
 
     fig.subplots_adjust(bottom=0.05)
     if save:
-        plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
@@ -2923,7 +2939,7 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
 
                 if aux_ctn.mean().values != 0:
 
-                    ax.text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}. "
+                    ax.text(-0.005, 1.025, f"({string.ascii_lowercase[i2]}) "
                                            f"$\\bf{{N={titles[plot]}}}$",
                             transform=ax.transAxes, size=15)
                     i2 += 1
@@ -3017,13 +3033,13 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
                 or i == 12 or i == 15 or i == 18 or i == 21:
             if i in [0, 3]:
 
-                axs[i].text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}. "
+                axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]}) "
                                            f"$\\bf{{{variable[i]}}}$"
                             ,
                             transform=axs[i].transAxes, size=12)
                 i2 += 1
             else:
-                axs[i].text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}.",
+                axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]})",
                             transform=axs[i].transAxes, size=12)
                 i2 += 1
 
@@ -3110,7 +3126,7 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
     fig.subplots_adjust(bottom=0.1, wspace=0.008, hspace=0.25, left=0)
 
     if save:
-        plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
@@ -3151,7 +3167,7 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
     i2 = 0
     for i in plots:
         if i in [0, 3, 6, 9, 12, 15, 18, 21]:
-            axs[i].text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}.",
+            axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]})",
                     transform=axs[i].transAxes, size=12)
             i2 += 1
 
@@ -3225,163 +3241,20 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
     fig.subplots_adjust(bottom=0.1, wspace=0.02, hspace=0.2, left=0)
 
     if save:
-        plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
 
 
-def PlotFinalFigS3(data, levels, cmap, titles, namefig, save, dpi, out_dir,
-                sig_points=None, lons=None, levels2=None, cmap2=None):
-
-    hatches='//////'
-    variable = ['Temperature', None, None, 'Precipitation']
-    plots = data.plots.values
-    num_plots = len(plots)
-
-    crs_latlon = ccrs.PlateCarree()
-
-    fig = plt.figure(figsize=(22, 13), constrained_layout=True)
-    subfigs = fig.subfigures(1, 2, width_ratios=[1, 1], wspace=0, hspace=.05)
-
-    axs0 = subfigs[0].subplots(4, 3,
-                               subplot_kw={'projection': ccrs.PlateCarree(
-                                   central_longitude=180)})
-    axs0 = axs0.flatten()
-    #subfigs[0].suptitle('Positive Phase', fontsize=20)
-
-    axs1 = subfigs[1].subplots(4, 3,
-                               subplot_kw={'projection': ccrs.PlateCarree(
-                                   central_longitude=180)})
-    axs1 = axs1.flatten()
-    #subfigs[1].suptitle('Negative Phase', fontsize=20)
-
-    axs = [axs0[0], axs0[1], axs0[2],
-           axs1[0], axs1[1], axs1[2],
-           axs0[3], axs0[4], axs0[5],
-           axs1[3], axs1[4], axs1[5],
-           axs0[6], axs0[7], axs0[8],
-           axs1[6], axs1[7], axs1[8],
-           axs0[9], axs0[10], axs0[11],
-           axs1[9], axs1[10], axs1[11]]
-
+def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
+                   out_dir, data2=None, levels2=None, cmap2=None,
+                   data2_ctn=None, titles2=None):
     import string
-    i2 = 0
-    for i in plots:
-        if i == 0 or i == 3 or i == 6 or i == 9 \
-                or i == 12 or i == 15 or i == 18 or i == 21:
-            if i in [0, 3]:
-
-                axs[i].text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}. "
-                                           f"$\\bf{{{variable[i]}}}$"
-                            ,
-                            transform=axs[i].transAxes, size=12)
-                i2 += 1
-            else:
-                axs[i].text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}.",
-                            transform=axs[i].transAxes, size=12)
-                i2 += 1
-
-        aux = data.sel(plots=i)
-        try:
-            aux_var = aux['var'].values
-        except:
-            aux_var = aux.values
-
-        if i in [0, 1, 2, 6, 7, 8, 12, 13, 14, 18, 19, 20]:
-            im0 = axs[i].contourf(aux.lon.values, aux.lat.values, aux_var,
-                                 levels=levels, cmap=cmap, extend='both',
-                                 transform=ccrs.PlateCarree())
-        else:
-            im1 = axs[i].contourf(aux.lon.values, aux.lat.values, aux_var,
-                                  levels=levels2, cmap=cmap2, extend='both',
-                                  transform=ccrs.PlateCarree())
-
-
-        if sig_points is not None:
-            aux_sig_points = sig_points.sel(plots=i)
-            colors_l = ['k', 'k']
-            try:
-                comp_sig_var = aux_sig_points['var'].values
-            except:
-                comp_sig_var = aux_sig_points.values
-
-            cs = axs[i].contourf(aux_sig_points.lon, aux_sig_points.lat,
-                                 comp_sig_var, transform=ccrs.PlateCarree(),
-                                 colors='none', hatches=['//////', '//////'],
-                                 extend='lower')
-
-            for i3, collection in enumerate(cs.collections):
-                collection.set_edgecolor(colors_l[i3 % len(colors_l)])
-
-            for collection in cs.collections:
-                collection.set_linewidth(0.)
-
-        axs[i].add_feature(cartopy.feature.LAND, facecolor='white')
-        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1)
-        axs[i].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
-                     zorder=20)
-
-        if i in [1, 4, 7, 10, 13, 16, 19, 22]:
-            axs[i].set_title(titles[i], fontsize=13)
-            axs[i].set_xticks(np.arange(110, 160, 10), crs=crs_latlon)
-            lon_formatter = LongitudeFormatter(zero_direction_label=True)
-            axs[i].xaxis.set_major_formatter(lon_formatter)
-            extent = [lons[i][0], lons[i][1], -60, -20]
-            axs[i].tick_params(labelsize=7)
-            axs[i].set_extent(extent, crs=crs_latlon)
-            axs[i].set_aspect('equal')
-
-        elif i in [2, 5, 8, 11, 14, 17, 20, 23]:
-            axs[i].set_xticks(np.arange(280, 340, 10), crs=crs_latlon)
-            lon_formatter = LongitudeFormatter(zero_direction_label=True)
-            axs[i].xaxis.set_major_formatter(lon_formatter)
-            axs[i].tick_params(labelsize=7)
-            extent = [lons[i][0], lons[i][1], -60, -20]
-            axs[i].set_extent(extent, crs=crs_latlon)
-            axs[i].set_aspect('equal')
-
-        else:
-            axs[i].set_xticks(np.arange(0, 60, 10), crs=crs_latlon)
-            axs[i].set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
-            lon_formatter = LongitudeFormatter(zero_direction_label=True)
-            lat_formatter = LatitudeFormatter()
-            axs[i].xaxis.set_major_formatter(lon_formatter)
-            axs[i].yaxis.set_major_formatter(lat_formatter)
-            axs[i].tick_params(labelsize=7)
-            extent = [lons[i][0], lons[i][1], -60, -20]
-            axs[i].set_extent(extent, crs=crs_latlon)
-            axs[i].set_aspect('equal')
-
-    pos = subfigs[0].add_axes([0.261, 0.03, 0.5, 0.02])
-    cb0 = subfigs[0].colorbar(im0, cax=pos, pad=0.1, orientation='horizontal')
-    cb0.ax.tick_params(labelsize=12)
-
-    pos = subfigs[1].add_axes([0.261, 0.03, 0.5, 0.02])
-    cb1 = subfigs[1].colorbar(im1, cax=pos, pad=0.1, orientation='horizontal')
-    cb1.ax.tick_params(labelsize=12)
-
-    fig.subplots_adjust(bottom=0.1, wspace=0.008, hspace=0.25, left=0)
-
-    if save:
-        plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
-        plt.close()
-    else:
-        plt.show()
-
-
-
-def PlotFinalFigS3(data, levels, cmap, titles, namefig, save, dpi, out_dir,
-                   data2=None, levels2=None, cmap2=None, data2_ctn=None,
-                   titles2=None):
-
-    # num_plots = len(plots)
-
     crs_latlon = ccrs.PlateCarree()
 
-    fig = plt.figure(figsize=(22, 8), constrained_layout=True)
-    subfigs = fig.subfigures(2, 1, height_ratios=[1, 1], wspace=0, hspace=.05)
+    fig = plt.figure(figsize=(17, 10), constrained_layout=True)
+    subfigs = fig.subfigures(2, 1, height_ratios=[1, 1], wspace=0, hspace=0)
 
     axs0 = subfigs[0].subplots(1, 1,
                                subplot_kw={'projection': ccrs.PlateCarree(
@@ -3394,6 +3267,8 @@ def PlotFinalFigS3(data, levels, cmap, titles, namefig, save, dpi, out_dir,
     # esto puede no ser necesario
     axs = [axs1[0], axs1[1], axs1[2], axs1[3]]
 
+    axs0.text(-0.005, 1.025, f"{string.ascii_lowercase[0]}. ",
+                transform=axs0.transAxes, size=12)
 
     aux = data
     try:
@@ -3405,14 +3280,49 @@ def PlotFinalFigS3(data, levels, cmap, titles, namefig, save, dpi, out_dir,
                           levels=levels, cmap=cmap, extend='both',
                           transform=ccrs.PlateCarree())
 
-    axs0.set_title(titles, fontsize=13)
+    aux_ctn = data_ctn
+    try:
+        aux_ctn_var = aux_ctn['var'].values
+    except:
+        aux_ctn_var = aux_ctn.values
 
-    import string
-    i2 = 0
+    levels_ctn = levels.copy()
+    if isinstance(levels_ctn, np.ndarray):
+        levels_ctn = levels_ctn[levels_ctn != 0]
+    else:
+        levels_ctn.remove(0)
+
+    axs0.contour(data2_ctn.lon.values, data2_ctn.lat.values,
+                   aux_ctn_var, linewidths=1,
+                   levels=levels_ctn, transform=crs_latlon,
+                   colors='k')
+
+    axs0.set_title(title0, fontsize=13)
+
+    axs0.add_feature(cartopy.feature.LAND, facecolor='white')
+    axs0.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    axs0.coastlines(color='dimgrey', linestyle='-', alpha=1)
+    axs0.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
+                   zorder=20)
+
+    axs0.set_xticks(np.arange(0, 360, 60), crs=crs_latlon)
+    axs0.set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+    lon_formatter = LongitudeFormatter(zero_direction_label=True)
+    lat_formatter = LatitudeFormatter()
+    axs0.xaxis.set_major_formatter(lon_formatter)
+    axs0.yaxis.set_major_formatter(lat_formatter)
+    axs0.tick_params(labelsize=7)
+    extent = [0, 359, -80, 20]
+    axs0.set_extent(extent, crs=crs_latlon)
+    axs0.set_aspect('equal')
+    axs0.set_title(title0, fontsize=13)
+
+    i2 = 1
     plots = data2.plots.values
     for i in plots:
-        axs[i].text(-0.005, 1.025, f"{string.ascii_lowercase[i2]}. ",
+        axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]}) ",
                             transform=axs[i].transAxes, size=12)
+        i2 += 1
 
         aux = data2.sel(plots=i)
         try:
@@ -3421,7 +3331,7 @@ def PlotFinalFigS3(data, levels, cmap, titles, namefig, save, dpi, out_dir,
             aux_var = aux.values
 
         im1 = axs[i].contourf(aux.lon.values, aux.lat.values, aux_var,
-                              levels=levels, cmap=cmap2, extend='both',
+                              levels=levels2, cmap=cmap2, extend='both',
                               transform=ccrs.PlateCarree())
 
         aux_ctn = data2_ctn.sel(plots=i)
@@ -3436,12 +3346,18 @@ def PlotFinalFigS3(data, levels, cmap, titles, namefig, save, dpi, out_dir,
         else:
             levels_ctn.remove(0)
 
-        ax.contour(data2_ctn.lon.values, data2_ctn.lat.values,
+        axs[i].add_feature(cartopy.feature.LAND, facecolor='white')
+        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1)
+        axs[i].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
+                       zorder=20)
+
+        axs[i].contour(data2_ctn.lon.values, data2_ctn.lat.values,
                    aux_ctn_var, linewidths=1,
                    levels=levels_ctn, transform=crs_latlon,
                    colors='k')
 
-        axs[i].set_xticks(np.arange(0, 60, 10), crs=crs_latlon)
+        axs[i].set_xticks(np.arange(0, 360, 60), crs=crs_latlon)
         axs[i].set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
         lon_formatter = LongitudeFormatter(zero_direction_label=True)
         lat_formatter = LatitudeFormatter()
@@ -3454,18 +3370,20 @@ def PlotFinalFigS3(data, levels, cmap, titles, namefig, save, dpi, out_dir,
 
         axs[i].set_title(titles2[i], fontsize=13)
 
-    pos = subfigs[0].add_axes([0.261, 0.03, 0.5, 0.02])
+    pos = subfigs[0].add_axes([0.92, 0.16, 0.01, 0.75])
     cb0 = subfigs[0].colorbar(im0, cax=pos, pad=0.1, orientation='vertical')
     cb0.ax.tick_params(labelsize=12)
 
-    pos = subfigs[1].add_axes([0.261, 0.03, 0.5, 0.02])
+    pos = subfigs[1].add_axes([0.195, 0.03, 0.5, 0.02])
     cb1 = subfigs[1].colorbar(im1, cax=pos, pad=0.1, orientation='horizontal')
     cb1.ax.tick_params(labelsize=12)
 
-    fig.subplots_adjust(bottom=0.1, wspace=0.008, hspace=0.25, left=0)
+    fig.subplots_adjust(bottom=0.1, wspace=0, hspace=0.25, left=0, right=0.90,
+                        top=1)
 
     if save:
-        plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
+################################################################################
