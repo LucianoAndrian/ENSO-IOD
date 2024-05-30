@@ -13,6 +13,7 @@ import cartopy.crs as ccrs
 import regionmask
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
+from matplotlib.font_manager import FontProperties
 
 import os
 os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
@@ -2679,14 +2680,14 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
               data_ctn2=None, levels_ctn2=None, color_ctn2=None,
               data_waf=None, wafx=None, wafy=None, waf_scale=None,
               waf_step=None, waf_label=None, sig_points=None, hatches=None,
-              num_cols=None):
+              num_cols=None, high=2, width = 7.08661):
 
     import matplotlib.gridspec as gridspec
     # cantidad de filas necesarias
     if num_cols is None:
         num_cols = 2
 
-    width = 22
+    width = width
     # if num_cols == 2:
     #     width = 22
     # else:
@@ -2699,7 +2700,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
 
     if map.upper() == 'HS':
         extent = [0, 359, -80, 20]
-        high = 3.5
+        high = high
     elif map.upper() == 'TR':
         extent = [45, 270, -20, 20]
         high = 2.5
@@ -2713,13 +2714,13 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
     fig, axes = plt.subplots(
         num_rows, num_cols, figsize=(width, high * num_rows),
         subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
-        gridspec_kw={'wspace': 0.05, 'hspace': 0.05})
+        gridspec_kw={'wspace': 0.1, 'hspace': 0.2})
 
     import string
 
     for i, (ax, plot) in enumerate(zip(axes.flatten(), plots)):
         ax.text(-0.005, 1.025, f"({string.ascii_lowercase[i]})",
-                transform=ax.transAxes, size=12)
+                transform=ax.transAxes, size=6)
 
         if data_ctn is not None:
             if levels_ctn is None:
@@ -2737,7 +2738,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
             except:
                 aux_ctn_var = aux_ctn.values
             ax.contour(data_ctn.lon.values, data_ctn.lat.values,
-                       aux_ctn_var, linewidths=1,
+                       aux_ctn_var, linewidths=0.4,
                        levels=levels_ctn, transform=crs_latlon,
                        colors=color_ctn)
 
@@ -2758,7 +2759,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
             except:
                 aux_ctn_var = aux_ctn.values
             ax.contour(data_ctn2.lon.values[::2], data_ctn2.lat.values[::2],
-                       aux_ctn_var[::2, ::2], linewidths=1.5,
+                       aux_ctn_var[::2, ::2], linewidths=0.5,
                        levels=levels_ctn2, transform=crs_latlon,
                        colors=color_ctn2)
 
@@ -2778,13 +2779,15 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
             from numpy import ma
             Q60 = np.nanpercentile(np.sqrt(np.add(np.power(wafx_aux, 2),
                                                   np.power(wafy_aux, 2))), 60)
-            M = np.sqrt(np.add(np.power(wafx_aux, 2), np.power(wafy_aux, 2))) < Q60
+            M = np.sqrt(np.add(np.power(wafx_aux, 2),
+                               np.power(wafy_aux, 2))) < Q60
             # mask array
             wafx_mask = ma.array(wafx_aux, mask=M)
             wafy_mask = ma.array(wafy_aux, mask=M)
             Q99 = np.nanpercentile(np.sqrt(np.add(np.power(wafx_aux, 2),
                                                   np.power(wafy_aux, 2))), 99)
-            M = np.sqrt(np.add(np.power(wafx_aux, 2), np.power(wafy_aux, 2))) > Q99
+            M = np.sqrt(np.add(np.power(wafx_aux, 2),
+                               np.power(wafy_aux, 2))) > Q99
             # mask array
             wafx_mask = ma.array(wafx_mask, mask=M)
             wafy_mask = ma.array(wafy_mask, mask=M)
@@ -2802,8 +2805,10 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
                           angles='xy', scale_units='xy')
 
             ax.quiverkey(Q, 0.85, 0.05, waf_label,
-                         rf'{waf_label:.1e} $\{{m^2}}{{s^2}}$',
-                         labelpos='E', coordinates='figure')
+                         f'{waf_label:.1e} $m^2$ $s^{-2}$',
+                         labelpos='E', coordinates='figure',
+                         labelsep=0.05,
+                         fontproperties=FontProperties(size=6, weight='light'))
 
         if sig_points is not None:
             aux_sig_points = sig_points.sel(plots=plot)
@@ -2821,23 +2826,27 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
             for collection in cs.collections:
                 collection.set_linewidth(0.)
 
-        ax.add_feature(cartopy.feature.LAND, facecolor='white')
+        ax.add_feature(cartopy.feature.LAND, facecolor='white', linewidth=0.5)
 
-        ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-        ax.coastlines(color='dimgrey', linestyle='-', alpha=1)
+        ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+        ax.coastlines(color='dimgrey', linestyle='-', alpha=1, linewidth=0.2)
         ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
                      zorder=20)
         ax.set_xticks(np.arange(0, 360, 60), crs=crs_latlon)
         ax.set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+        ax.tick_params(width=0.5, pad=1)
         lon_formatter = LongitudeFormatter(zero_direction_label=True)
         lat_formatter = LatitudeFormatter()
         ax.xaxis.set_major_formatter(lon_formatter)
         ax.yaxis.set_major_formatter(lat_formatter)
-        ax.tick_params(labelsize=7)
+        ax.tick_params(labelsize=4)
         ax.set_extent(extent, crs=crs_latlon)
 
         ax.set_aspect('equal')
-        ax.set_title(titles[plot], fontsize=12)
+        ax.set_title(titles[plot], fontsize=6, pad=2)
+
+        for spine in ax.spines.values():
+            spine.set_linewidth(0.5)
 
     # Eliminar los lugares en blanco que existan
     # for i in range(num_plots, num_rows * num_cols):
@@ -2845,17 +2854,18 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
 
     cbar_pos = 'H'
     if cbar_pos.upper() == 'H':
-        pos = fig.add_axes([0.261, 0.03, 0.5, 0.02])
+        pos = fig.add_axes([0.235, 0.03, 0.5, 0.02])
         cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
-        cb.ax.tick_params(labelsize=12)
+        cb.ax.tick_params(labelsize=5)
     elif cbar_pos.upper() == 'V':
         pos = fig.add_axes([0.2, 0.05, 0.6, 0.02])
         cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
-        cb.ax.tick_params(labelsize=12)
+        cb.ax.tick_params(labelsize=4)
 
-    fig.subplots_adjust(bottom=0.05)
+    fig.subplots_adjust(bottom=0.1, wspace=0, hspace=0.25, left=0, right=1,
+                        top=1)
     if save:
-        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{out_dir}{namefig}.pdf", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()

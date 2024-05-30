@@ -422,47 +422,47 @@ n34_un_pos, n34_un_pos_dmi_values, n34_un_neg, n34_un_neg_dmi_values, \
 dmi_sim_pos, n34_sim_pos, dmi_sim_neg, n34_sim_neg, dmi_todos, n34_todos, \
 dmi_pos_n34_neg, dmi_neg_n34_pos = auxScatter(n34, n34_3, dmi, dmi_3, 10)
 
-in_label_size = 18
-label_legend_size = 18
-tick_label_size = 15
+in_label_size = 13
+label_legend_size = 12
+tick_label_size = 11
 scatter_size_fix = 3
 
 # ---------------------------------------------------------------------------- #
-fig, ax = plt.subplots(dpi=dpi, figsize=(10, 10))
+fig, ax = plt.subplots(dpi=dpi, figsize=(7.08661, 7.08661))
 # todos
 ax.scatter(x=dmi_todos, y=n34_todos, marker='o', label='Niño3.4 vs DMI',
-           s=50*scatter_size_fix, edgecolor='k', color='dimgray', alpha=1)
+           s=30*scatter_size_fix, edgecolor='k', color='dimgray', alpha=1)
 # dmi puros
 ax.scatter(x=dmi_un_pos.values, y=dmi_un_pos_n34_values.values, marker='o',
-           s=50*scatter_size_fix, edgecolor='k', facecolor='firebrick',
+           s=30*scatter_size_fix, edgecolor='k', facecolor='firebrick',
            alpha=1, label='IOD+')
 ax.scatter(x=dmi_un_neg.values, y=dmi_un_neg_n34_values.values, marker='o',
-           s=50*scatter_size_fix, facecolor='limegreen', edgecolor='k',
+           s=30*scatter_size_fix, facecolor='limegreen', edgecolor='k',
            alpha=1, label='IOD-')
 # n34 puros
 ax.scatter(y=n34_un_pos.values, x=n34_un_pos_dmi_values.values, marker='o',
-           s=50*scatter_size_fix, edgecolors='k', facecolor='navy', alpha=1,
+           s=30*scatter_size_fix, edgecolors='k', facecolor='navy', alpha=1,
            label='El Niño')
 ax.scatter(y=n34_un_neg.values, x=n34_un_neg_dmi_values.values, marker='o',
-           s=50*scatter_size_fix, edgecolors='k', facecolor='deeppink',
+           s=30*scatter_size_fix, edgecolors='k', facecolor='deeppink',
            alpha=1, label='La Niña')
 # sim
 ax.scatter(x=dmi_sim_pos.values, y=n34_sim_pos.values, marker='o',
-           s=50*scatter_size_fix, edgecolor='k', color='#FF5B12', alpha=1,
+           s=30*scatter_size_fix, edgecolor='k', color='#FF5B12', alpha=1,
            label='El Niño & IOD+')
 ax.scatter(x=dmi_sim_neg.values, y=n34_sim_neg.values, marker='o',
-           s=50*scatter_size_fix, edgecolor='k', color='deepskyblue',
+           s=30*scatter_size_fix, edgecolor='k', color='deepskyblue',
            alpha=1, label='La Niña & IOD-')
 # sim opp. sing
 ax.scatter(x=dmi_pos_n34_neg.values, y=n34_sim_neg.values, marker='o',
-           s=50*scatter_size_fix, edgecolor='k', color='orange', alpha=1,
+           s=30*scatter_size_fix, edgecolor='k', color='orange', alpha=1,
            label='La Niña & IOD+')
 ax.scatter(x=dmi_neg_n34_pos.values, y=n34_sim_pos.values, marker='o',
-           s=50*scatter_size_fix, edgecolor='k', color='gold', alpha=1,
+           s=30*scatter_size_fix, edgecolor='k', color='gold', alpha=1,
            label='El Niño & IOD-')
 
 ax.legend(loc=(.01, .57), fontsize=label_legend_size)
-ax.tick_params(axis='both', which='major', labelsize=tick_label_size)
+ax.tick_params(axis='both', which='major', labelsize=tick_label_size, pad=1)
 ax.set_ylim((-5, 5))
 ax.set_xlim((-5, 5))
 ax.axhspan(-.5, .5, alpha=0.2, color='black', zorder=0)
@@ -473,14 +473,15 @@ ax.text(-4.9, 4.6, 'EN/IOD-', dict(size=in_label_size))
 ax.text(-.2, 4.6, 'EN', dict(size=in_label_size))
 ax.text(+3.7, 4.6, 'EN/IOD+', dict(size=in_label_size))
 ax.text(+4.2, -.1, 'IOD+', dict(size=in_label_size))
-ax.text(+3.78, -4.9, 'LN/IOD+', dict(size=in_label_size))
+ax.text(+3.7, -4.9, 'LN/IOD+', dict(size=in_label_size))
 ax.text(-.2, -4.9, 'LN', dict(size=in_label_size))
 ax.text(-4.9, -4.9, ' LN/IOD-', dict(size=in_label_size))
 ax.text(-4.9, -.1, 'IOD-', dict(size=in_label_size))
 plt.tight_layout()
 
 if save:
-    plt.savefig(out_dir + 'figure1.png')
+    plt.savefig(out_dir + 'figure1.pdf', dpi=dpi, bbox_inches='tight')
+    plt.close('all')
 else:
     plt.show()
 
@@ -577,7 +578,7 @@ PlotFinal(data=aux_sst, levels=scale_sst, cmap=cbar_sst,
           save=save, dpi=dpi, out_dir=out_dir,
           data_ctn=aux_vp, levels_ctn=scale_vp, color_ctn='k',
           data_ctn2=aux_div, levels_ctn2=scale_div,
-          color_ctn2=['#D300FF', '#00FF5D'])
+          color_ctn2=['#D300FF', '#00FF5D'], high=1.3)
 ################################################################################
 # HGT y WAF
 ################################################################################
@@ -670,7 +671,7 @@ for v, v_count, hpalevel in zip(variables, [0, 1], [200, 750]):
               save=save, dpi=dpi, out_dir=out_dir,
               data_ctn=aux_hgt_wo_corr, levels_ctn=None, color_ctn='k',
               data_waf=data_sf, wafx=wafx, wafy=wafy,
-              waf_scale=None, waf_label=10e-6, waf_step=4)
+              waf_scale=None, waf_label=10e-6, waf_step=4, high=1.3)
 
 ################################################################################
 # Composites
@@ -730,7 +731,7 @@ PlotFinal(data=aux_sst, levels=scale_sst_comp, cmap=cbar_sst,
           save=save, dpi=dpi, out_dir=out_dir,
           data_ctn=aux_vp, levels_ctn=scale_vp_comp, color_ctn='k',
           data_ctn2=aux_div, levels_ctn2=scale_div_comp,
-          color_ctn2=['#D300FF', '#00FF5D'])
+          color_ctn2=['#D300FF', '#00FF5D'], high=1.3)
 
 print('#######################################################################')
 print('Figure 6-7')
@@ -795,7 +796,7 @@ for v, hpalevel, f_count in zip(['HGT200_SON_mer_d_w', 'HGT750_SON_mer_d_w'],
               save=save, dpi=dpi, out_dir=out_dir,
               data_ctn=aux_hgt_no_sig, levels_ctn=None, color_ctn='k',
               data_waf=data_sf, wafx=aux_wafx, wafy=aux_wafy,
-              waf_scale=None, waf_label=10e-5, waf_step=4)
+              waf_scale=None, waf_label=10e-5, waf_step=4, high=1.3)
 ################################################################################
 print('#######################################################################')
 print('Figure8')
