@@ -11,6 +11,7 @@ import cartopy.feature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import cartopy.crs as ccrs
 import regionmask
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 from matplotlib.font_manager import FontProperties
@@ -2703,7 +2704,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
         high = high
     elif map.upper() == 'TR':
         extent = [45, 270, -20, 20]
-        high = 2.5
+        high = high
     elif map.upper() == 'HS_EX':
         extent = [0, 359, -65, -20]
         high = 2
@@ -2830,8 +2831,9 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
 
         ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
         ax.coastlines(color='dimgrey', linestyle='-', alpha=1, linewidth=0.2)
-        ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
-                     zorder=20)
+        gl = ax.gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
+                          zorder=20)
+        gl.ylocator = plt.MultipleLocator(20)
         ax.set_xticks(np.arange(0, 360, 60), crs=crs_latlon)
         ax.set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
         ax.tick_params(width=0.5, pad=1)
@@ -2856,11 +2858,11 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
     if cbar_pos.upper() == 'H':
         pos = fig.add_axes([0.235, 0.03, 0.5, 0.02])
         cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
-        cb.ax.tick_params(labelsize=5)
+        cb.ax.tick_params(labelsize=5, pad=1)
     elif cbar_pos.upper() == 'V':
         pos = fig.add_axes([0.2, 0.05, 0.6, 0.02])
         cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
-        cb.ax.tick_params(labelsize=4)
+        cb.ax.tick_params(labelsize=4, pad=1)
 
     fig.subplots_adjust(bottom=0.1, wspace=0, hspace=0.25, left=0, right=1,
                         top=1)
@@ -2873,9 +2875,9 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
 def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                         out_dir, data_ctn=None, levels_ctn=None,
                         color_ctn=None, row_titles=None, col_titles=None,
-                        clim_plot=None, clim_levels=None,clim_cbar=None):
+                        clim_plot=None, clim_levels=None,clim_cbar=None,
+                        high=2, width = 7.08661):
     num_cols = 5
-    width = 42
     num_rows = 5
 
     plots = data.plots.values
@@ -2883,13 +2885,13 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
 
     if map.upper() == 'HS':
         extent = [0, 359, -80, 20]
-        high = 3
+        high = high
     elif map.upper() == 'TR':
         extent = [45, 270, -20, 20]
-        high = 2.5
+        high = high
     elif map.upper() == 'HS_EX':
         extent = [0, 359, -65, -20]
-        high = 2
+        high = high
     else:
         print(f"Mapa {map} no seteado")
         return
@@ -2897,7 +2899,7 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
     fig, axes = plt.subplots(
         num_rows, num_cols, figsize=(width, high * num_rows),
         subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)},
-        gridspec_kw={'wspace': 0.04, 'hspace': 0.01})
+        gridspec_kw={'wspace': 0.05, 'hspace': 0.01})
 
     import string
     i2 = 0
@@ -2905,18 +2907,38 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
         remove_axes = False
 
         if i == 2 or i == 10:
-            ax.set_title(col_titles[i], fontsize=18)
+            ax.set_title(col_titles[i], fontsize=5, pad=2)
             ax.yaxis.set_label_position('left')
             ax.text(-0.05, 0.5, row_titles[i], rotation=90,
-                    transform=ax.transAxes, fontsize=18,
+                    transform=ax.transAxes, fontsize=5,
                     verticalalignment='center')
         elif i == 3 or i == 4 or i == 11:
-            ax.set_title(col_titles[i], fontsize=18)
+            ax.set_title(col_titles[i], fontsize=5, pad=3)
         elif i == 7 or i == 15 or i == 20:
             ax.yaxis.set_label_position('left')
             ax.text(-0.05, 0.5, row_titles[i], rotation=90,
-                    transform=ax.transAxes, fontsize=18,
+                    transform=ax.transAxes, fontsize=5,
                     verticalalignment='center')
+
+        if i in [4, 9, 14, 17, 22]:
+            ax.yaxis.tick_right()
+            ax.yaxis.set_label_position("right")
+            ax.set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+            ax.tick_params(width=0.3, pad=1)
+            lat_formatter = LatitudeFormatter()
+            ax.yaxis.set_major_formatter(lat_formatter)
+            ax.tick_params(labelsize=3)
+            ax.set_extent(extent, crs=crs_latlon)
+
+        if i in [20,21,22, 23, 13, 14]:
+            ax.set_xticks(np.arange(0, 360, 60), crs=crs_latlon)
+            ax.tick_params(width=0.3, pad=1)
+            lon_formatter = LongitudeFormatter(zero_direction_label=True)
+            ax.xaxis.set_major_formatter(lon_formatter)
+            ax.tick_params(labelsize=3)
+            ax.set_extent(extent, crs=crs_latlon)
+
+        ax.tick_params(width=0.5, pad=1, labelsize=4)
 
         if plot == 12:
             cp = ax.contour(clim_plot.lon.values, clim_plot.lat.values,
@@ -2930,9 +2952,18 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
 
             ax.add_feature(cartopy.feature.LAND, facecolor='white')
 
-            ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+            ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
             ax.coastlines(color='dimgrey', linestyle='-', alpha=1)
-            ax.set_title('Climatology', fontsize=18)
+            ax.set_title('Climatology', fontsize=4, pad=1)
+
+            gl = ax.gridlines(draw_labels=False, linewidth=0.3,
+                              linestyle='-',
+                              zorder=20)
+            gl.ylocator = plt.MultipleLocator(20)
+            gl.xlocator = plt.MultipleLocator(60)
+            for spine in ax.spines.values():
+                spine.set_linewidth(0.5)
+
         else:
 
             if data_ctn is not None:
@@ -2950,8 +2981,8 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                 if aux_ctn.mean().values != 0:
 
                     ax.text(-0.005, 1.025, f"({string.ascii_lowercase[i2]}) "
-                                           f"$\\bf{{N={titles[plot]}}}$",
-                            transform=ax.transAxes, size=15)
+                                           f"$N={titles[plot]}$",
+                            transform=ax.transAxes, size=4)
                     i2 += 1
 
                     try:
@@ -2960,7 +2991,7 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                         aux_ctn_var = aux_ctn.values
 
                     ax.contour(data_ctn.lon.values, data_ctn.lat.values,
-                               aux_ctn_var, linewidths=1,
+                               aux_ctn_var, linewidths=0.4,
                                levels=levels_ctn, transform=crs_latlon,
                                colors=color_ctn)
                 else:
@@ -2977,10 +3008,18 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                                  levels=levels,
                                  transform=crs_latlon, cmap=cmap, extend='both')
 
-                ax.add_feature(cartopy.feature.LAND, facecolor='white')
+                ax.add_feature(cartopy.feature.LAND, facecolor='white',
+                               linewidth=0.5)
 
-                ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-                ax.coastlines(color='dimgrey', linestyle='-', alpha=1)
+                ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+                ax.coastlines(color='dimgrey', linestyle='-', alpha=1,
+                              linewidth=0.2)
+                gl = ax.gridlines(draw_labels=False, linewidth=0.3,
+                                  linestyle='-',
+                                  zorder=20)
+                gl.ylocator = plt.MultipleLocator(20)
+                gl.xlocator = plt.MultipleLocator(60)
+
 
             else:
                 remove_axes = True
@@ -2988,22 +3027,26 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
             if remove_axes:
                 ax.axis('off')
 
+            for spine in ax.spines.values():
+                spine.set_linewidth(0.5)
     # cbar_pos = 'H'
     # if cbar_pos == 'H':
-    pos = fig.add_axes([0.261, 0.03, 0.5, 0.02])
+    pos = fig.add_axes([0.261, 0, 0.5, 0.02])
     cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
-    cb.ax.tick_params(labelsize=15)
+    cb.ax.tick_params(labelsize=4, pad=1)
 
-    fig.subplots_adjust(bottom=0.05)
+    fig.subplots_adjust(bottom=0.05, wspace=0, hspace=0.25, left=0, right=1,
+                        top=1)
     if save:
-        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{out_dir}{namefig}.pdf", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
 
 
 def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
-                sig_points=None, lons=None, levels2=None, cmap2=None):
+                sig_points=None, lons=None, levels2=None, cmap2=None,
+                high=4, width = 7.08661):
 
     hatches='//////'
     variable = ['Temperature', None, None, 'Precipitation']
@@ -3012,8 +3055,8 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
 
     crs_latlon = ccrs.PlateCarree()
 
-    fig = plt.figure(figsize=(22, 13), constrained_layout=True)
-    subfigs = fig.subfigures(1, 2, width_ratios=[1, 1], wspace=0, hspace=.05)
+    fig = plt.figure(figsize=(width, high), constrained_layout=True)
+    subfigs = fig.subfigures(1, 2, width_ratios=[1, 1], wspace=0.05, hspace=.2)
 
     axs0 = subfigs[0].subplots(4, 3,
                                subplot_kw={'projection': ccrs.PlateCarree(
@@ -3044,13 +3087,13 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
             if i in [0, 3]:
 
                 axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]}) "
-                                           f"$\\bf{{{variable[i]}}}$"
+                                           f"${variable[i]}$"
                             ,
-                            transform=axs[i].transAxes, size=12)
+                            transform=axs[i].transAxes, size=6)
                 i2 += 1
             else:
                 axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]})",
-                            transform=axs[i].transAxes, size=12)
+                            transform=axs[i].transAxes, size=6)
                 i2 += 1
 
         aux = data.sel(plots=i)
@@ -3077,9 +3120,10 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
             except:
                 comp_sig_var = aux_sig_points.values
 
+            mpl.rcParams['hatch.linewidth'] = 0.5
             cs = axs[i].contourf(aux_sig_points.lon, aux_sig_points.lat,
                                  comp_sig_var, transform=ccrs.PlateCarree(),
-                                 colors='none', hatches=['//////', '//////'],
+                                 colors='none', hatches=['///////', '///////'],
                                  extend='lower')
 
             for i3, collection in enumerate(cs.collections):
@@ -3088,61 +3132,71 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
             for collection in cs.collections:
                 collection.set_linewidth(0.)
 
-        axs[i].add_feature(cartopy.feature.LAND, facecolor='white')
-        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1)
-        axs[i].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
-                     zorder=20)
+        axs[i].add_feature(cartopy.feature.LAND, facecolor='white',
+                           linewidth=0.5)
+        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1,
+                          linewidth=0.2)
+        gl = axs[i].gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
+                          zorder=20)
+        gl.ylocator = plt.MultipleLocator(20)
+        gl.xlocator = plt.MultipleLocator(20)
 
         if i in [1, 4, 7, 10, 13, 16, 19, 22]:
-            axs[i].set_title(titles[i], fontsize=13)
-            axs[i].set_xticks(np.arange(110, 160, 10), crs=crs_latlon)
+            axs[i].set_title(titles[i], fontsize=6, pad=1)
+            axs[i].set_xticks(np.arange(100, 160, 20), crs=crs_latlon)
+            axs[i].tick_params(width=0.5, pad=1)
             lon_formatter = LongitudeFormatter(zero_direction_label=True)
             axs[i].xaxis.set_major_formatter(lon_formatter)
             extent = [lons[i][0], lons[i][1], -60, -20]
-            axs[i].tick_params(labelsize=7)
+            axs[i].tick_params(labelsize=4)
             axs[i].set_extent(extent, crs=crs_latlon)
             axs[i].set_aspect('equal')
 
         elif i in [2, 5, 8, 11, 14, 17, 20, 23]:
-            axs[i].set_xticks(np.arange(280, 340, 10), crs=crs_latlon)
+            axs[i].set_xticks(np.arange(280, 340, 20), crs=crs_latlon)
             lon_formatter = LongitudeFormatter(zero_direction_label=True)
             axs[i].xaxis.set_major_formatter(lon_formatter)
-            axs[i].tick_params(labelsize=7)
+            axs[i].tick_params(width=0.5, pad=1)
+            axs[i].tick_params(labelsize=4)
             extent = [lons[i][0], lons[i][1], -60, -20]
             axs[i].set_extent(extent, crs=crs_latlon)
             axs[i].set_aspect('equal')
 
         else:
-            axs[i].set_xticks(np.arange(0, 60, 10), crs=crs_latlon)
+            axs[i].set_xticks(np.arange(0, 60, 20), crs=crs_latlon)
             axs[i].set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+            axs[i].tick_params(width=0.5, pad=1)
             lon_formatter = LongitudeFormatter(zero_direction_label=True)
             lat_formatter = LatitudeFormatter()
             axs[i].xaxis.set_major_formatter(lon_formatter)
             axs[i].yaxis.set_major_formatter(lat_formatter)
-            axs[i].tick_params(labelsize=7)
+            axs[i].tick_params(labelsize=4)
             extent = [lons[i][0], lons[i][1], -60, -20]
             axs[i].set_extent(extent, crs=crs_latlon)
             axs[i].set_aspect('equal')
 
-    pos = subfigs[0].add_axes([0.261, 0.03, 0.5, 0.02])
+        for spine in axs[i].spines.values():
+            spine.set_linewidth(0.5)
+
+    pos = subfigs[0].add_axes([0.21, 0.03, 0.5, 0.02])
     cb0 = subfigs[0].colorbar(im0, cax=pos, pad=0.1, orientation='horizontal')
-    cb0.ax.tick_params(labelsize=12)
+    cb0.ax.tick_params(labelsize=5, pad=1)
 
-    pos = subfigs[1].add_axes([0.261, 0.03, 0.5, 0.02])
+    pos = subfigs[1].add_axes([0.21, 0.03, 0.5, 0.02])
     cb1 = subfigs[1].colorbar(im1, cax=pos, pad=0.1, orientation='horizontal')
-    cb1.ax.tick_params(labelsize=12)
+    cb1.ax.tick_params(labelsize=5, pad=1)
 
-    fig.subplots_adjust(bottom=0.1, wspace=0.008, hspace=0.25, left=0)
+    fig.subplots_adjust(bottom=0.1, wspace=0.008, hspace=0.35, left=0, top=1)
 
     if save:
-        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{out_dir}{namefig}.pdf", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
 
 def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
-                   sig_points=None, lons=None):
+                   sig_points=None, lons=None, high=4.19, width = 7.08661):
 
     hatches='//////'
 
@@ -3151,7 +3205,7 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
 
     crs_latlon = ccrs.PlateCarree()
 
-    fig = plt.figure(figsize=(22, 10), constrained_layout=True)
+    fig = plt.figure(figsize=(width, high), constrained_layout=True)
     subfigs = fig.subfigures(1, 2, width_ratios=[1, 1], wspace=0, hspace=.05)
 
     axs0 = subfigs[0].subplots(3, 3,
@@ -3178,7 +3232,7 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
     for i in plots:
         if i in [0, 3, 6, 9, 12, 15, 18, 21]:
             axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]})",
-                    transform=axs[i].transAxes, size=12)
+                    transform=axs[i].transAxes, size=6)
             i2 += 1
 
         aux = data.sel(plots=i)
@@ -3195,9 +3249,10 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
             aux_sig_points = sig_points.sel(plots=i)
             colors_l = ['k', 'k']
             comp_sig_var = aux_sig_points['var']
+            mpl.rcParams['hatch.linewidth'] = 0.5
             cs = axs[i].contourf(aux_sig_points.lon, aux_sig_points.lat,
                                  comp_sig_var, transform=ccrs.PlateCarree(),
-                                 colors='none', hatches=['//////', '//////'],
+                                 colors='none', hatches=['///////', '///////'],
                                  extend='lower')
 
             for i3, collection in enumerate(cs.collections):
@@ -3208,50 +3263,58 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
 
         axs[i].add_feature(cartopy.feature.LAND, facecolor='white')
         axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1)
-        axs[i].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
-                     zorder=20)
-        if i in [1, 4, 7, 10, 13, 16, 19, 22]:
+        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1,
+                          linewidth=0.2)
+        gl = axs[i].gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
+                          zorder=20)
+        gl.ylocator = plt.MultipleLocator(20)
+        gl.xlocator = plt.MultipleLocator(20)
 
-            axs[i].set_title(titles[i], fontsize=13)
-            axs[i].set_xticks(np.arange(110, 160, 10), crs=crs_latlon)
+        if i in [1, 4, 7, 10, 13, 16, 19, 22]:
+            axs[i].set_title(titles[i], fontsize=6, pad=1)
+            axs[i].set_xticks(np.arange(100, 160, 20), crs=crs_latlon)
+            axs[i].tick_params(width=0.5, pad=1)
             lon_formatter = LongitudeFormatter(zero_direction_label=True)
             axs[i].xaxis.set_major_formatter(lon_formatter)
             extent = [lons[i][0], lons[i][1], -60, -20]
-            axs[i].tick_params(labelsize=7)
+            axs[i].tick_params(labelsize=4)
             axs[i].set_extent(extent, crs=crs_latlon)
             axs[i].set_aspect('equal')
 
         elif i in [2, 5, 8, 11, 14, 17, 20, 23]:
-
-            axs[i].set_xticks(np.arange(280, 340, 10), crs=crs_latlon)
+            axs[i].set_xticks(np.arange(280, 340, 20), crs=crs_latlon)
             lon_formatter = LongitudeFormatter(zero_direction_label=True)
             axs[i].xaxis.set_major_formatter(lon_formatter)
-            axs[i].tick_params(labelsize=7)
+            axs[i].tick_params(width=0.5, pad=1)
+            axs[i].tick_params(labelsize=4)
             extent = [lons[i][0], lons[i][1], -60, -20]
             axs[i].set_extent(extent, crs=crs_latlon)
             axs[i].set_aspect('equal')
 
         else:
-            axs[i].set_xticks(np.arange(0, 60, 10), crs=crs_latlon)
+            axs[i].set_xticks(np.arange(0, 60, 20), crs=crs_latlon)
             axs[i].set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+            axs[i].tick_params(width=0.5, pad=1)
             lon_formatter = LongitudeFormatter(zero_direction_label=True)
             lat_formatter = LatitudeFormatter()
             axs[i].xaxis.set_major_formatter(lon_formatter)
             axs[i].yaxis.set_major_formatter(lat_formatter)
-            axs[i].tick_params(labelsize=7)
+            axs[i].tick_params(labelsize=4)
             extent = [lons[i][0], lons[i][1], -60, -20]
             axs[i].set_extent(extent, crs=crs_latlon)
             axs[i].set_aspect('equal')
 
+        for spine in axs[i].spines.values():
+            spine.set_linewidth(0.5)
+
     pos = subfigs[1].add_axes([-.56, 0.03, 1, 0.02])
     cb = subfigs[1].colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
-    cb.ax.tick_params(labelsize=12)
+    cb.ax.tick_params(labelsize=5)
 
-    fig.subplots_adjust(bottom=0.1, wspace=0.02, hspace=0.2, left=0)
+    fig.subplots_adjust(bottom=0.1, wspace=0.02, hspace=0.2, left=0, top=1)
 
     if save:
-        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{out_dir}{namefig}.pdf", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
@@ -3259,12 +3322,14 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
 
 def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
                    out_dir, data2=None, levels2=None, cmap2=None,
-                   data2_ctn=None, titles2=None):
+                   data2_ctn=None, titles2=None, high=4, width = 7.08661):
     import string
     crs_latlon = ccrs.PlateCarree()
 
-    fig = plt.figure(figsize=(17, 10), constrained_layout=True)
-    subfigs = fig.subfigures(2, 1, height_ratios=[1, 1], wspace=0, hspace=0)
+    fig = plt.figure(figsize=(width, high), constrained_layout=True)
+    subfigs = fig.subfigures(2, 1, height_ratios=[0.95, 1.05],
+                             wspace=0.05,
+                             hspace=0.1)
 
     axs0 = subfigs[0].subplots(1, 1,
                                subplot_kw={'projection': ccrs.PlateCarree(
@@ -3278,7 +3343,7 @@ def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
     axs = [axs1[0], axs1[1], axs1[2], axs1[3]]
 
     axs0.text(-0.005, 1.025, f"{string.ascii_lowercase[0]}. ",
-                transform=axs0.transAxes, size=12)
+                transform=axs0.transAxes, size=6)
 
     aux = data
     try:
@@ -3287,7 +3352,7 @@ def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
         aux_var = aux.values
 
     im0 = axs0.contourf(aux.lon.values, aux.lat.values, aux_var,
-                          levels=levels, cmap=cmap, extend='both',
+                          levels=levels2, cmap=cmap2, extend='both',
                           transform=ccrs.PlateCarree())
 
     aux_ctn = data_ctn
@@ -3303,17 +3368,18 @@ def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
         levels_ctn.remove(0)
 
     axs0.contour(data2_ctn.lon.values, data2_ctn.lat.values,
-                   aux_ctn_var, linewidths=1,
+                   aux_ctn_var, linewidths=0.4,
                    levels=levels_ctn, transform=crs_latlon,
                    colors='k')
 
-    axs0.set_title(title0, fontsize=13)
-
-    axs0.add_feature(cartopy.feature.LAND, facecolor='white')
-    axs0.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-    axs0.coastlines(color='dimgrey', linestyle='-', alpha=1)
-    axs0.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
-                   zorder=20)
+    axs0.add_feature(cartopy.feature.LAND, facecolor='white',
+                           linewidth=0.5)
+    axs0.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+    axs0.coastlines(color='dimgrey', linestyle='-', alpha=1, linewidth=0.2)
+    gl = axs0.gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
+                          zorder=20)
+    gl.ylocator = plt.MultipleLocator(20)
+    gl.xlocator = plt.MultipleLocator(60)
 
     axs0.set_xticks(np.arange(0, 360, 60), crs=crs_latlon)
     axs0.set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
@@ -3321,17 +3387,20 @@ def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
     lat_formatter = LatitudeFormatter()
     axs0.xaxis.set_major_formatter(lon_formatter)
     axs0.yaxis.set_major_formatter(lat_formatter)
-    axs0.tick_params(labelsize=7)
+    axs0.tick_params(labelsize=4)
+    axs0.tick_params(width=0.5, pad=1)
     extent = [0, 359, -80, 20]
     axs0.set_extent(extent, crs=crs_latlon)
     axs0.set_aspect('equal')
-    axs0.set_title(title0, fontsize=13)
+    axs0.set_title(title0, fontsize=6, pad=1)
+    for spine in axs0.spines.values():
+        spine.set_linewidth(0.5)
 
     i2 = 1
     plots = data2.plots.values
     for i in plots:
         axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]}) ",
-                            transform=axs[i].transAxes, size=12)
+                            transform=axs[i].transAxes, size=6)
         i2 += 1
 
         aux = data2.sel(plots=i)
@@ -3356,14 +3425,18 @@ def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
         else:
             levels_ctn.remove(0)
 
-        axs[i].add_feature(cartopy.feature.LAND, facecolor='white')
-        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1)
-        axs[i].gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-',
-                       zorder=20)
+        axs[i].add_feature(cartopy.feature.LAND, facecolor='white',
+                           linewidth=0.5)
+        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1,
+                          linewidth=0.2)
+        gl = axs[i].gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
+                          zorder=20)
+        gl.ylocator = plt.MultipleLocator(20)
+        gl.xlocator = plt.MultipleLocator(60)
 
         axs[i].contour(data2_ctn.lon.values, data2_ctn.lat.values,
-                   aux_ctn_var, linewidths=1,
+                   aux_ctn_var, linewidths=0.4,
                    levels=levels_ctn, transform=crs_latlon,
                    colors='k')
 
@@ -3373,26 +3446,30 @@ def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
         lat_formatter = LatitudeFormatter()
         axs[i].xaxis.set_major_formatter(lon_formatter)
         axs[i].yaxis.set_major_formatter(lat_formatter)
-        axs[i].tick_params(labelsize=7)
+        axs[i].tick_params(labelsize=4)
+        axs[i].tick_params(width=0.5, pad=1)
         extent = [0, 359, -80, 20]
         axs[i].set_extent(extent, crs=crs_latlon)
         axs[i].set_aspect('equal')
 
-        axs[i].set_title(titles2[i], fontsize=13)
+        axs[i].set_title(titles2[i], fontsize=6, pad=1)
 
-    pos = subfigs[0].add_axes([0.92, 0.16, 0.01, 0.75])
-    cb0 = subfigs[0].colorbar(im0, cax=pos, pad=0.1, orientation='vertical')
-    cb0.ax.tick_params(labelsize=12)
+        for spine in axs[i].spines.values():
+            spine.set_linewidth(0.5)
 
-    pos = subfigs[1].add_axes([0.195, 0.03, 0.5, 0.02])
-    cb1 = subfigs[1].colorbar(im1, cax=pos, pad=0.1, orientation='horizontal')
-    cb1.ax.tick_params(labelsize=12)
+    # pos = subfigs[0].add_axes([0.96, 0.16, 0.01, 0.75])
+    # cb0 = subfigs[0].colorbar(im0, cax=pos, pad=0, orientation='vertical')
+    # cb0.ax.tick_params(labelsize=5, pad=1)
 
-    fig.subplots_adjust(bottom=0.1, wspace=0, hspace=0.25, left=0, right=0.90,
+    pos = subfigs[1].add_axes([0.25, 0.01, 0.5, 0.02])
+    cb1 = subfigs[1].colorbar(im1, cax=pos, pad=1, orientation='horizontal')
+    cb1.ax.tick_params(labelsize=5, pad=1)
+
+    fig.subplots_adjust(bottom=0.1, wspace=0, hspace=0.25, left=0, right=1,
                         top=1)
 
     if save:
-        plt.savefig(f"{out_dir}{namefig}.png", dpi=dpi, bbox_inches='tight')
+        plt.savefig(f"{out_dir}{namefig}.pdf", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()

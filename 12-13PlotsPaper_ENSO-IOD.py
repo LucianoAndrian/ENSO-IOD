@@ -210,7 +210,7 @@ PlotFinal_Figs12_13(cases_ordenados, scale_hgt_comp, cbar, aux_num, 'figure12',
                     data_ctn=cases_ordenados, color_ctn='k',
                     row_titles=row_titles, col_titles=col_titles,
                     clim_plot=clim, clim_cbar='Reds',
-                    clim_levels=np.linspace(11000,12500,7))
+                    clim_levels=np.linspace(11000,12500,7), high=0.55)
 
 print('#######################################################################')
 print('Figure13')
@@ -252,7 +252,8 @@ for c in cases_magnitude:
         aux_num.append('')
 
 
-    da = xr.DataArray(aux['var'], dims=["lat", "lon"], coords={"lat": lat, "lon": lon},
+    da = xr.DataArray(aux['var'], dims=["lat", "lon"],
+                      coords={"lat": lat, "lon": lon},
                       name="var")
     cases_ordenados.append(da)
 
@@ -265,7 +266,7 @@ PlotFinal_Figs12_13(cases_ordenados, scale_hgt_snr, cbar_snr, aux_num,
                     data_ctn=cases_ordenados, color_ctn='k',
                     row_titles=row_titles, col_titles=col_titles,
                     clim_plot=clim, clim_cbar='Reds',
-                    clim_levels=np.linspace(11000,12500,7))
+                    clim_levels=np.linspace(11000,12500,7), high=0.55)
 print('#######################################################################')
 print('Done')
 print('#######################################################################')

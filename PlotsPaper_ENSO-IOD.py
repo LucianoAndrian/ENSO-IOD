@@ -851,45 +851,45 @@ dmi_neutro, n34_neutro = SelectParIndex('neutros', 'neutros',
                                         by_r=False)
 
 
-fig, ax = plt.subplots(dpi=dpi, figsize=(10, 10))
+fig, ax = plt.subplots(dpi=dpi, figsize=(7.08661, 7.08661))
 
 # todos
 ax.scatter(y=n34_neutro, x=dmi_neutro, marker='o', label='Niño3.4 vs DMI',
-           s=50*scatter_size_fix, edgecolor='k', color='dimgray', alpha=1)
+           s=30*scatter_size_fix, edgecolor='k', color='dimgray', alpha=1)
 
 # dmi puros
 ax.scatter(x=dmi_puros_pos, y=n34_in_dmi_puros_pos, marker='o',
-           s=50*scatter_size_fix, edgecolor='k', color='firebrick',
+           s=30*scatter_size_fix, edgecolor='k', color='firebrick',
            alpha=1, label='IOD+')
 ax.scatter(x=dmi_puros_neg, y=n34_in_dmi_puros_neg, marker='o',
-           s=50*scatter_size_fix, edgecolor='k', color='limegreen',
+           s=30*scatter_size_fix, edgecolor='k', color='limegreen',
            alpha=1, label='IOD-')
 
 # n34 puros
 ax.scatter(x=dmi_in_n34_puros_pos, y=n34_puros_pos, marker='o',
-            s=50*scatter_size_fix, edgecolor='k', color='navy', alpha=1,
+            s=30*scatter_size_fix, edgecolor='k', color='navy', alpha=1,
            label='El Niño')
 ax.scatter(x=dmi_in_n34_puros_neg, y=n34_puros_neg, marker='o',
-           s=50*scatter_size_fix, edgecolor='k', color='deeppink',
+           s=30*scatter_size_fix, edgecolor='k', color='deeppink',
            alpha=1, label='La Niña')
 
 # sim
-ax.scatter(x=dmi_sim_pos, y=n34_sim_pos, marker='o', s=50*scatter_size_fix,
+ax.scatter(x=dmi_sim_pos, y=n34_sim_pos, marker='o', s=30*scatter_size_fix,
            edgecolor='k', color='#FF5B12', alpha=1, label='El Niño & IOD+')
-ax.scatter(x=dmi_sim_neg, y=n34_sim_neg, marker='o', s=50*scatter_size_fix,
+ax.scatter(x=dmi_sim_neg, y=n34_sim_neg, marker='o', s=30*scatter_size_fix,
            edgecolor='k', color='deepskyblue', alpha=1,
            label='La Niña & IOD-')
 
 # sim opp. sing
 ax.scatter(x=dmi_pos_n34_neg, y=n34_in_dmi_pos_n34_neg, marker='o',
-           s=50*scatter_size_fix, edgecolor='k', color='orange', alpha=1,
+           s=30*scatter_size_fix, edgecolor='k', color='orange', alpha=1,
            label='La Niña & IOD+')
 ax.scatter(x=dmi_neg_n34_pos, y=n34_in_dmi_neg_n34_pos, marker='o',
-            s=50*scatter_size_fix, edgecolor='k', color='gold', alpha=1,
+            s=30*scatter_size_fix, edgecolor='k', color='gold', alpha=1,
            label='El Niño & IOD-')
 
 ax.legend(loc=(.01, .57), fontsize=label_legend_size)
-ax.tick_params(axis='both', which='major', labelsize=tick_label_size)
+ax.tick_params(axis='both', which='major', labelsize=tick_label_size, pad=1)
 ax.set_ylim((-5, 5))
 ax.set_xlim((-5, 5))
 ax.axhspan(-.5, .5, alpha=0.2, color='black', zorder=0)
@@ -900,16 +900,18 @@ ax.text(-4.9, 4.6, 'EN/IOD-', dict(size=in_label_size))
 ax.text(-.2, 4.6, 'EN', dict(size=in_label_size))
 ax.text(+3.7, 4.6, 'EN/IOD+', dict(size=in_label_size))
 ax.text(+4.2, -.1, 'IOD+', dict(size=in_label_size))
-ax.text(+3.78, -4.9, 'LN/IOD+', dict(size=in_label_size))
+ax.text(+3.7, -4.9, 'LN/IOD+', dict(size=in_label_size))
 ax.text(-.2, -4.9, 'LN', dict(size=in_label_size))
 ax.text(-4.9, -4.9, ' LN/IOD-', dict(size=in_label_size))
 ax.text(-4.9, -.1, 'IOD-', dict(size=in_label_size))
 plt.tight_layout()
 
 if save:
-    plt.savefig(out_dir + 'figure8.png')
+    plt.savefig(out_dir + 'figure8.pdf', dpi=dpi, bbox_inches='tight')
+    plt.close('all')
 else:
     plt.show()
+
 ################################################################################
 print('#######################################################################')
 print('Figure 9')
@@ -927,7 +929,7 @@ aux_sst = xr.concat(aux_sst, dim='plots')
 
 PlotFinal(data=aux_sst, levels=scale_sst_comp, cmap=cbar_sst,
           titles=title_case, namefig=f"figure9", map='tr',
-          save=save, dpi=dpi, out_dir=out_dir)
+          save=save, dpi=dpi, out_dir=out_dir, high=0.9)
 ################################################################################
 print('#######################################################################')
 print('Figure 10-11')
@@ -958,12 +960,12 @@ aux_hgt_snr = xr.concat(aux_hgt_snr, dim='plots')
 PlotFinal(data=aux_hgt, levels=scale_hgt_comp, cmap=cbar,
           titles=title_case, namefig=f"figure10", map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
-          data_ctn=aux_hgt, color_ctn='k')
+          data_ctn=aux_hgt, color_ctn='k', high=1.3)
 
 PlotFinal(data=aux_hgt_snr, levels=scale_hgt_snr, cmap=cbar_snr,
           titles=title_case, namefig=f"figure11", map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
-          data_ctn=aux_hgt_snr, color_ctn='k')
+          data_ctn=aux_hgt_snr, color_ctn='k', high=1.3)
 ################################################################################
 print('#######################################################################')
 print('Figure 14')
@@ -1118,7 +1120,7 @@ PlotFinal14(data=aux_data_f, levels=scale_t, cmap=cbar,
             namefig=f"figure14", save=save, dpi=dpi,
             out_dir=out_dir, sig_points=aux_sig_f,
             lons=lons_cont*len(aux_data_f.plots), levels2=scale_pp,
-            cmap2=cbar_pp)
+            cmap2=cbar_pp, high=3.9)
 
 print('#######################################################################')
 print('Figure 15-16')
@@ -1177,7 +1179,7 @@ for v_count, v in enumerate(variables_tpp):
                    cmap=aux_cbar[v_count], titles=title_case,
                    namefig=f"figure{v_count+15}", save=save, dpi=dpi,
                    out_dir=out_dir, sig_points=aux_sig,
-                   lons=lons_cont*len(aux_var_no_sig.plots))
+                   lons=lons_cont*len(aux_var_no_sig.plots), high=3)
 
 print('#######################################################################')
 print('Figure sup. 1-2')
@@ -1200,7 +1202,7 @@ data_hgt['plots'] = range(0, len(years))
 PlotFinal(data=data_hgt, levels=scale_hgt_ind, cmap=cbar,
           titles=title_years, namefig=f"s-figure1", map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
-          data_ctn=data_hgt, color_ctn='k')
+          data_ctn=data_hgt, color_ctn='k', high=1.25)
 
 # Ks ------------------------------------------------------------------------- #
 u = xr.open_dataset(data_dir + 'u_UV200_w_detrend.nc')
@@ -1222,10 +1224,9 @@ ks = ks.to_dataset()
 ks = ks.rename({'time':'plots'})
 ks['plots'] = range(0, len(years))
 
-
 PlotFinal(data=ks, levels=scale_ks, cmap=cbar_ks,
           titles=title_years, namefig=f"s-figure2", map='hs',
-          save=save, dpi=dpi, out_dir=out_dir)
+          save=save, dpi=dpi, out_dir=out_dir, high=1.25)
 
 print('#######################################################################')
 print('Figure sup. 3')
@@ -1365,18 +1366,18 @@ aux_events_dif = [enso_dif_obs, iod_dif_obs, enso_dif_cfs, iod_dif_cfs]
 aux_events_dif = xr.concat(aux_events_dif, dim='plots')
 aux_events_dif_test = SetDataToPlotFinal(enso_obs_test, iod_obs_test,
                                  enso_cfs_test, iod_cfs_test)
-
+scale_aux = [-375, -275, -175, -75, -15, 0, 15, 75, 175, 275, 375]
 PlotFinalFigS3(dif_f, dif.rename({'hgt':'var'}), scale_hgt, cbar,
                'Seasonal mean climatological differences',
                's-figure3', save, dpi, out_dir,
                data2=aux_events_dif.where(aux_events_dif_test<0.05),
-               levels2=scale_hgt_comp, cmap2=cbar, data2_ctn=aux_events_dif,
+               levels2=scale_aux, cmap2=cbar, data2_ctn=aux_events_dif,
                titles2=['Composites differences ERA5 El Niño - La Niña',
                         'Composites differences ERA5 positive IOD - '
                         'negative IOD',
                         'Composites differences CFSv2 El Niño - La Niña',
                         'Composites differences CFSv2 positive IOD - '
-                        'negative IOD'])
+                        'negative IOD'], high=4.4)
 print('########################################################################'
       '##########')
 print(f"Done: out_dir:{out_dir}")
