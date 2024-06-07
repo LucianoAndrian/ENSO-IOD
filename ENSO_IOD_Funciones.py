@@ -2614,8 +2614,8 @@ def CreateDirectory(out_dir, *args):
             if not os.path.exists(os.path.join(out_dir, str(arg))):
                 os.mkdir(os.path.join(out_dir, str(arg)))
 
-def DirAndFile(out_dir, dir_results, common_name, names):
-    file_name = f"{'_'.join(names)}_{common_name}.jpg"
+def DirAndFile(out_dir, dir_results, common_name, names, format='jpg'):
+    file_name = f"{'_'.join(names)}_{common_name}.{format}"
     path = os.path.join(out_dir, dir_results, file_name)
     return path
 
@@ -2954,7 +2954,7 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
         if plot == 12:
             cp = ax.contour(clim_plot.lon.values[::3],
                             clim_plot.lat.values[::3],
-                            clim_plot['var'][::3,::3], linewidths=1,
+                            clim_plot['var'][::3,::3], linewidth=1,
                             levels=clim_levels, transform=crs_latlon,
                             cmap=clim_cbar)
             # cp = ax.contourf(clim_plot.lon.values, clim_plot.lat.values,
@@ -2966,7 +2966,7 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
 
             #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
             ax.coastlines(color='k', linestyle='-', alpha=1,
-                          resolution='110m', linedith=0.2)
+                          resolution='110m', linewidth=0.2)
             ax.set_title('Climatology', fontsize=4, pad=1)
 
             gl = ax.gridlines(draw_labels=False, linewidth=0.3,
