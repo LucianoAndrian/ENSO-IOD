@@ -437,25 +437,25 @@ ax.scatter(x=dmi_un_pos.values, y=dmi_un_pos_n34_values.values, marker='o',
            s=30*scatter_size_fix, edgecolor='k', facecolor='firebrick',
            alpha=1, label='IOD+')
 ax.scatter(x=dmi_un_neg.values, y=dmi_un_neg_n34_values.values, marker='o',
-           s=30*scatter_size_fix, facecolor='limegreen', edgecolor='k',
+           s=30*scatter_size_fix, facecolor='#7CCD73', edgecolor='k',
            alpha=1, label='IOD-')
 # n34 puros
 ax.scatter(y=n34_un_pos.values, x=n34_un_pos_dmi_values.values, marker='o',
            s=30*scatter_size_fix, edgecolors='k', facecolor='navy', alpha=1,
            label='El Niño')
 ax.scatter(y=n34_un_neg.values, x=n34_un_neg_dmi_values.values, marker='o',
-           s=30*scatter_size_fix, edgecolors='k', facecolor='deeppink',
+           s=30*scatter_size_fix, edgecolors='k', facecolor='#DE00FF',
            alpha=1, label='La Niña')
 # sim
 ax.scatter(x=dmi_sim_pos.values, y=n34_sim_pos.values, marker='o',
            s=30*scatter_size_fix, edgecolor='k', color='#FF5B12', alpha=1,
            label='El Niño & IOD+')
 ax.scatter(x=dmi_sim_neg.values, y=n34_sim_neg.values, marker='o',
-           s=30*scatter_size_fix, edgecolor='k', color='deepskyblue',
+           s=30*scatter_size_fix, edgecolor='k', color='#63A6FF',
            alpha=1, label='La Niña & IOD-')
 # sim opp. sing
 ax.scatter(x=dmi_pos_n34_neg.values, y=n34_sim_neg.values, marker='o',
-           s=30*scatter_size_fix, edgecolor='k', color='orange', alpha=1,
+           s=30*scatter_size_fix, edgecolor='k', color='#FF9232', alpha=1,
            label='La Niña & IOD+')
 ax.scatter(x=dmi_neg_n34_pos.values, y=n34_sim_pos.values, marker='o',
            s=30*scatter_size_fix, edgecolor='k', color='gold', alpha=1,
@@ -862,7 +862,7 @@ ax.scatter(x=dmi_puros_pos, y=n34_in_dmi_puros_pos, marker='o',
            s=30*scatter_size_fix, edgecolor='k', color='firebrick',
            alpha=1, label='IOD+')
 ax.scatter(x=dmi_puros_neg, y=n34_in_dmi_puros_neg, marker='o',
-           s=30*scatter_size_fix, edgecolor='k', color='limegreen',
+           s=30*scatter_size_fix, edgecolor='k', color='#7CCD73',
            alpha=1, label='IOD-')
 
 # n34 puros
@@ -870,19 +870,19 @@ ax.scatter(x=dmi_in_n34_puros_pos, y=n34_puros_pos, marker='o',
             s=30*scatter_size_fix, edgecolor='k', color='navy', alpha=1,
            label='El Niño')
 ax.scatter(x=dmi_in_n34_puros_neg, y=n34_puros_neg, marker='o',
-           s=30*scatter_size_fix, edgecolor='k', color='deeppink',
+           s=30*scatter_size_fix, edgecolor='k', color='#DE00FF',
            alpha=1, label='La Niña')
 
 # sim
 ax.scatter(x=dmi_sim_pos, y=n34_sim_pos, marker='o', s=30*scatter_size_fix,
            edgecolor='k', color='#FF5B12', alpha=1, label='El Niño & IOD+')
 ax.scatter(x=dmi_sim_neg, y=n34_sim_neg, marker='o', s=30*scatter_size_fix,
-           edgecolor='k', color='deepskyblue', alpha=1,
+           edgecolor='k', color='#63A6FF', alpha=1,
            label='La Niña & IOD-')
 
 # sim opp. sing
 ax.scatter(x=dmi_pos_n34_neg, y=n34_in_dmi_pos_n34_neg, marker='o',
-           s=30*scatter_size_fix, edgecolor='k', color='orange', alpha=1,
+           s=30*scatter_size_fix, edgecolor='k', color='#FF9232', alpha=1,
            label='La Niña & IOD+')
 ax.scatter(x=dmi_neg_n34_pos, y=n34_in_dmi_neg_n34_pos, marker='o',
             s=30*scatter_size_fix, edgecolor='k', color='gold', alpha=1,
@@ -929,7 +929,7 @@ aux_sst = xr.concat(aux_sst, dim='plots')
 
 PlotFinal(data=aux_sst, levels=scale_sst_comp, cmap=cbar_sst,
           titles=title_case, namefig=f"figure9", map='tr',
-          save=save, dpi=dpi, out_dir=out_dir, high=0.9)
+          save=save, dpi=dpi, out_dir=out_dir, high=0.9, step=3)
 ################################################################################
 print('#######################################################################')
 print('Figure 10-11')
@@ -1202,7 +1202,7 @@ data_hgt['plots'] = range(0, len(years))
 PlotFinal(data=data_hgt, levels=scale_hgt_ind, cmap=cbar,
           titles=title_years, namefig=f"s-figure1", map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
-          data_ctn=data_hgt, color_ctn='k', high=1.25)
+          data_ctn=data_hgt, color_ctn='k', high=1.25, step=4)
 
 # Ks ------------------------------------------------------------------------- #
 u = xr.open_dataset(data_dir + 'u_UV200_w_detrend.nc')
@@ -1224,9 +1224,10 @@ ks = ks.to_dataset()
 ks = ks.rename({'time':'plots'})
 ks['plots'] = range(0, len(years))
 
-PlotFinal(data=ks, levels=scale_ks, cmap=cbar_ks,
-          titles=title_years, namefig=f"s-figure2", map='hs',
-          save=save, dpi=dpi, out_dir=out_dir, high=1.25)
+ks2 = xr.where(np.isnan(ks), 0.5 , np.nan)
+PlotFinal(data=ks2, levels=[0,1,2], cmap=cbar, titles=title_years,
+          namefig=f"s-figure2", map='hs', save=save, dpi=dpi,
+          out_dir=out_dir, high=1.25, step=1, cbar_pos='V')
 
 print('#######################################################################')
 print('Figure sup. 3')

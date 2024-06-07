@@ -2681,7 +2681,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
               data_ctn2=None, levels_ctn2=None, color_ctn2=None,
               data_waf=None, wafx=None, wafy=None, waf_scale=None,
               waf_step=None, waf_label=None, sig_points=None, hatches=None,
-              num_cols=None, high=2, width = 7.08661):
+              num_cols=None, high=2, width = 7.08661, step=2, cbar_pos = 'H'):
 
     import matplotlib.gridspec as gridspec
     # cantidad de filas necesarias
@@ -2738,8 +2738,8 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
                 aux_ctn_var = aux_ctn['var'].values
             except:
                 aux_ctn_var = aux_ctn.values
-            ax.contour(data_ctn.lon.values, data_ctn.lat.values,
-                       aux_ctn_var, linewidths=0.4,
+            ax.contour(data_ctn.lon.values[::step], data_ctn.lat.values[::step],
+                       aux_ctn_var[::step, ::step], linewidths=0.4,
                        levels=levels_ctn, transform=crs_latlon,
                        colors=color_ctn)
 
@@ -2759,8 +2759,9 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
                 aux_ctn_var = aux_ctn['var'].values
             except:
                 aux_ctn_var = aux_ctn.values
-            ax.contour(data_ctn2.lon.values[::2], data_ctn2.lat.values[::2],
-                       aux_ctn_var[::2, ::2], linewidths=0.5,
+            ax.contour(data_ctn2.lon.values[::step],
+                       data_ctn2.lat.values[::step],
+                       aux_ctn_var[::step, ::step], linewidths=0.5,
                        levels=levels_ctn2, transform=crs_latlon,
                        colors=color_ctn2)
 
@@ -2769,7 +2770,8 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
             aux_var = aux['var'].values
         except:
             aux_var = aux.values
-        im = ax.contourf(aux.lon.values, aux.lat.values, aux_var,
+        im = ax.contourf(aux.lon.values[::step], aux.lat.values[::step],
+                         aux_var[::step,::step],
                          levels=levels,
                          transform=crs_latlon, cmap=cmap, extend='both')
 
@@ -2816,8 +2818,9 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
             #hatches = '....'
             colors_l = ['k', 'k']
             comp_sig_var = aux_sig_points['var']
-            cs = ax.contourf(aux_sig_points.lon, aux_sig_points.lat,
-                             comp_sig_var, transform=crs_latlon,
+            cs = ax.contourf(aux_sig_points.lon[::step],
+                             aux_sig_points.lat[::step],
+                             comp_sig_var[::step,::step], transform=crs_latlon,
                              colors='none', hatches=[hatches, hatches],
                              extend='lower')
 
@@ -2829,8 +2832,9 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
 
         ax.add_feature(cartopy.feature.LAND, facecolor='white', linewidth=0.5)
 
-        ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
-        ax.coastlines(color='dimgrey', linestyle='-', alpha=1, linewidth=0.2)
+        #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+        ax.coastlines(color='k', linestyle='-', alpha=1, linewidth=0.2,
+                      resolution='110m')
         gl = ax.gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
                           zorder=20)
         gl.ylocator = plt.MultipleLocator(20)
@@ -2854,18 +2858,25 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
     # for i in range(num_plots, num_rows * num_cols):
     #     fig.delaxes(axes.flatten()[i])
 
-    cbar_pos = 'H'
+    #cbar_pos = 'H'
     if cbar_pos.upper() == 'H':
         pos = fig.add_axes([0.235, 0.03, 0.5, 0.02])
         cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
         cb.ax.tick_params(labelsize=5, pad=1)
+        fig.subplots_adjust(bottom=0.1, wspace=0, hspace=0.25, left=0, right=1,
+                            top=1)
     elif cbar_pos.upper() == 'V':
-        pos = fig.add_axes([0.2, 0.05, 0.6, 0.02])
-        cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
-        cb.ax.tick_params(labelsize=4, pad=1)
+        import matplotlib.patches as mpatches
+        aux_color = cmap.colors[2]
+        patch = mpatches.Patch(color=aux_color, label='Ks < 0')
 
-    fig.subplots_adjust(bottom=0.1, wspace=0, hspace=0.25, left=0, right=1,
-                        top=1)
+        legend = fig.legend(handles=[patch], loc='lower center', fontsize=8,
+                            frameon=True, framealpha=1, fancybox=True)
+        legend.set_bbox_to_anchor((0.5, 0.01), transform=fig.transFigure)
+        legend.get_frame().set_linewidth(0.5)
+        fig.subplots_adjust(bottom=0.1, wspace=0, hspace=0.25, left=0, right=1,
+                            top=1)
+
     if save:
         plt.savefig(f"{out_dir}{namefig}.pdf", dpi=dpi, bbox_inches='tight')
         plt.close()
@@ -2941,8 +2952,9 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
         ax.tick_params(width=0.5, pad=1, labelsize=4)
 
         if plot == 12:
-            cp = ax.contour(clim_plot.lon.values, clim_plot.lat.values,
-                            clim_plot['var'], linewidths=1,
+            cp = ax.contour(clim_plot.lon.values[::3],
+                            clim_plot.lat.values[::3],
+                            clim_plot['var'][::3,::3], linewidths=1,
                             levels=clim_levels, transform=crs_latlon,
                             cmap=clim_cbar)
             # cp = ax.contourf(clim_plot.lon.values, clim_plot.lat.values,
@@ -2952,8 +2964,9 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
 
             ax.add_feature(cartopy.feature.LAND, facecolor='white')
 
-            ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
-            ax.coastlines(color='dimgrey', linestyle='-', alpha=1)
+            #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+            ax.coastlines(color='k', linestyle='-', alpha=1,
+                          resolution='110m', linedith=0.2)
             ax.set_title('Climatology', fontsize=4, pad=1)
 
             gl = ax.gridlines(draw_labels=False, linewidth=0.3,
@@ -2990,8 +3003,9 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                     except:
                         aux_ctn_var = aux_ctn.values
 
-                    ax.contour(data_ctn.lon.values, data_ctn.lat.values,
-                               aux_ctn_var, linewidths=0.4,
+                    ax.contour(data_ctn.lon.values[::3],
+                               data_ctn.lat.values[::3],
+                               aux_ctn_var[::3,::3], linewidths=0.4,
                                levels=levels_ctn, transform=crs_latlon,
                                colors=color_ctn)
                 else:
@@ -3004,22 +3018,21 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                 aux_var = aux.values
 
             if aux.mean().values != 0:
-                im = ax.contourf(aux.lon.values, aux.lat.values, aux_var,
+                im = ax.contourf(aux.lon.values[::3],
+                                 aux.lat.values[::3], aux_var[::3,::3],
                                  levels=levels,
                                  transform=crs_latlon, cmap=cmap, extend='both')
 
                 ax.add_feature(cartopy.feature.LAND, facecolor='white',
                                linewidth=0.5)
-
-                ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
-                ax.coastlines(color='dimgrey', linestyle='-', alpha=1,
-                              linewidth=0.2)
+                #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+                ax.coastlines(color='k', linestyle='-', alpha=1,
+                              linewidth=0.2, resolution='110m')
                 gl = ax.gridlines(draw_labels=False, linewidth=0.3,
                                   linestyle='-',
                                   zorder=20)
                 gl.ylocator = plt.MultipleLocator(20)
                 gl.xlocator = plt.MultipleLocator(60)
-
 
             else:
                 remove_axes = True
@@ -3048,7 +3061,7 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
                 sig_points=None, lons=None, levels2=None, cmap2=None,
                 high=4, width = 7.08661):
 
-    hatches='//////'
+    hatches='///'
     variable = ['Temperature', None, None, 'Precipitation']
     plots = data.plots.values
     num_plots = len(plots)
@@ -3103,14 +3116,15 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
             aux_var = aux.values
 
         if i in [0, 1, 2, 6, 7, 8, 12, 13, 14, 18, 19, 20]:
-            im0 = axs[i].contourf(aux.lon.values, aux.lat.values, aux_var,
+            im0 = axs[i].contourf(aux.lon.values[::2], aux.lat.values[::2],
+                                  aux_var[::2,::2],
                                  levels=levels, cmap=cmap, extend='both',
                                  transform=ccrs.PlateCarree())
         else:
-            im1 = axs[i].contourf(aux.lon.values, aux.lat.values, aux_var,
+            im1 = axs[i].contourf(aux.lon.values[::2], aux.lat.values[::2],
+                                  aux_var[::2, ::2],
                                   levels=levels2, cmap=cmap2, extend='both',
                                   transform=ccrs.PlateCarree())
-
 
         if sig_points is not None:
             aux_sig_points = sig_points.sel(plots=i)
@@ -3121,9 +3135,11 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
                 comp_sig_var = aux_sig_points.values
 
             mpl.rcParams['hatch.linewidth'] = 0.5
-            cs = axs[i].contourf(aux_sig_points.lon, aux_sig_points.lat,
-                                 comp_sig_var, transform=ccrs.PlateCarree(),
-                                 colors='none', hatches=['///////', '///////'],
+            cs = axs[i].contourf(aux_sig_points.lon[::2],
+                                 aux_sig_points.lat[::2],
+                                 comp_sig_var[::2,::2],
+                                 transform=ccrs.PlateCarree(),
+                                 colors='none', hatches=['//////', '//////'],
                                  extend='lower')
 
             for i3, collection in enumerate(cs.collections):
@@ -3134,9 +3150,9 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
 
         axs[i].add_feature(cartopy.feature.LAND, facecolor='white',
                            linewidth=0.5)
-        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
-        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1,
-                          linewidth=0.2)
+        #axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+        axs[i].coastlines(color='k', linestyle='-', alpha=1,
+                          linewidth=0.2, resolution='110m')
         gl = axs[i].gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
                           zorder=20)
         gl.ylocator = plt.MultipleLocator(20)
@@ -3241,7 +3257,8 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
         except:
             aux_var = aux.values
 
-        im = axs[i].contourf(aux.lon.values, aux.lat.values, aux_var,
+        im = axs[i].contourf(aux.lon.values[::2], aux.lat.values[::2],
+                             aux_var[::2,::2],
                              levels=levels, cmap=cmap, extend='both',
                              transform=ccrs.PlateCarree())
 
@@ -3250,8 +3267,10 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
             colors_l = ['k', 'k']
             comp_sig_var = aux_sig_points['var']
             mpl.rcParams['hatch.linewidth'] = 0.5
-            cs = axs[i].contourf(aux_sig_points.lon, aux_sig_points.lat,
-                                 comp_sig_var, transform=ccrs.PlateCarree(),
+            cs = axs[i].contourf(aux_sig_points.lon[::2],
+                                 aux_sig_points.lat[::2],
+                                 comp_sig_var[::2,::2],
+                                 transform=ccrs.PlateCarree(),
                                  colors='none', hatches=['///////', '///////'],
                                  extend='lower')
 
@@ -3262,9 +3281,9 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
                 collection.set_linewidth(0.)
 
         axs[i].add_feature(cartopy.feature.LAND, facecolor='white')
-        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1,
-                          linewidth=0.2)
+        #axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+        axs[i].coastlines(color='k', linestyle='-', alpha=1,
+                          linewidth=0.2, resolution='110m')
         gl = axs[i].gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
                           zorder=20)
         gl.ylocator = plt.MultipleLocator(20)
@@ -3351,9 +3370,10 @@ def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
     except:
         aux_var = aux.values
 
-    im0 = axs0.contourf(aux.lon.values, aux.lat.values, aux_var,
-                          levels=levels2, cmap=cmap2, extend='both',
-                          transform=ccrs.PlateCarree())
+    im0 = axs0.contourf(aux.lon.values[::2], aux.lat.values[::2],
+                        aux_var[::2,::2],
+                        levels=levels2, cmap=cmap2, extend='both',
+                        transform=ccrs.PlateCarree())
 
     aux_ctn = data_ctn
     try:
@@ -3367,15 +3387,17 @@ def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
     else:
         levels_ctn.remove(0)
 
-    axs0.contour(data2_ctn.lon.values, data2_ctn.lat.values,
-                   aux_ctn_var, linewidths=0.4,
-                   levels=levels_ctn, transform=crs_latlon,
-                   colors='k')
+    axs0.contour(data2_ctn.lon.values[::2],
+                 data2_ctn.lat.values[::2],
+                 aux_ctn_var[::2,::2], linewidths=0.4,
+                 levels=levels_ctn, transform=crs_latlon,
+                 colors='k')
 
     axs0.add_feature(cartopy.feature.LAND, facecolor='white',
                            linewidth=0.5)
-    axs0.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
-    axs0.coastlines(color='dimgrey', linestyle='-', alpha=1, linewidth=0.2)
+    #axs0.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+    axs0.coastlines(color='k', linestyle='-', alpha=1, linewidth=0.2,
+                    resolution='110m')
     gl = axs0.gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
                           zorder=20)
     gl.ylocator = plt.MultipleLocator(20)
@@ -3427,16 +3449,16 @@ def PlotFinalFigS3(data, data_ctn, levels, cmap, title0, namefig, save, dpi,
 
         axs[i].add_feature(cartopy.feature.LAND, facecolor='white',
                            linewidth=0.5)
-        axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
-        axs[i].coastlines(color='dimgrey', linestyle='-', alpha=1,
-                          linewidth=0.2)
+        #axs[i].add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
+        axs[i].coastlines(color='k', linestyle='-', alpha=1,
+                          linewidth=0.2, resolution='110m')
         gl = axs[i].gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
                           zorder=20)
         gl.ylocator = plt.MultipleLocator(20)
         gl.xlocator = plt.MultipleLocator(60)
 
-        axs[i].contour(data2_ctn.lon.values, data2_ctn.lat.values,
-                   aux_ctn_var, linewidths=0.4,
+        axs[i].contour(data2_ctn.lon.values[::2], data2_ctn.lat.values[::2],
+                   aux_ctn_var[::2,::2], linewidths=0.4,
                    levels=levels_ctn, transform=crs_latlon,
                    colors='k')
 
