@@ -2808,7 +2808,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
                           angles='xy', scale_units='xy')
 
             ax.quiverkey(Q, 0.85, 0.05, waf_label,
-                         f'{waf_label:.1e} $m^2$ $s^{-2}$',
+                         f'{waf_label:.1e} $m^2$ $s^{{-2}}$',
                          labelpos='E', coordinates='figure',
                          labelsep=0.05,
                          fontproperties=FontProperties(size=6, weight='light'))
