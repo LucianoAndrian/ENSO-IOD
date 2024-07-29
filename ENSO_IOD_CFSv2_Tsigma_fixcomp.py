@@ -103,7 +103,7 @@ cbar_snr.set_under('#070B4F')
 cbar_snr.set_bad(color='white')
 #-------------------------------------------------------------------------------
 
-scale_signal =  np.linspace(-1.2,1.2,13)
+scale_signal =  [-1, -.75, -.5, -.25, -.1, 0, .1, .25, .5, .75, 1]
 scale_snr = [-1,-.8,-.6,-.4,-.2,-.1,0,0.1,0.2,0.4,0.6,0.8,1]
 scale_prob = [.2,.3,.4,.45,.5,.55,.6,.7,.8]
 
@@ -133,7 +133,7 @@ for s in seasons:
             mask = MakeMask(comp, 'var')
             comp *= mask
 
-            Plot(comp, levels=scale_snr, cmap=cbar_t, dpi=dpi, step=1,
+            Plot(comp, levels=scale_signal, cmap=cbar_t, dpi=dpi, step=1,
                  name_fig='tsigma_comp_' + c + '_' + s + name_fig_end,
                  title='Mean Composite - CFSv2 - ' + s + '\n'
                        + title_case[c_count] + '\n' + ' ' + 'tsigma'
