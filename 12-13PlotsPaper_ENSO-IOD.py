@@ -5,7 +5,7 @@ de este codigo es para reordenar la salida de BinsByCases para poder graficar
 con la misma metodologia que el resto de las figuras.
 """
 ################################################################################
-save = True
+save = False
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/figuras_final/'
 # import #######################################################################
 import os
