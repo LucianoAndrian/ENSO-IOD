@@ -1894,8 +1894,12 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
                 snr=False, neutro_clim=False, obsdates=False):
 
     def Weights(data):
-        weights = np.transpose(np.tile(np.cos(np.linspace(-80,20,101) * np.pi / 180),
-                                       (len(data.lon), 1)))
+        # weights = np.transpose(np.tile(np.cos(np.linspace(-80,20,101) * np.pi / 180),
+        #                                (len(data.lon), 1)))
+        weights = np.transpose(
+            np.tile(np.cos(np.arange(
+                data.lat.min().values, data.lat.max().values+1) * np.pi / 180),
+                    (len(data.lon), 1)))
         data_w = data * weights
         return data_w
 
@@ -1909,14 +1913,19 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     data_dates_n34_or /= data_dates_n34_or.mean('r').std()
 
     # 1.1 Climatología y case
-    end_nc_file = '.nc' if v != 'tref' else '_nodetrend.nc'
+    end_nc_file = '.nc' #if v != 'tref' else '_nodetrend.nc'
+    print(end_nc_file)
 
     if neutro_clim:
         clim = Weights(xr.open_dataset(cases_dir + v + '_neutros' + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
     else:
         clim = Weights(xr.open_dataset(cases_dir + v + '_' + s.lower() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
-
-    case = Weights(xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
+    try:
+        case = Weights(xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
+    except:
+        print(f"case {c}, no encontrado para {v}")
+        aux = clim.mean('time').__mul__(0)
+        return aux, aux, aux
 
     # Anomalía
     for l in [0, 1, 2, 3]:
@@ -2887,7 +2896,8 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                         out_dir, data_ctn=None, levels_ctn=None,
                         color_ctn=None, row_titles=None, col_titles=None,
                         clim_plot=None, clim_levels=None,clim_cbar=None,
-                        high=2, width = 7.08661):
+                        high=2, width = 7.08661, cbar_pos='H', plot_step=3,
+                        contourf_clim=False):
     num_cols = 5
     num_rows = 5
 
@@ -2897,12 +2907,22 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
     if map.upper() == 'HS':
         extent = [0, 359, -80, 20]
         high = high
+        xticks = np.arange(0, 360, 60)
+        yticks = np.arange(-80, 20, 20)
     elif map.upper() == 'TR':
         extent = [45, 270, -20, 20]
         high = high
+        xticks = np.arange(0, 360, 60)
+        np.arange(-80, 20, 20)
     elif map.upper() == 'HS_EX':
         extent = [0, 359, -65, -20]
         high = high
+        xticks = np.arange(0, 360, 60)
+    elif map.upper() == 'SA':
+        extent = [270, 330, -60, 20]
+        high = high
+        yticks = np.arange(-60, 15+1, 10)
+        xticks = np.arange(275, 330+1, 10)
     else:
         print(f"Mapa {map} no seteado")
         return
@@ -2934,7 +2954,7 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
         if i in [4, 9, 14, 17, 22]:
             ax.yaxis.tick_right()
             ax.yaxis.set_label_position("right")
-            ax.set_yticks(np.arange(-80, 20, 20), crs=crs_latlon)
+            ax.set_yticks(yticks, crs=crs_latlon)
             ax.tick_params(width=0.3, pad=1)
             lat_formatter = LatitudeFormatter()
             ax.yaxis.set_major_formatter(lat_formatter)
@@ -2942,7 +2962,7 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
             ax.set_extent(extent, crs=crs_latlon)
 
         if i in [20,21,22, 23, 13, 14]:
-            ax.set_xticks(np.arange(0, 360, 60), crs=crs_latlon)
+            ax.set_xticks(xticks, crs=crs_latlon)
             ax.tick_params(width=0.3, pad=1)
             lon_formatter = LongitudeFormatter(zero_direction_label=True)
             ax.xaxis.set_major_formatter(lon_formatter)
@@ -2952,15 +2972,28 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
         ax.tick_params(width=0.5, pad=1, labelsize=4)
 
         if plot == 12:
-            cp = ax.contour(clim_plot.lon.values[::3],
-                            clim_plot.lat.values[::3],
-                            clim_plot['var'][::3,::3], linewidth=1,
-                            levels=clim_levels, transform=crs_latlon,
-                            cmap=clim_cbar)
-            # cp = ax.contourf(clim_plot.lon.values, clim_plot.lat.values,
-            #                 clim_plot['var'], levels=clim_levels,
-            #                 transform=crs_latlon, cmap=clim_cbar,
-            #                  extend='both')
+            if contourf_clim:
+                cp = ax.contourf(clim_plot.lon.values[::plot_step],
+                                 clim_plot.lat.values[::plot_step],
+                                 clim_plot['var'][::plot_step, ::plot_step],
+                                 levels=clim_levels,
+                                 transform=crs_latlon, cmap=clim_cbar,
+                                 extend='both')
+
+                # cp = ax.contour(clim_plot.lon.values[::plot_step],
+                #                 clim_plot.lat.values[::plot_step],
+                #                 clim_plot['var'][::plot_step, ::plot_step],
+                #                 linewidth=0.2, levels=clim_levels,
+                #                 transform=crs_latlon, colors='k')
+
+
+
+            else:
+                cp = ax.contour(clim_plot.lon.values[::plot_step],
+                                clim_plot.lat.values[::plot_step],
+                                clim_plot['var'][::plot_step, ::plot_step],
+                                linewidth=1, levels=clim_levels,
+                                transform=crs_latlon, cmap=clim_cbar)
 
             ax.add_feature(cartopy.feature.LAND, facecolor='white')
 
@@ -2972,8 +3005,10 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
             gl = ax.gridlines(draw_labels=False, linewidth=0.3,
                               linestyle='-',
                               zorder=20)
+
             gl.ylocator = plt.MultipleLocator(20)
             gl.xlocator = plt.MultipleLocator(60)
+
             for spine in ax.spines.values():
                 spine.set_linewidth(0.5)
 
@@ -3003,9 +3038,10 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                     except:
                         aux_ctn_var = aux_ctn.values
 
-                    ax.contour(data_ctn.lon.values[::3],
-                               data_ctn.lat.values[::3],
-                               aux_ctn_var[::3,::3], linewidths=0.4,
+                    ax.contour(data_ctn.lon.values[::plot_step],
+                               data_ctn.lat.values[::plot_step],
+                               aux_ctn_var[::plot_step,::plot_step],
+                               linewidths=0.4,
                                levels=levels_ctn, transform=crs_latlon,
                                colors=color_ctn)
                 else:
@@ -3018,8 +3054,9 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                 aux_var = aux.values
 
             if aux.mean().values != 0:
-                im = ax.contourf(aux.lon.values[::3],
-                                 aux.lat.values[::3], aux_var[::3,::3],
+                im = ax.contourf(aux.lon.values[::plot_step],
+                                 aux.lat.values[::plot_step],
+                                 aux_var[::plot_step,::plot_step],
                                  levels=levels,
                                  transform=crs_latlon, cmap=cmap, extend='both')
 
@@ -3043,19 +3080,30 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
             for spine in ax.spines.values():
                 spine.set_linewidth(0.5)
     # cbar_pos = 'H'
-    # if cbar_pos == 'H':
-    pos = fig.add_axes([0.261, 0, 0.5, 0.02])
-    cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
-    cb.ax.tick_params(labelsize=4, pad=1)
+    if cbar_pos.upper() == 'H':
+        pos = fig.add_axes([0.261, 0, 0.5, 0.02])
+        cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='horizontal')
+        cb.ax.tick_params(labelsize=4, pad=1)
 
-    fig.subplots_adjust(bottom=0.05, wspace=0, hspace=0.25, left=0, right=1,
-                        top=1)
+        fig.subplots_adjust(bottom=0.05, wspace=0, hspace=0.25, left=0, right=1,
+                            top=1)
+
+    elif cbar_pos.upper() == 'V':
+        pos = fig.add_axes([0.261, 0, 0.5, 0.02])
+        cb = fig.colorbar(im, cax=pos, pad=0.1, orientation='vertical')
+        cb.ax.tick_params(labelsize=4, pad=1)
+
+        fig.subplots_adjust(bottom=0.05, wspace=0, hspace=0.25, left=0, right=1,
+                            top=1)
+    else:
+        print(f"cbar_pos {cbar_pos} no valido")
+
+
     if save:
         plt.savefig(f"{out_dir}{namefig}.pdf", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
-
 
 def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
                 sig_points=None, lons=None, levels2=None, cmap2=None,
