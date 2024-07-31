@@ -4,7 +4,7 @@ de este codigo es para reordenar la salida de BinsByCases para poder graficar
 con la misma metodologia que el resto de las figuras.
 """
 ################################################################################
-save = False
+save = True
 out_dir = ('/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/'
            'fieldbycases/')
 # import #######################################################################
