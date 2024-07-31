@@ -24,7 +24,7 @@ save = True
 dpi = 300
 detrend = True
 save_nc = True
-plot = False
+plot = True
 # Funciones ####################################################################
 def Plot(comp, levels = np.linspace(-1,1,11), cmap='RdBu',
          dpi=100, save=True, step=1,
@@ -82,7 +82,7 @@ def SpatialProbability(data, mask):
                 / len(data['var'][:, lt, ln])
     return prob*mask
 ################################################################################
-seasons = ['JJA','SON']
+seasons = ['SON']
 cases = ['dmi_puros_pos', 'dmi_puros_neg', 'n34_puros_pos', 'n34_puros_neg',
          'sim_pos', 'sim_neg',
          'n34_pos', 'n34_neg', 'dmi_pos', 'dmi_neg']
@@ -184,15 +184,15 @@ for s in seasons:
                      save=save)
 
             # #prob
-            # comp_prob = case - neutro.mean('time')
-            # aux = xr.where(comp_prob > 0, comp_prob, np.nan)
-            # prob = SpatialProbability(aux, mask)
-            # Plot(prob, levels=scale_prob,cmap=cbar_Prueba, dpi=dpi, step=1,
-            #      name_fig='prec_prob_' + c + '_' + s + '_' + name_fig_end,
-            #      title='Probability of PP>0' + '- CFSv2 - ' + s + '\n'
-            #            + title_case[c_count] + '\n' + ' ' + 'PREC'
-            #            + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
-            #      save=save)
+            comp_prob = case - neutro.mean('time')
+            aux = xr.where(comp_prob > 0, comp_prob, np.nan)
+            prob = SpatialProbability(aux, mask)
+            Plot(prob, levels=scale_prob,cmap=cbar_Prueba, dpi=dpi, step=1,
+                 name_fig='prec_prob_' + c + '_' + s + '_' + name_fig_end,
+                 title='Probability of PP>0' + '- CFSv2 - ' + s + '\n'
+                       + title_case[c_count] + '\n' + ' ' + 'PREC'
+                       + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
+                 save=save)
 
         except:
             print('Error in ' + c + ' - ' + s)

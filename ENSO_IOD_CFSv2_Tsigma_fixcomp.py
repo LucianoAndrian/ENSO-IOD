@@ -154,16 +154,16 @@ for s in seasons:
                        + ' - ' + 'Cases: ' + str(num_case) + ' ' + name_fig_end,
                  save=save)
 
-            # #prob
-            # comp_prob = case - neutro.mean('time')
-            # aux = xr.where(comp_prob > 0, comp_prob, np.nan)
-            # prob = SpatialProbability(aux, mask)
-            # Plot(prob, levels=scale_prob,cmap=cbar_t, dpi=dpi, step=1,
-            #      name_fig='tsigma_prob_' + c + '_' + s,
-            #      title='Probability of T>0' + '- CFSv2 - ' + s + '\n'
-            #            + title_case[c_count] + '\n' + ' ' + 'tsigma'
-            #            + ' - ' + 'Cases: ' + str(num_case),
-            #      save=save)
+            #prob
+            comp_prob = case - neutro.mean('time')
+            aux = xr.where(comp_prob > 0, comp_prob, np.nan)
+            prob = SpatialProbability(aux, mask)
+            Plot(prob, levels=scale_prob,cmap=cbar_t, dpi=dpi, step=1,
+                 name_fig='tsigma_prob_' + c + '_' + s,
+                 title='Probability of T>0' + '- CFSv2 - ' + s + '\n'
+                       + title_case[c_count] + '\n' + ' ' + 'tsigma'
+                       + ' - ' + 'Cases: ' + str(num_case),
+                 save=save)
             
         except:
             print('Error in ' + c + ' - ' + s)
