@@ -1890,12 +1890,10 @@ def SelectBins(data, min, max, sd=1):
         return (data >= min*sd) & (data <= max*sd)
 
 def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
-                bin_limits, bins_by_cases_dmi, bins_by_cases_n34, dates_dir, cases_dir,
-                snr=False, neutro_clim=False, obsdates=False):
+                bin_limits, bins_by_cases_dmi, bins_by_cases_n34, dates_dir,
+                cases_dir, snr=False, neutro_clim=False):
 
     def Weights(data):
-        # weights = np.transpose(np.tile(np.cos(np.linspace(-80,20,101) * np.pi / 180),
-        #                                (len(data.lon), 1)))
         weights = np.transpose(
             np.tile(np.cos(np.arange(
                 data.lat.min().values, data.lat.max().values+1) * np.pi / 180),
@@ -1906,33 +1904,64 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     # 1. se abren los archivos de los índices (completos y se pesan por su SD)
     # tambien los archivos de la variable en cuestion pero para cada "case" = c
 
-    data_dates_dmi_or = xr.open_dataset(dates_dir + 'DMI_' + s + '_Leads_r_CFSv2.nc')
+    data_dates_dmi_or = xr.open_dataset(dates_dir + 'DMI_' + s +
+                                        '_Leads_r_CFSv2.nc')
     data_dates_dmi_or /=  data_dates_dmi_or.mean('r').std()
 
-    data_dates_n34_or = xr.open_dataset(dates_dir + 'N34_' + s + '_Leads_r_CFSv2.nc')
+    data_dates_n34_or = xr.open_dataset(dates_dir + 'N34_' + s +
+                                        '_Leads_r_CFSv2.nc')
     data_dates_n34_or /= data_dates_n34_or.mean('r').std()
 
     # 1.1 Climatología y case
     end_nc_file = '.nc' #if v != 'tref' else '_nodetrend.nc'
-    print(end_nc_file)
 
     if neutro_clim:
-        clim = Weights(xr.open_dataset(cases_dir + v + '_neutros' + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
+        clim = Weights(
+            xr.open_dataset(cases_dir + v + '_neutros' + '_' + s.upper() +
+                            end_nc_file).rename({v_name: 'var'}) * fix_factor)
     else:
-        clim = Weights(xr.open_dataset(cases_dir + v + '_' + s.lower() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
+        clim = Weights(
+            xr.open_dataset(cases_dir + v + '_' + s.lower() +
+                            end_nc_file).rename({v_name: 'var'}) * fix_factor)
     try:
-        case = Weights(xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() + end_nc_file).rename({v_name: 'var'}) * fix_factor)
+        case = Weights(
+            xr.open_dataset(cases_dir + v + '_' + c + '_' + s.upper() +
+                            end_nc_file).rename({v_name: 'var'}) * fix_factor)
     except:
         print(f"case {c}, no encontrado para {v}")
         aux = clim.mean('time').__mul__(0)
         return aux, aux, aux
 
+    if v == 'tref' or v == 'prec' or v == 'tsigma':
+        lat = np.arange(-60, 15 + 1)
+        lon = np.arange(275, 330 + 1)
+    else:
+        lat = np.linspace(-80, 20, 101)
+        lon = np.linspace(0, 359, 360)
+
+    if clim.lat[0]>clim.lat[-1]:
+        lat_clim = lat[::-1]
+    else:
+        lat_clim = lat
+    clim = clim.sel(lat=slice(lat_clim[0], lat_clim[-1]),
+                    lon=slice(lon[0], lon[-1]))
+
+    if case.lat[0] > case.lat[-1]:
+        lat_case = lat[::-1]
+    else:
+        lat_case = lat
+    case = case.sel(lat=slice(lat_case[0], lat_case[-1]),
+                    lon=slice(lon[0], lon[-1]))
+
+
     # Anomalía
     for l in [0, 1, 2, 3]:
         try:
-            clim_aux = clim.sel(time=clim.time.dt.month.isin(mm - l)).mean(['r', 'time'])
+            clim_aux = clim.sel(
+                time=clim.time.dt.month.isin(mm - l)).mean(['r', 'time'])
         except:
-            clim_aux = clim.sel(time=clim.time.dt.month.isin(mm - l)).mean(['time'])
+            clim_aux = clim.sel(
+                time=clim.time.dt.month.isin(mm - l)).mean(['time'])
 
         if l==0:
             anom = case.sel(time=case.time.dt.month.isin(mm - l)) - clim_aux
@@ -1950,22 +1979,13 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     # con .sortby(..time.dt.month) en cada caso se simplifica el problema
     # y coinciden todos los eventos en fecha, r y L
 
-    if obsdates: # por ahora no funca
-        print('Fechas Observadas deshabilitado')
-        return
-        # aux_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
-        # aux_cases = xr.open_dataset(aux_dir + v + '_' + c + '_' + s + '_CFSv2_obsDates.nc')\
-        #     .rename({v: 'index'})
-        # aux_cases['index'] = aux_cases.time
-        # aux_cases = aux_cases.drop(['lon', 'lat'])
-    else:
-        cases_date_dir = '/pikachu/datos/luciano.andrian/cases_dates/'
-        try:
-            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
-                .rename({'__xarray_dataarray_variable__': 'index'})
-        except:
-            aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
-                .rename({'sst': 'index'})
+    cases_date_dir = '/pikachu/datos/luciano.andrian/cases_dates/'
+    try:
+        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+            .rename({'__xarray_dataarray_variable__': 'index'})
+    except:
+        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+            .rename({'sst': 'index'})
 
     case_sel_dmi = SelectVariables(aux_cases, data_dates_dmi_or)
     case_sel_dmi = case_sel_dmi.sortby(case_sel_dmi.time.dt.month)
@@ -1989,16 +2009,21 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     # 3. Seleccion en cada bin
     anom_bin_main = list()
     num_bin_main = list()
-    for ba_dmi in range(0, len(bins_aux_dmi)):  # loops en las bins para el dmi segun case
-        bins_aux = data_merged.where(SelectBins(data_merged.dmi,
-                                                bin_limits[bins_aux_dmi[ba_dmi]][0],
-                                                bin_limits[bins_aux_dmi[ba_dmi]][1]))
+    # loops en las bins para el dmi segun case
+    for ba_dmi in range(0, len(bins_aux_dmi)):
+        bins_aux = data_merged.where(
+            SelectBins(data_merged.dmi,
+                       bin_limits[bins_aux_dmi[ba_dmi]][0],
+                       bin_limits[bins_aux_dmi[ba_dmi]][1]))
+
         anom_bin = list()
         num_bin = list()
-        for ba_n34 in range(0, len(bins_aux_n34)):  # loop en las correspondientes al n34 segun case
-            bin_f = bins_aux.where(SelectBins(bins_aux.n34,
-                                              bin_limits[bins_aux_n34[ba_n34]][0],
-                                              bin_limits[bins_aux_n34[ba_n34]][1]))
+        # loop en las correspondientes al n34 segun case
+        for ba_n34 in range(0, len(bins_aux_n34)):
+            bin_f = bins_aux.where(
+                SelectBins(bins_aux.n34,
+                           bin_limits[bins_aux_n34[ba_n34]][0],
+                           bin_limits[bins_aux_n34[ba_n34]][1]))
 
             if snr:
                 spread = bin_f - bin_f.mean(['time'])

@@ -4,7 +4,7 @@ de este codigo es para reordenar la salida de BinsByCases para poder graficar
 con la misma metodologia que el resto de las figuras.
 """
 ################################################################################
-save = True
+save = False
 out_dir = ('/home/luciano.andrian/doc/salidas/ENSO_IOD/Modelos/Composites/'
            'fieldbycases/')
 # import #######################################################################
@@ -23,7 +23,7 @@ from shapely.errors import ShapelyDeprecationWarning
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 warnings.filterwarnings("ignore")
 
-from ENSO_IOD_Funciones import BinsByCases, PlotFinal_Figs12_13
+from ENSO_IOD_Funciones import BinsByCases, PlotFinal_Figs12_13, MakeMask
 
 ################################################################################
 data_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/ERA5/1940_2020/'
@@ -100,16 +100,19 @@ col_titles = [None, None, 'Neutro IOD', 'Moderate IOD+',
 
 lat = np.arange(-60, 15+1)
 lon = np.arange(275, 330+1)
-
+lat = np.arange(-60, 15+1)
+lon = np.arange(275, 330+1)
 ################################################################################
 # por motivos esteticos...
 clim = (xr.open_dataset('/pikachu/datos/luciano.andrian/observado/ncfiles/'
                        'data_no_detrend/pp_gpcc_v2020_0.25.nc').
         sel(lat=slice(lat[-1], lat[0]+1), lon=slice(lon[0], lon[-1]+1)))
-clim = clim.rolling(time=3, center=True).mean()
-clim = clim.sel(time=clim.time.dt.month.isin(10))
+clim = clim.sel(time=clim.time[0])*np.nan
 clim = clim.rename({'precip':'var'})
-clim = clim.mean(['time'])
+# clim = clim.rolling(time=3, center=True).mean()
+# clim = clim.sel(time=clim.time.dt.month.isin(10))
+# clim = clim.rename({'precip':'var'})
+# clim = clim.mean(['time'])
 
 ################################################################################
 
@@ -180,6 +183,9 @@ for c_count, c  in enumerate(cases):
             cases_names.append(case_name)
 
 print('#######################################################################')
+print('PREC ##################################################################')
+print('#######################################################################')
+
 # Computo en el orden orignal ------------------------------------------------ #
 aux_comps = {}
 aux_num_comps = {}
@@ -192,7 +198,142 @@ for c_count, c  in enumerate(cases):
                                            bins_by_cases_dmi=bins_by_cases_dmi,
                                            bins_by_cases_n34=bins_by_cases_n34,
                                            snr=False, cases_dir=cases_dir,
-                                           dates_dir=dates_dir, obsdates=False,
+                                           dates_dir=dates_dir,
+                                           neutro_clim=True)
+
+    bins_aux_dmi = bins_by_cases_dmi[c_count]
+    bins_aux_n34 = bins_by_cases_n34[c_count]
+
+    for b_dmi in range(0, len(bins_aux_dmi)):
+        for b_n34 in range(0, len(bins_aux_n34)):
+
+            try:
+                aux_comps[cases_names[n_count]] = cases_bin['var']
+                aux_num_comps[cases_names[n_count]] = np.nan
+            except:
+                aux_comps[cases_names[n_count]] = cases_bin[b_dmi][b_n34]
+                aux_num_comps[cases_names[n_count]] = num_bin[b_dmi][b_n34]
+            n_count += 1
+# ---------------------------------------------------------------------------- #
+# Reordenando para plotear --------------------------------------------------- #
+cases_ordenados = []
+
+aux_num=[]
+for c in cases_magnitude:
+    try:
+        aux = aux_comps[c]
+        aux_num.append(aux_num_comps[c])
+    except:
+        aux = aux_comps[cases_magnitude[2]]*0
+        aux_num.append('')
+
+    try:
+        da = xr.DataArray(aux, dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+    except:
+        da = xr.DataArray(aux['var'], dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+
+    cases_ordenados.append(da)
+
+cases_ordenados = xr.concat(cases_ordenados, dim='plots')
+# ---------------------------------------------------------------------------- #
+
+cases_ordenados = cases_ordenados*MakeMask(cases_ordenados, 'var')['var']
+PlotFinal_Figs12_13(cases_ordenados, scale_pp, cbar_pp, aux_num,
+                    'fieldbycases_prec_SON-CFSv2',
+                    'SA', save, dpi, out_dir,
+                    data_ctn=cases_ordenados, color_ctn='k',
+                    row_titles=row_titles, col_titles=col_titles,
+                    clim_plot=clim, clim_cbar='YlGnBu',
+                    clim_levels=np.linspace(0,500,10), high=2, width=7,
+                    plot_step=1, contourf_clim=False)
+
+print('PREC - SNR#############################################################')
+# Computo en el orden orignal ------------------------------------------------ #
+aux_comps = {}
+aux_num_comps = {}
+n_count = 0
+for c_count, c  in enumerate(cases):
+    cases_bin, num_bin, auxx = BinsByCases(v='prec', v_name='prec',
+                                           fix_factor=30, s='SON', mm=10, c=c,
+                                           c_count=c_count,
+                                           bin_limits=bin_limits,
+                                           bins_by_cases_dmi=bins_by_cases_dmi,
+                                           bins_by_cases_n34=bins_by_cases_n34,
+                                           snr=True, cases_dir=cases_dir,
+                                           dates_dir=dates_dir,
+                                           neutro_clim=True)
+
+    bins_aux_dmi = bins_by_cases_dmi[c_count]
+    bins_aux_n34 = bins_by_cases_n34[c_count]
+
+    for b_dmi in range(0, len(bins_aux_dmi)):
+        for b_n34 in range(0, len(bins_aux_n34)):
+
+            try:
+                aux_comps[cases_names[n_count]] = cases_bin['var']
+                aux_num_comps[cases_names[n_count]] = np.nan
+            except:
+                aux_comps[cases_names[n_count]] = cases_bin[b_dmi][b_n34]
+                aux_num_comps[cases_names[n_count]] = num_bin[b_dmi][b_n34]
+            n_count += 1
+# ---------------------------------------------------------------------------- #
+# Reordenando para plotear --------------------------------------------------- #
+cases_ordenados = []
+
+aux_num=[]
+for c in cases_magnitude:
+    try:
+        aux = aux_comps[c]
+        aux_num.append(aux_num_comps[c])
+    except:
+        aux = aux_comps[cases_magnitude[2]]*0
+        aux_num.append('')
+
+    try:
+        da = xr.DataArray(aux, dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+    except:
+        da = xr.DataArray(aux['var'], dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+
+    cases_ordenados.append(da)
+
+cases_ordenados = xr.concat(cases_ordenados, dim='plots')
+# ---------------------------------------------------------------------------- #
+
+cases_ordenados = cases_ordenados*MakeMask(cases_ordenados, 'var')['var']
+PlotFinal_Figs12_13(cases_ordenados, scale_snr, cbar_pp_snr, aux_num,
+                    'fieldbycases_prec_SON-CFSv2',
+                    'SA', save, dpi, out_dir,
+                    data_ctn=cases_ordenados, color_ctn='k',
+                    row_titles=row_titles, col_titles=col_titles,
+                    clim_plot=clim, clim_cbar='YlGnBu',
+                    clim_levels=np.linspace(0,500,10), high=2, width=7,
+                    plot_step=1, contourf_clim=False)
+
+print('#######################################################################')
+print('Tref ##################################################################')
+print('#######################################################################')
+lat = np.arange(-60, 15+1)
+# Computo en el orden orignal ------------------------------------------------ #
+aux_comps = {}
+aux_num_comps = {}
+n_count = 0
+for c_count, c  in enumerate(cases):
+    cases_bin, num_bin, auxx = BinsByCases(v='tref', v_name='tref',
+                                           fix_factor=1, s='SON', mm=10, c=c,
+                                           c_count=c_count,
+                                           bin_limits=bin_limits,
+                                           bins_by_cases_dmi=bins_by_cases_dmi,
+                                           bins_by_cases_n34=bins_by_cases_n34,
+                                           snr=False, cases_dir=cases_dir,
+                                           dates_dir=dates_dir,
                                            neutro_clim=True)
 
     bins_aux_dmi = bins_by_cases_dmi[c_count]
@@ -211,8 +352,140 @@ for c_count, c  in enumerate(cases):
 # Reordenando para plotear --------------------------------------------------- #
 cases_ordenados = []
 
-#lat = np.arange(-70, 20+1)[::-1]
-#lon = np.arange(270, 340+1)
+aux_num=[]
+for c in cases_magnitude:
+    try:
+        aux = aux_comps[c]
+        aux_num.append(aux_num_comps[c])
+    except:
+        aux = aux_comps[cases_magnitude[2]]*0
+        aux_num.append('')
+
+    try:
+        da = xr.DataArray(aux, dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+    except:
+        da = xr.DataArray(aux['var'], dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+
+    cases_ordenados.append(da)
+
+cases_ordenados = xr.concat(cases_ordenados, dim='plots')
+# ---------------------------------------------------------------------------- #
+
+cases_ordenados = cases_ordenados*MakeMask(cases_ordenados, 'var')['var']
+PlotFinal_Figs12_13(cases_ordenados, scale_t, cbar_t, aux_num,
+                    'fieldbycases_tref_SON-CFSv2',
+                    'SA', save, dpi, out_dir,
+                    data_ctn=cases_ordenados, color_ctn='k',
+                    row_titles=row_titles, col_titles=col_titles,
+                    clim_plot=clim, clim_cbar='YlGnBu',
+                    clim_levels=np.linspace(0,500,10), high=2, width=7,
+                    plot_step=1, contourf_clim=False)
+
+print('Tref - SNR ############################################################')
+# Computo en el orden orignal ------------------------------------------------ #
+aux_comps = {}
+aux_num_comps = {}
+n_count = 0
+for c_count, c  in enumerate(cases):
+    cases_bin, num_bin, auxx = BinsByCases(v='tref', v_name='tref',
+                                           fix_factor=1, s='SON', mm=10, c=c,
+                                           c_count=c_count,
+                                           bin_limits=bin_limits,
+                                           bins_by_cases_dmi=bins_by_cases_dmi,
+                                           bins_by_cases_n34=bins_by_cases_n34,
+                                           snr=True, cases_dir=cases_dir,
+                                           dates_dir=dates_dir,
+                                           neutro_clim=True)
+
+    bins_aux_dmi = bins_by_cases_dmi[c_count]
+    bins_aux_n34 = bins_by_cases_n34[c_count]
+
+    for b_dmi in range(0, len(bins_aux_dmi)):
+        for b_n34 in range(0, len(bins_aux_n34)):
+            try:
+                aux_comps[cases_names[n_count]] = cases_bin['var']
+                aux_num_comps[cases_names[n_count]] = np.nan
+            except:
+                aux_comps[cases_names[n_count]] = cases_bin[b_dmi][b_n34]
+                aux_num_comps[cases_names[n_count]] = num_bin[b_dmi][b_n34]
+            n_count += 1
+# ---------------------------------------------------------------------------- #
+# Reordenando para plotear --------------------------------------------------- #
+cases_ordenados = []
+
+aux_num=[]
+for c in cases_magnitude:
+    try:
+        aux = aux_comps[c]
+        aux_num.append(aux_num_comps[c])
+    except:
+        aux = aux_comps[cases_magnitude[2]]*0
+        aux_num.append('')
+
+    try:
+        da = xr.DataArray(aux, dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+    except:
+        da = xr.DataArray(aux['var'], dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+
+    cases_ordenados.append(da)
+
+cases_ordenados = xr.concat(cases_ordenados, dim='plots')
+# ---------------------------------------------------------------------------- #
+
+cases_ordenados = cases_ordenados*MakeMask(cases_ordenados, 'var')['var']
+PlotFinal_Figs12_13(cases_ordenados, scale_snr, cbar_snr_t, aux_num,
+                    'fieldbycases_tref_SON-CFSv2',
+                    'SA', save, dpi, out_dir,
+                    data_ctn=cases_ordenados, color_ctn='k',
+                    row_titles=row_titles, col_titles=col_titles,
+                    clim_plot=clim, clim_cbar='YlGnBu',
+                    clim_levels=np.linspace(0,500,10), high=2, width=7,
+                    plot_step=1, contourf_clim=False)
+
+
+print('#######################################################################')
+print('Tsigma ################################################################')
+print('#######################################################################')
+lat = np.arange(-60, 15+1)[::-1]
+# Computo en el orden orignal ------------------------------------------------ #
+aux_comps = {}
+aux_num_comps = {}
+n_count = 0
+for c_count, c  in enumerate(cases):
+    cases_bin, num_bin, auxx = BinsByCases(v='tsigma', v_name='TMP',
+                                           fix_factor=1, s='SON', mm=10, c=c,
+                                           c_count=c_count,
+                                           bin_limits=bin_limits,
+                                           bins_by_cases_dmi=bins_by_cases_dmi,
+                                           bins_by_cases_n34=bins_by_cases_n34,
+                                           snr=False, cases_dir=cases_dir,
+                                           dates_dir=dates_dir,
+                                           neutro_clim=True)
+
+    bins_aux_dmi = bins_by_cases_dmi[c_count]
+    bins_aux_n34 = bins_by_cases_n34[c_count]
+
+    for b_dmi in range(0, len(bins_aux_dmi)):
+        for b_n34 in range(0, len(bins_aux_n34)):
+            try:
+                aux_comps[cases_names[n_count]] = cases_bin['var']
+                aux_num_comps[cases_names[n_count]] = np.nan
+            except:
+                aux_comps[cases_names[n_count]] = cases_bin[b_dmi][b_n34]
+                aux_num_comps[cases_names[n_count]] = num_bin[b_dmi][b_n34]
+            n_count += 1
+# ---------------------------------------------------------------------------- #
+# Reordenando para plotear --------------------------------------------------- #
+cases_ordenados = []
+
 aux_num=[]
 for c in cases_magnitude:
     try:
@@ -223,21 +496,96 @@ for c in cases_magnitude:
         aux_num.append('')
 
 
-    da = xr.DataArray(aux, dims=["lat", "lon"], coords={"lat": lat, "lon": lon},
-                      name="var")
+    try:
+        da = xr.DataArray(aux, dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+    except:
+        da = xr.DataArray(aux['var'], dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+
     cases_ordenados.append(da)
 
 cases_ordenados = xr.concat(cases_ordenados, dim='plots')
 # ---------------------------------------------------------------------------- #
-from ENSO_IOD_Funciones import MakeMask
+
 cases_ordenados = cases_ordenados*MakeMask(cases_ordenados, 'var')['var']
-PlotFinal_Figs12_13(cases_ordenados, scale_pp, cbar_pp, aux_num,
-                    'figure12',
+PlotFinal_Figs12_13(cases_ordenados, scale_t, cbar_t, aux_num,
+                    'fieldbycases_tsigma_SON-CFSv2',
                     'SA', save, dpi, out_dir,
                     data_ctn=cases_ordenados, color_ctn='k',
                     row_titles=row_titles, col_titles=col_titles,
                     clim_plot=clim, clim_cbar='YlGnBu',
                     clim_levels=np.linspace(0,500,10), high=2, width=7,
-                    plot_step=1, contourf_clim=True)
+                    plot_step=1, contourf_clim=False)
+
+print('Tsigma - SNR ##########################################################')
+# Computo en el orden orignal ------------------------------------------------ #
+aux_comps = {}
+aux_num_comps = {}
+n_count = 0
+for c_count, c  in enumerate(cases):
+    cases_bin, num_bin, auxx = BinsByCases(v='tsigma', v_name='TMP',
+                                           fix_factor=1, s='SON', mm=10, c=c,
+                                           c_count=c_count,
+                                           bin_limits=bin_limits,
+                                           bins_by_cases_dmi=bins_by_cases_dmi,
+                                           bins_by_cases_n34=bins_by_cases_n34,
+                                           snr=True, cases_dir=cases_dir,
+                                           dates_dir=dates_dir,
+                                           neutro_clim=True)
+
+    bins_aux_dmi = bins_by_cases_dmi[c_count]
+    bins_aux_n34 = bins_by_cases_n34[c_count]
+
+    for b_dmi in range(0, len(bins_aux_dmi)):
+        for b_n34 in range(0, len(bins_aux_n34)):
+            try:
+                aux_comps[cases_names[n_count]] = cases_bin['var']
+                aux_num_comps[cases_names[n_count]] = np.nan
+            except:
+                aux_comps[cases_names[n_count]] = cases_bin[b_dmi][b_n34]
+                aux_num_comps[cases_names[n_count]] = num_bin[b_dmi][b_n34]
+            n_count += 1
+# ---------------------------------------------------------------------------- #
+# Reordenando para plotear --------------------------------------------------- #
+cases_ordenados = []
+
+aux_num=[]
+for c in cases_magnitude:
+    try:
+        aux = aux_comps[c]
+        aux_num.append(aux_num_comps[c])
+    except:
+        aux = aux_comps[cases_magnitude[2]]*0
+        aux_num.append('')
+
+    try:
+        da = xr.DataArray(aux, dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+    except:
+        da = xr.DataArray(aux['var'], dims=["lat", "lon"],
+                          coords={"lat": lat, "lon": lon},
+                          name="var")
+
+    cases_ordenados.append(da)
+
+cases_ordenados = xr.concat(cases_ordenados, dim='plots')
+# ---------------------------------------------------------------------------- #
+
+cases_ordenados = cases_ordenados*MakeMask(cases_ordenados, 'var')['var']
+PlotFinal_Figs12_13(cases_ordenados, scale_snr, cbar_snr_t, aux_num,
+                    'fieldbycases_tsigma_SON-CFSv2',
+                    'SA', save, dpi, out_dir,
+                    data_ctn=cases_ordenados, color_ctn='k',
+                    row_titles=row_titles, col_titles=col_titles,
+                    clim_plot=clim, clim_cbar='YlGnBu',
+                    clim_levels=np.linspace(0,500,10), high=2, width=7,
+                    plot_step=1, contourf_clim=False)
 
 
+print('#######################################################################')
+print('Done ##################################################################')
+print('#######################################################################')
