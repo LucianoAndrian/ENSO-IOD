@@ -173,7 +173,7 @@ for c_count, c  in enumerate(cases):
                                            bins_by_cases_dmi=bins_by_cases_dmi,
                                            bins_by_cases_n34=bins_by_cases_n34,
                                            snr=False, cases_dir=cases_dir,
-                                           dates_dir=dates_dir, obsdates=False,
+                                           dates_dir=dates_dir,
                                            neutro_clim=True)
 
     bins_aux_dmi = bins_by_cases_dmi[c_count]
@@ -227,7 +227,7 @@ for c_count, c  in enumerate(cases):
                                            bins_by_cases_dmi=bins_by_cases_dmi,
                                            bins_by_cases_n34=bins_by_cases_n34,
                                            snr=True, cases_dir=cases_dir,
-                                           dates_dir=dates_dir, obsdates=False,
+                                           dates_dir=dates_dir,
                                            neutro_clim=True)
 
     bins_aux_dmi = bins_by_cases_dmi[c_count]
