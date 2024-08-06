@@ -11,7 +11,7 @@ import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind
-from ENSO_IOD_Funciones import SelectNMMEFiles
+from ENSO_IOD_Funciones import SelectNMMEFiles, ChangeLons
 import warnings
 warnings.filterwarnings("ignore")
 ################################################################################
@@ -93,6 +93,7 @@ def Weights(data):
                                    (len(data.lon), 1)))
     data_w = data * weights
     return data_w
+
 ################################################################################
 if compute:
     print('compute = True')
@@ -116,8 +117,11 @@ if compute:
     hindcast = hindcast.load()
 
     # media climatologica hindcast sin filtrar tendencia
-    hindcast2 = hindcast.mean(['r', 'time', 'L'])
+    hindcast2 = (hindcast.mean(['r', 'time', 'L'])/
+                 hindcast.std(['r', 'time', 'L']))
+    hindcast3 = hindcast.mean(['r', 'time', 'L'])
     hindcast2.to_netcdf(f"{out_dir}hindcast_{v}_cfsv2_meanclim_son.nc")
+    hindcast3.to_netcdf(f"{out_dir}hindcast_no-norm_{v}_cfsv2_meanclim_son.nc")
     del data
 
     # Detrend -----------------------------------------------------------------#
@@ -209,8 +213,12 @@ if compute:
     # media movil de 3 meses para separar en estaciones
     real_time = data.rolling(time=3, center=True).mean()
     real_time = real_time.load()
-    real_time2 = real_time.mean(['r', 'time', 'L'])
+    real_time2 = (real_time.mean(['r', 'time', 'L'])/
+                  real_time.std(['r', 'time', 'L']))
+    real_time3 = real_time.mean(['r', 'time', 'L'])
     real_time2.to_netcdf(f"{out_dir}real_time_{v}_cfsv2_meanclim_son.nc")
+    real_time3.to_netcdf(
+        f"{out_dir}real_time_no-norm_{v}_cfsv2_meanclim_son.nc")
     del data
 
     # Detrend -----------------------------------------------------------------#
@@ -238,65 +246,67 @@ if compute:
         son_realtime_detrend.mean(['r', 'time'])
     son_realtime_detrend.to_netcdf(f"{out_dir}realtime_{v}_cfsv2_meanclim_"
                                    f"detrend_son.nc")
-else:
-    print('compute = False')
-    print('Opening CFSv2 saved files')
-    hindcast = xr.open_dataset(f"{out_dir}hindcast_{v}_cfsv2_meanclim_son.nc")
-    son_hindcast_detrend = \
-            xr.open_dataset(f"{out_dir}hindcast_{v}_cfsv2_meanclim_"
-                            f"detrend_son.nc")
 
-    real_time = xr.open_dataset(f"{out_dir}real_time_{v}_cfsv2_meanclim_son.nc")
-    son_realtime_detrend = \
-            xr.open_dataset(f"{out_dir}realtime_{v}_cfsv2_meanclim_"
-                            f"detrend_son.nc")
 
+print('Opening CFSv2 saved files')
+hindcast = xr.open_dataset(f"{out_dir}hindcast_{v}_cfsv2_meanclim_son.nc")
+hindcast_no_norm = (
+    xr.open_dataset(f"{out_dir}hindcast_no-norm_{v}_cfsv2_meanclim_son.nc"))
+son_hindcast_detrend = (
+    xr.open_dataset(f"{out_dir}hindcast_{v}_cfsv2_meanclim_detrend_son.nc"))
+
+real_time = xr.open_dataset(f"{out_dir}real_time_{v}_cfsv2_meanclim_son.nc")
+real_time_no_norm = (
+    xr.open_dataset(f"{out_dir}real_time_no-norm_{v}_cfsv2_meanclim_son.nc"))
+son_realtime_detrend = (
+    xr.open_dataset(f"{out_dir}realtime_{v}_cfsv2_meanclim_detrend_son.nc"))
 
 ###############################################################################
-# GPCC
 print('Tcru...')
 data_dir_pp_clim = ('/pikachu/datos/luciano.andrian/observado/ncfiles/'
                     'data_no_detrend/')
 data = xr.open_dataset(data_dir_pp_clim + 't_cru0.25.nc')
-# ESTO NO FUNCAAAA!
-data = data.sel(lon=slice(275, 331), lat=slice(-70, 20))
+data = ChangeLons(data)
+data = data.sel(lon=slice(275, 331), lat=slice(-70, 20),
+                time=data.time.dt.year.isin(range(1982, 2020)))
 data = data.interp(lat=hindcast.lat.values, lon=hindcast.lon.values)
-data = Weights(data)
-data = data.rolling(time=3, center=True).mean()
 data = data.sel(time=data.time.dt.month.isin(10)) #son
 data = data.drop('stn')
 data = data.rename({'tmp':'tref'})
-data = data.sel(time=data.time.dt.year.isin(range(1982, 2020)))
 t_clim = data.mean('time')
-#t_clim = t_clim.sel(lat=slice(20, -70), lon=slice(275, 331))
 del data
 
 # sin tendencia
 data_dir_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/'
 data = xr.open_dataset(data_dir_pp + 'tcru_w_c_d_0.25_SON.nc')
+data = data.sel(lon=slice(275, 331), lat=slice(-70, 20),
+                time=data.time.dt.year.isin(range(1982, 2020)))
 data = data.interp(lat=hindcast.lat.values, lon=hindcast.lon.values)
 data = data.rename({'var':'tref'})
-data = data.sel(time=data.time.dt.year.isin(range(1981, 2021)))
 
 #------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------#
 print('Plot...')
 # total sin tendencia
-
 aux_hind = son_hindcast_detrend + hindcast
-aux_hind = Weights(aux_hind)
-
 aux_real = son_realtime_detrend + real_time
-aux_real = Weights(aux_real)
-
 cfsv2 = xr.concat([aux_hind, aux_real], dim='time')
-cfsv2 = cfsv2/cfsv2.std(['r','time'])
-cfsv2 = cfsv2
+
+aux_hind_no_norm = son_hindcast_detrend + hindcast_no_norm
+aux_real_no_norm = son_realtime_detrend + real_time_no_norm
+cfsv2_no_norm = xr.concat([aux_hind_no_norm,
+                           aux_real_no_norm], dim='time')-273
 
 t = data + t_clim
-t = t/t.std('time')
+#------------------------------------------------------------------------------#
+# VEEER normalización
+t_norm = t/t.std('time')
+dif = cfsv2.mean(['time','r']) - t_norm.mean('time')
+dif = Weights(dif)
 
-dif = cfsv2.mean(['time','r']) - t.mean('time')
+dif_no_norm = cfsv2_no_norm.mean(['time','r']) - t.mean('time')
+dif_no_norm = Weights(dif_no_norm)
+
 from matplotlib import colors
 cbar_t = colors.ListedColormap(['#B9391B', '#CD4838', '#E25E55', '#F28C89',
                                 '#FFCECC', 'white', '#B3DBFF', '#83B9EB',
@@ -305,29 +315,41 @@ cbar_t.set_over('#9B1C00')
 cbar_t.set_under('#014A9B')
 cbar_t.set_bad(color='white')
 scale_t = [-2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2]
+scale_pp_no_norm = np.linspace(-5,5,13)
 
-Plot(dif, dif.tref, scale_t, save, dpi,
-     'CFSv2 hindcast + real time - Tcru (detrended)',
-     'pp_dif_hind_real_d.jpg', out_dir, cbar_t)
+#
+# Plot(dif, dif.tref, scale_t, save, dpi,
+#      'CFSv2 hindcast + real time - Tcru (Norm y detr)',
+#      'tref_dif_hind_real_d.jpg', out_dir, cbar_t)
 
+# Plot(dif_no_norm, dif_no_norm.tref, scale_pp_no_norm, save, dpi,
+#      'CFSv2 hindcast + real time - Tcru (No-Norm y detr)',
+#      'tref_no-norm_dif_hind_real_d.jpg', out_dir, cbar_t)
 
 # Testeo ----------------------------------------------------------------------#
 print('Testeo de diferencia de medias con t-student por leadtime')
-#from scipy import stats
-# # promediando todos los r (y leadtimes, sino hay condicion sobre el tiempo)
-# aux = stats.ttest_ind(
-#     cfsv2.mean('r').hgt,
-#     era.isel(lat=slice(None, None, -1)).hgt,
-#     equal_var=False)
-# plt.imshow(aux[0]);plt.colorbar();plt.show()
 
-# por leadtimes
+# pvalue = []
+# for m in [7, 8, 9, 10]:
+#     cfsv2_monthly_mean = cfsv2.sel(
+#         time=cfsv2.time.dt.month.isin(m)).mean('r').tref
+#     pp_tref = t_norm.tref#.isel(lat=slice(None, None, -1)).tref
+#     # test
+#     pvalue.append(
+#         ttest_ind(cfsv2_monthly_mean, pp_tref, equal_var=False)[1])
+#
+# # promedio de pvalue por leadtime
+# pvalue = sum(pvalue) / len(pvalue)
+#
+# Plot(dif, dif.where(pvalue<0.05).tref, scale_t, save, dpi,
+#      'CFSv2 hindcast + real time - GPCC (Norm y detr)',
+#      'tref_dif_hind_real_d_tested.jpg', out_dir, cbar_t)
 
 pvalue = []
 for m in [7, 8, 9, 10]:
-    cfsv2_monthly_mean = cfsv2.sel(
-        time=cfsv2.time.dt.month.isin(m)).mean('r').tref
-    pp_tref = pp.tref#.isel(lat=slice(None, None, -1)).tref
+    cfsv2_monthly_mean = cfsv2_no_norm.sel(
+        time=cfsv2_no_norm.time.dt.month.isin(m)).mean('r').tref
+    pp_tref = t.tref#.isel(lat=slice(None, None, -1)).tref
     # test
     pvalue.append(
         ttest_ind(cfsv2_monthly_mean, pp_tref, equal_var=False)[1])
@@ -335,9 +357,11 @@ for m in [7, 8, 9, 10]:
 # promedio de pvalue por leadtime
 pvalue = sum(pvalue) / len(pvalue)
 
-Plot(dif, dif.where(pvalue<0.05).tref, scale_pp, save, dpi,
-     'CFSv2 hindcast + real time - GPCC (detrended)',
-     'pp_dif_hind_real_d_tested.jpg', out_dir, cbar_pp)
+Plot(dif_no_norm, dif_no_norm.where(pvalue<0.05).tref, scale_pp_no_norm,
+     save, dpi,
+     'CFSv2 hindcast + real time - GPCC (No-Norm y detr)',
+     'tref_no-norm_dif_hind_real_d_tested.jpg', out_dir, cbar_t)
+
 #------------------------------------------------------------------------------#
 print('done')
 #------------------------------------------------------------------------------#

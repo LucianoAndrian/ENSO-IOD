@@ -1,6 +1,8 @@
-"""
+﻿"""
 Prueba Validación CFSv2
 """
+################################################################################
+save = False
 ################################################################################
 import xarray as xr
 import numpy as np
@@ -15,7 +17,7 @@ os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 import matplotlib.path as mpath
 import warnings
 warnings.filterwarnings("ignore")
-
+from scipy.stats import ttest_ind
 from ENSO_IOD_Funciones import MakeMask
 ################################################################################
 nc_date_dir = '/pikachu/datos/luciano.andrian/observado/ncfiles/' \
@@ -30,9 +32,11 @@ cases_dir = '/pikachu/datos/luciano.andrian/cases_fields/'
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/Validation/'
 
 #Plot
-save = True
-dpi = 300
-detrend_cfsv2=True # esto era para PP
+if save:
+    dpi = 300
+else:
+    dpi = 100
+
 # Functions ####################################################################
 def CompositeSimple(original_data, index, mmin, mmax, mean=True):
     def is_months(month, mmin, mmax):
@@ -278,12 +282,11 @@ cbar_pp.set_under('#3F2404')
 cbar_pp.set_over('#00221A')
 cbar_pp.set_bad(color='white')
 
-cbar_t = colors.ListedColormap(['#9B1C00', '#B9391B', '#CD4838', '#E25E55',
-                                '#F28C89', '#FFCECC',
-                              '#B3DBFF', '#83B9EB', '#5E9AD7', '#3C7DC3',
-                                '#2064AF', '#014A9B'][::-1])
-cbar_t.set_over('#691800')
-cbar_t.set_under('#013774')
+cbar_t = colors.ListedColormap(['#B9391B', '#CD4838', '#E25E55', '#F28C89',
+                                '#FFCECC', 'white', '#B3DBFF', '#83B9EB',
+                                '#5E9AD7', '#3C7DC3', '#2064AF'][::-1])
+cbar_t.set_over('#9B1C00')
+cbar_t.set_under('#014A9B')
 cbar_t.set_bad(color='white')
 
 cbar_t_r = colors.ListedColormap(['#9B1C00', '#B9391B', '#CD4838', '#E25E55',
@@ -326,8 +329,6 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
         ln_cfs = Weights(xr.open_dataset(
             cases_dir + 'hgt_' + cases_cfs[3] + '_' + s + '.nc')\
             .rename({'hgt': 'var'}).__mul__(9.8))
-
-        from scipy.stats import ttest_ind
 
         enso_cfs_test = ttest_ind(
             en_cfs['var'].values, ln_cfs['var'].values, equal_var=False)[1]
@@ -397,6 +398,7 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
             ax.contour(field.lon, field.lat, field['var'],
                        transform=crs_latlon, colors='k',
                        levels=scale, linewidths=1)
+
             im = ax.contourf(field.lon, field.lat,
                              field.where(test<0.05)['var'],
                              levels=scale,
@@ -427,176 +429,332 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
 
 ################################################################################
 ################################################################################
-# # PP --------------------------------------------------------------------------#
-# if detrend_cfsv2:
-#     file_name_end = '.nc'
-#     name_fig_end = ''
-#     title_trend = 'Detrend'
-# else:
-#     file_name_end = '_nodetrend.nc'
-#     name_fig_end = 'NoDetrend'
-#     title_trend = 'No Detrend'
+# PP --------------------------------------------------------------------------#
+end_nc_file = '.nc'
+s = 'SON'
+v_name = ['Precipitation - GPCC']
+scale = np.linspace(-30, 30, 13)
+
+data = xr.open_dataset(data_dir_t_pp + 'ppgpcc_w_c_d_1_SON.nc')
+
+# neutro CFSv2 --------------------------------------------------------------- #
+neutro = (xr.open_dataset(cases_dir + 'prec_neutros_' + s + '.nc')
+          .rename({'prec': 'var'}).__mul__(30))
+
+# ENSO_CFSv2 ----------------------------------------------------------------- #
+en_cfs = (xr.open_dataset(cases_dir + 'prec_' + cases_cfs[2] + '_' + s + '.nc')
+          .rename({'prec': 'var'}).__mul__(30))
+ln_cfs = (xr.open_dataset(cases_dir + 'prec_' + cases_cfs[3] + '_' + s + '.nc')
+          .rename({'prec': 'var'}).__mul__(30))
+
+enso_cfs_test = ttest_ind(
+    en_cfs['var'].values, ln_cfs['var'].values, equal_var=False)[1]
+
+enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
+enso_dif_cfs = enso_dif_cfs.sel(lat=slice(None, None, -1))
+
+# IOD_CFSv2 ---------------------------------------------------------------------------------------------------#
+iodp_cfs = (xr.open_dataset(
+    cases_dir + 'prec_' + cases_cfs[0] + '_' + s + '.nc')
+            .rename({'prec': 'var'}).__mul__(30))
+iodn_cfs = (xr.open_dataset
+            (cases_dir + 'prec_' + cases_cfs[1] + '_' + s + '.nc')
+            .rename({'prec': 'var'}).__mul__(30))
+
+iod_cfs_test = ttest_ind(
+    iodp_cfs['var'].values, iodn_cfs['var'].values, equal_var=False)[1]
+
+iod_dif_cfs = iodp_cfs.mean('time') - iodn_cfs.mean('time')
+iod_dif_cfs = iod_dif_cfs.sel(lat=slice(None, None, -1))
+
+# ENSO_obs --------------------------------------------------------------------#
+x, y, en_obs = CaseComp(data, s, mmonth=[9, 11], c=cases[2],
+                        two_variables=False)
+#en_obs = en_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
+x, y, ln_obs = CaseComp(data, s, mmonth=[9, 11], c=cases[3],
+                        two_variables=False)
+#ln_obs = ln_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
+enso_obs_test = ttest_ind(
+    en_obs['var'].values, ln_obs['var'].values, equal_var=False)[1]
+
+enso_dif_obs = en_obs.mean('time') - ln_obs.mean('time')
 #
-# v_name = ['Precipitation - GPCC', 'Precipitation - PREC'] # probar con cmap?
-# scale = np.linspace(-30, 30, 13)
-#
-# for v, v_count in zip(['pp_gpcc_d_w_c_1950-2020_0.25.nc', 'pp_prec_d_w_c_1950-2020_2.5.nc'], [0,1]):
-#     data = xr.open_dataset(data_dir_t_pp + v)
-#
-#     for s, s_count in zip(['JJA','SON'], [0,1]):
-#         # neutro CFSv2 ------------------------------------------------------------------------------------------------#
-#         neutro = xr.open_dataset(cases_dir + 'prec_neutros_' + s + '.nc').rename({'prec': 'var'}).__mul__(30)
-#
-#         # ENSO_CFSv2 --------------------------------------------------------------------------------------------------#
-#         en_cfs = xr.open_dataset(cases_dir + 'prec_' + cases_cfs[2] + '_' + s + '.nc').rename({'prec': 'var'}).__mul__(30)
-#         ln_cfs = xr.open_dataset(cases_dir + 'prec_' + cases_cfs[3] + '_' + s + '.nc').rename({'prec': 'var'}).__mul__(30)
-#
-#         enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
-#
-#         # IOD_CFSv2 ---------------------------------------------------------------------------------------------------#
-#         iodp_cfs = xr.open_dataset(cases_dir + 'prec_' + cases_cfs[0] + '_' + s + '.nc').rename({'prec': 'var'}).__mul__(30)
-#         iodn_cfs = xr.open_dataset(cases_dir + 'prec_' + cases_cfs[1] + '_' + s + '.nc').rename({'prec': 'var'}).__mul__(30)
-#
-#         iod_dif_cfs = iodp_cfs.mean('time') - iodn_cfs.mean('time')
-#
-#         # ENSO_obs ----------------------------------------------------------------------------------------------------#
-#         x, y, en_obs = CaseComp(data, s, mmonth=min_max_months[s_count], c=cases[2], two_variables=False)
-#         en_obs = en_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
-#         x, y, ln_obs = CaseComp(data, s, mmonth=min_max_months[s_count], c=cases[3], two_variables=False)
-#         ln_obs = ln_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
-#
-#         enso_dif_obs = en_obs - ln_obs
-#
-#         # IOD_obs ----------------------------------------------------------------------------------------------------#
-#         x, y, iodp_obs = CaseComp(data, s, mmonth=min_max_months[s_count], c=cases[0], two_variables=False)
-#         iodp_obs = iodp_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
-#         x, y, iodn_obs = CaseComp(data, s, mmonth=min_max_months[s_count], c=cases[1], two_variables=False)
-#         iodn_obs = iodn_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
-#
-#         iod_dif_obs = iodp_obs - iodn_obs
-#
-#         fig = plt.figure(figsize=(5, 6), dpi=dpi)
-#         gs = fig.add_gridspec(2, 2)
-#
-#         mask = MakeMask(iod_dif_cfs, 'var')
-#
-#         title = ['EN-LN_' + v_name[v_count].split()[2], 'EN-LN_CFSv2',
-#                  'IOD_pos-neg_'  + v_name[v_count].split()[2], 'IOD_pos-neg_CFSv2']
-#         comps = [enso_dif_obs, enso_dif_cfs, iod_dif_obs, iod_dif_cfs]
-#         for field, f_count, f_count_c, t in zip(comps,[0,1,0,1],[0,0,1,1], title):
-#             field *= mask
-#             ax = fig.add_subplot(gs[f_count, f_count_c],
-#                              projection=ccrs.PlateCarree(central_longitude=180))
-#             crs_latlon = ccrs.PlateCarree()
-#             ax.set_extent([270, 330, -60, 20], crs=crs_latlon)
-#
-#             # ax.contour(field.lon, field.lat, field['var'],
-#             #            transform=crs_latlon, colors='k',
-#             #            levels=scale, linewidths=1)
-#             im = ax.contourf(field.lon, field.lat, field['var'],
-#                              levels=scale,
-#                              transform=crs_latlon, cmap=cbar_pp, extend='both')
-#
-#             cb = plt.colorbar(im, fraction=0.040, pad=0.025, shrink=0.8)
-#             cb.ax.tick_params(labelsize=5)
-#             ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor='#4B4B4B')
-#             ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-#             ax.coastlines(color='#4B4B4B', linestyle='-', alpha=1)
-#             ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
-#             ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
-#             ax.set_yticks(np.arange(-60, 40, 20), crs=crs_latlon)
-#             lon_formatter = LongitudeFormatter(zero_direction_label=True)
-#             lat_formatter = LatitudeFormatter()
-#             ax.xaxis.set_major_formatter(lon_formatter)
-#             ax.yaxis.set_major_formatter(lat_formatter)
-#             ax.tick_params(labelsize=5)
-#             ax.set_title(t, fontsize=10)
-#             plt.tight_layout()
-#         fig.suptitle('PP - ' + s)
-#         if save:
-#             plt.savefig(out_dir + 'prec_dif_' + s + '_' + v_name[v_count].split()[2] + '.jpg', dpi=dpi)
-#         else:
-#             plt.show()
+# IOD_obs ---------------------------------------------------------------------#
+x, y, iodp_obs = CaseComp(data, s, mmonth=[9, 11], c=cases[0],
+                          two_variables=False)
+#iodp_obs = iodp_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
+x, y, iodn_obs = CaseComp(data, s, mmonth=[9, 11], c=cases[1],
+                          two_variables=False)
+#iodn_obs = iodn_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
+
+iod_obs_test = ttest_ind(
+    iodp_obs['var'].values, iodn_obs['var'].values, equal_var=False)[1]
+
+iod_dif_obs = iodp_obs.mean('time') - iodn_obs.mean('time')
+
+fig = plt.figure(figsize=(5, 6), dpi=dpi)
+gs = fig.add_gridspec(2, 2)
+
+title = ['EN-LN_' + v_name[0].split()[2], 'EN-LN_CFSv2',
+         'IOD_pos-neg_'  + v_name[0].split()[2], 'IOD_pos-neg_CFSv2']
+comps = [enso_dif_obs, enso_dif_cfs, iod_dif_obs, iod_dif_cfs]
+tests = [enso_obs_test, enso_cfs_test, iod_obs_test, iod_cfs_test]
+
+for field, f_count, f_count_c, t, test in zip(comps,[0,1,0,1],[0,0,1,1],
+                                              title, tests):
+    field = field*MakeMask(field, 'var')
+    ax = fig.add_subplot(gs[f_count, f_count_c],
+                         projection=ccrs.PlateCarree(central_longitude=180))
+    crs_latlon = ccrs.PlateCarree()
+    ax.set_extent([270, 330, -60, 20], crs=crs_latlon)
+
+    im = ax.contourf(field.lon, field.lat, field['var'],#.where(test<0.5)['var'],
+                     levels=scale,
+                     transform=crs_latlon, cmap=cbar_pp, extend='both')
+
+    # aux = field.where(test < 0.05, np.nan)
+    # ax.contourf(field.lon, field.lat, aux['var'],
+    #             levels=scale, hatches=['***'],
+    #             transform=crs_latlon, color='k')
+
+    cb = plt.colorbar(im, fraction=0.040, pad=0.025, shrink=0.8)
+    cb.ax.tick_params(labelsize=5)
+    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey',
+                   edgecolor='#4B4B4B')
+    ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    ax.coastlines(color='#4B4B4B', linestyle='-', alpha=1)
+    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+    ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
+    ax.set_yticks(np.arange(-60, 40, 20), crs=crs_latlon)
+    lon_formatter = LongitudeFormatter(zero_direction_label=True)
+    lat_formatter = LatitudeFormatter()
+    ax.xaxis.set_major_formatter(lon_formatter)
+    ax.yaxis.set_major_formatter(lat_formatter)
+    ax.tick_params(labelsize=5)
+    ax.set_title(t, fontsize=10)
+    plt.tight_layout()
+
+
+fig.suptitle('PP - ' + s)
+if save:
+    plt.savefig(out_dir + 'prec_dif_' + s + '_' + v_name[0].split()[2] +
+                '.jpg', dpi=dpi)
+else:
+    plt.show()
+
+
+
+fig = plt.figure(figsize=(5, 6), dpi=dpi)
+gs = fig.add_gridspec(2, 2)
+
+title = ['EN-LN_' + v_name[0].split()[2], 'EN-LN_CFSv2',
+         'IOD_pos-neg_'  + v_name[0].split()[2], 'IOD_pos-neg_CFSv2']
+comps = [enso_dif_obs, enso_dif_cfs, iod_dif_obs, iod_dif_cfs]
+tests = [enso_obs_test, enso_cfs_test, iod_obs_test, iod_cfs_test]
+
+for field, f_count, f_count_c, t, test in zip(comps,[0,1,0,1],[0,0,1,1],
+                                              title, tests):
+    field = field*MakeMask(field, 'var')
+    ax = fig.add_subplot(gs[f_count, f_count_c],
+                         projection=ccrs.PlateCarree(central_longitude=180))
+    crs_latlon = ccrs.PlateCarree()
+    ax.set_extent([270, 330, -60, 20], crs=crs_latlon)
+
+    im = ax.contourf(field.lon, field.lat, field.where(test<0.1)['var'],
+                     levels=scale,
+                     transform=crs_latlon, cmap=cbar_pp, extend='both')
+
+    # aux = field.where(test < 0.05, np.nan)
+    # ax.contourf(field.lon, field.lat, aux['var'],
+    #             levels=scale, hatches=['***'],
+    #             transform=crs_latlon, color='k')
+
+    cb = plt.colorbar(im, fraction=0.040, pad=0.025, shrink=0.8)
+    cb.ax.tick_params(labelsize=5)
+    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey',
+                   edgecolor='#4B4B4B')
+    ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    ax.coastlines(color='#4B4B4B', linestyle='-', alpha=1)
+    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+    ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
+    ax.set_yticks(np.arange(-60, 40, 20), crs=crs_latlon)
+    lon_formatter = LongitudeFormatter(zero_direction_label=True)
+    lat_formatter = LatitudeFormatter()
+    ax.xaxis.set_major_formatter(lon_formatter)
+    ax.yaxis.set_major_formatter(lat_formatter)
+    ax.tick_params(labelsize=5)
+    ax.set_title(t, fontsize=10)
+    plt.tight_layout()
+
+
+fig.suptitle('PP - ' + s + ' - sig. 0.1')
+if save:
+    plt.savefig(out_dir + 'prec_dif_test_' + s + '_' + v_name[0].split()[2] +
+                '.jpg', dpi=dpi)
+else:
+    plt.show()
 #
 # ########################################################################################################################
-# # T -------------------------------------------------------------------------------------------------------------------#
-# v_name = [ 'Temperature - Cru'] # agregar otro dataset
-# scale = np.linspace(-1, 1, 17)
+# T -------------------------------------------------------------------------------------------------------------------#
+end_nc_file = '.nc'
+s = 'SON'
+v_name = ['trefipitation - GPCC']
+scale = np.linspace(-1.2, 1.2, 13)
+
+data = xr.open_dataset(data_dir_t_pp + 'tcru_w_c_d_0.25_SON.nc')
+
+# neutro CFSv2 --------------------------------------------------------------- #
+neutro = (xr.open_dataset(cases_dir + 'tref_neutros_' + s + '.nc')
+          .rename({'tref': 'var'})-273)
+
+# ENSO_CFSv2 ----------------------------------------------------------------- #
+en_cfs = (xr.open_dataset(cases_dir + 'tref_' + cases_cfs[2] + '_' + s + '.nc')
+          .rename({'tref': 'var'})-273)
+ln_cfs = (xr.open_dataset(cases_dir + 'tref_' + cases_cfs[3] + '_' + s + '.nc')
+          .rename({'tref': 'var'})-273)
+
+enso_cfs_test = ttest_ind(
+    en_cfs['var'].values, ln_cfs['var'].values, equal_var=False)[1]
+
+enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
+enso_dif_cfs = enso_dif_cfs.sel(lat=slice(None, None, -1))
+
+# IOD_CFSv2 ---------------------------------------------------------------------------------------------------#
+iodp_cfs = (xr.open_dataset(
+    cases_dir + 'tref_' + cases_cfs[0] + '_' + s + '.nc')
+            .rename({'tref': 'var'})-273)
+iodn_cfs = (xr.open_dataset
+            (cases_dir + 'tref_' + cases_cfs[1] + '_' + s + '.nc')
+            .rename({'tref': 'var'})-273)
+
+iod_cfs_test = ttest_ind(
+    iodp_cfs['var'].values, iodn_cfs['var'].values, equal_var=False)[1]
+
+iod_dif_cfs = iodp_cfs.mean('time') - iodn_cfs.mean('time')
+iod_dif_cfs = iod_dif_cfs.sel(lat=slice(None, None, -1))
+
+# ENSO_obs --------------------------------------------------------------------#
+x, y, en_obs = CaseComp(data, s, mmonth=[9, 11], c=cases[2],
+                        two_variables=False)
+#en_obs = en_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
+x, y, ln_obs = CaseComp(data, s, mmonth=[9, 11], c=cases[3],
+                        two_variables=False)
+#ln_obs = ln_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
+enso_obs_test = ttest_ind(
+    en_obs['var'].values, ln_obs['var'].values, equal_var=False)[1]
+
+enso_dif_obs = en_obs.mean('time') - ln_obs.mean('time')
 #
-# for v, v_count in zip(['t_cru_d_w_c_1950-2020_0.25.nc'], [0]):
-#     data = xr.open_dataset(data_dir_t_pp + v)
+# IOD_obs ---------------------------------------------------------------------#
+x, y, iodp_obs = CaseComp(data, s, mmonth=[9, 11], c=cases[0],
+                          two_variables=False)
+#iodp_obs = iodp_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
+x, y, iodn_obs = CaseComp(data, s, mmonth=[9, 11], c=cases[1],
+                          two_variables=False)
+#iodn_obs = iodn_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
+
+iod_obs_test = ttest_ind(
+    iodp_obs['var'].values, iodn_obs['var'].values, equal_var=False)[1]
+
+iod_dif_obs = iodp_obs.mean('time') - iodn_obs.mean('time')
+
+fig = plt.figure(figsize=(5, 6), dpi=dpi)
+gs = fig.add_gridspec(2, 2)
+
+title = ['EN-LN_' + v_name[0].split()[2], 'EN-LN_CFSv2',
+         'IOD_pos-neg_'  + v_name[0].split()[2], 'IOD_pos-neg_CFSv2']
+comps = [enso_dif_obs, enso_dif_cfs, iod_dif_obs, iod_dif_cfs]
+tests = [enso_obs_test, enso_cfs_test, iod_obs_test, iod_cfs_test]
+
+for field, f_count, f_count_c, t, test in zip(comps,[0,1,0,1],[0,0,1,1],
+                                              title, tests):
+    field = field*MakeMask(field, 'var')
+    ax = fig.add_subplot(gs[f_count, f_count_c],
+                         projection=ccrs.PlateCarree(central_longitude=180))
+    crs_latlon = ccrs.PlateCarree()
+    ax.set_extent([270, 330, -60, 20], crs=crs_latlon)
+
+    im = ax.contourf(field.lon, field.lat, field['var'],#.where(test<0.5)['var'],
+                     levels=scale,
+                     transform=crs_latlon, cmap=cbar_t, extend='both')
+
+    # aux = field.where(test < 0.05, np.nan)
+    # ax.contourf(field.lon, field.lat, aux['var'],
+    #             levels=scale, hatches=['***'],
+    #             transform=crs_latlon, color='k')
+
+    cb = plt.colorbar(im, fraction=0.040, pad=0.025, shrink=0.8)
+    cb.ax.tick_params(labelsize=5)
+    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey',
+                   edgecolor='#4B4B4B')
+    ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    ax.coastlines(color='#4B4B4B', linestyle='-', alpha=1)
+    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+    ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
+    ax.set_yticks(np.arange(-60, 40, 20), crs=crs_latlon)
+    lon_formatter = LongitudeFormatter(zero_direction_label=True)
+    lat_formatter = LatitudeFormatter()
+    ax.xaxis.set_major_formatter(lon_formatter)
+    ax.yaxis.set_major_formatter(lat_formatter)
+    ax.tick_params(labelsize=5)
+    ax.set_title(t, fontsize=10)
+    plt.tight_layout()
+
+
+fig.suptitle('Temp - ' + s)
+if save:
+    plt.savefig(out_dir + 'tref_dif_' + s + '_' + v_name[0].split()[2] +
+                '.jpg', dpi=dpi)
+else:
+    plt.show()
 #
-#     for s, s_count in zip(['SON'], [1]):
-#         # neutro CFSv2 ------------------------------------------------------------------------------------------------#
-#         neutro = xr.open_dataset(cases_dir + 'tref_neutros_' + s + '.nc').rename({'tref': 'var'})
-#
-#         # ENSO_CFSv2 --------------------------------------------------------------------------------------------------#
-#         en_cfs = xr.open_dataset(cases_dir + 'tref_' + cases_cfs[2] + '_' + s + '.nc').rename({'tref': 'var'})
-#         ln_cfs = xr.open_dataset(cases_dir + 'tref_' + cases_cfs[3] + '_' + s + '.nc').rename({'tref': 'var'})
-#
-#         enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
-#
-#         # IOD_CFSv2 ---------------------------------------------------------------------------------------------------#
-#         iodp_cfs = xr.open_dataset(cases_dir + 'tref_' + cases_cfs[0] + '_' + s + '.nc').rename({'tref': 'var'})
-#         iodn_cfs = xr.open_dataset(cases_dir + 'tref_' + cases_cfs[1] + '_' + s + '.nc').rename({'tref': 'var'})
-#
-#         iod_dif_cfs = iodp_cfs.mean('time') - iodn_cfs.mean('time')
-#
-#         # ENSO_obs ----------------------------------------------------------------------------------------------------#
-#         x, y, en_obs = CaseComp(data, s, mmonth=min_max_months[s_count], c=cases[2], two_variables=False)
-#         en_obs = en_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
-#         x, y, ln_obs = CaseComp(data, s, mmonth=min_max_months[s_count], c=cases[3], two_variables=False)
-#         ln_obs = ln_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
-#
-#         enso_dif_obs = en_obs - ln_obs
-#
-#         # IOD_obs ----------------------------------------------------------------------------------------------------#
-#         x, y, iodp_obs = CaseComp(data, s, mmonth=min_max_months[s_count], c=cases[0], two_variables=False)
-#         iodp_obs = iodp_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
-#         x, y, iodn_obs = CaseComp(data, s, mmonth=min_max_months[s_count], c=cases[1], two_variables=False)
-#         iodn_obs = iodn_obs.interp(lon=enso_dif_cfs.lon.values, lat=enso_dif_cfs.lat.values)
-#
-#         iod_dif_obs = iodp_obs - iodn_obs
-#
-#         fig = plt.figure(figsize=(5, 6), dpi=dpi)
-#         gs = fig.add_gridspec(2, 2)
-#         mask = MakeMask(iod_dif_cfs, 'var')
-#
-#         title = ['EN-LN_' + v_name[v_count].split()[2], 'EN-LN_CFSv2',
-#                  'IOD_pos-neg_'  + v_name[v_count].split()[2], 'IOD_pos-neg_CFSv2']
-#         comps = [enso_dif_obs, enso_dif_cfs, iod_dif_obs, iod_dif_cfs]
-#         for field, f_count, f_count_c, t in zip(comps,[0,1,0,1],[0,0,1,1], title):
-#             field *= mask
-#             ax = fig.add_subplot(gs[f_count, f_count_c],
-#                              projection=ccrs.PlateCarree(central_longitude=180))
-#             crs_latlon = ccrs.PlateCarree()
-#             ax.set_extent([270, 330, -60, 20], crs=crs_latlon)
-#
-#             # ax.contour(field.lon, field.lat, field['var'],
-#             #            transform=crs_latlon, colors='k',
-#             #            levels=scale, linewidths=1)
-#             im = ax.contourf(field.lon, field.lat, field['var'],
-#                              levels=scale,
-#                              transform=crs_latlon, cmap=cbar_t, extend='both')
-#
-#             cb = plt.colorbar(im, fraction=0.040, pad=0.025, shrink=0.8)
-#             cb.ax.tick_params(labelsize=5)
-#             ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey', edgecolor='#4B4B4B')
-#             ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
-#             ax.coastlines(color='#4B4B4B', linestyle='-', alpha=1)
-#             ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
-#             ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
-#             ax.set_yticks(np.arange(-60, 40, 20), crs=crs_latlon)
-#             lon_formatter = LongitudeFormatter(zero_direction_label=True)
-#             lat_formatter = LatitudeFormatter()
-#             ax.xaxis.set_major_formatter(lon_formatter)
-#             ax.yaxis.set_major_formatter(lat_formatter)
-#             ax.tick_params(labelsize=5)
-#             ax.set_title(t, fontsize=10)
-#             plt.tight_layout()
-#         fig.suptitle('Temp - ' + s)
-#         if save:
-#             plt.savefig(out_dir + 'tref_dif_' + s + '.jpg', dpi=dpi)
-#         else:
-#             plt.show()
-########################################################################################################################
+
+fig = plt.figure(figsize=(5, 6), dpi=dpi)
+gs = fig.add_gridspec(2, 2)
+
+title = ['EN-LN_' + v_name[0].split()[2], 'EN-LN_CFSv2',
+         'IOD_pos-neg_'  + v_name[0].split()[2], 'IOD_pos-neg_CFSv2']
+comps = [enso_dif_obs, enso_dif_cfs, iod_dif_obs, iod_dif_cfs]
+tests = [enso_obs_test, enso_cfs_test, iod_obs_test, iod_cfs_test]
+
+for field, f_count, f_count_c, t, test in zip(comps,[0,1,0,1],[0,0,1,1],
+                                              title, tests):
+    field = field*MakeMask(field, 'var')
+    ax = fig.add_subplot(gs[f_count, f_count_c],
+                         projection=ccrs.PlateCarree(central_longitude=180))
+    crs_latlon = ccrs.PlateCarree()
+    ax.set_extent([270, 330, -60, 20], crs=crs_latlon)
+
+    im = ax.contourf(field.lon, field.lat, field.where(test<0.1)['var'],
+                     levels=scale,
+                     transform=crs_latlon, cmap=cbar_t, extend='both')
+
+    # aux = field.where(test < 0.05, np.nan)
+    # ax.contourf(field.lon, field.lat, aux['var'],
+    #             levels=scale, hatches=['***'],
+    #             transform=crs_latlon, color='k')
+
+    cb = plt.colorbar(im, fraction=0.040, pad=0.025, shrink=0.8)
+    cb.ax.tick_params(labelsize=5)
+    ax.add_feature(cartopy.feature.LAND, facecolor='lightgrey',
+                   edgecolor='#4B4B4B')
+    ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.5)
+    ax.coastlines(color='#4B4B4B', linestyle='-', alpha=1)
+    ax.gridlines(crs=crs_latlon, linewidth=0.3, linestyle='-')
+    ax.set_xticks(np.arange(270, 330, 10), crs=crs_latlon)
+    ax.set_yticks(np.arange(-60, 40, 20), crs=crs_latlon)
+    lon_formatter = LongitudeFormatter(zero_direction_label=True)
+    lat_formatter = LatitudeFormatter()
+    ax.xaxis.set_major_formatter(lon_formatter)
+    ax.yaxis.set_major_formatter(lat_formatter)
+    ax.tick_params(labelsize=5)
+    ax.set_title(t, fontsize=10)
+    plt.tight_layout()
+
+
+fig.suptitle('Temp - ' + s + ' - sig. 0.1')
+if save:
+    plt.savefig(out_dir + 'tref_dif_test_' + s + '_' + v_name[0].split()[2] +
+                '.jpg', dpi=dpi)
+else:
+    plt.show()

@@ -116,8 +116,12 @@ if compute:
     hindcast = hindcast.load()
 
     # media climatologica hindcast sin filtrar tendencia
-    hindcast2 = hindcast.mean(['r', 'time', 'L'])
+    hindcast2 = (hindcast.mean(['r', 'time', 'L'])/
+                 hindcast.std(['r', 'time', 'L']))
+    hindcast3 = hindcast.mean(['r', 'time', 'L'])
     hindcast2.to_netcdf(f"{out_dir}hindcast_{v}_cfsv2_meanclim_son.nc")
+    hindcast3.to_netcdf(f"{out_dir}hindcast_no-norm_{v}"
+                        f"_cfsv2_meanclim_son.nc")
     del data
 
     # Detrend -----------------------------------------------------------------#
@@ -203,10 +207,13 @@ if compute:
     # media movil de 3 meses para separar en estaciones
     real_time = data.rolling(time=3, center=True).mean()
     real_time = real_time.load()
-    real_time2 = real_time.mean(['r', 'time', 'L'])
+    real_time2 = (real_time.mean(['r', 'time', 'L'])/
+                  real_time.std(['r', 'time', 'L']))
+    real_time3 = real_time.mean(['r', 'time', 'L'])
     real_time2.to_netcdf(f"{out_dir}real_time_{v}_cfsv2_meanclim_son.nc")
+    real_time3.to_netcdf(
+        f"{out_dir}real_time_no-norm_{v}_cfsv2_meanclim_son.nc")
     del data
-
     # Detrend -----------------------------------------------------------------#
     print('Detrend...')
     # la climatologia usada es la de hindcast 1998-2011
@@ -232,63 +239,67 @@ if compute:
         son_realtime_detrend.mean(['r', 'time'])
     son_realtime_detrend.to_netcdf(f"{out_dir}realtime_{v}_cfsv2_meanclim_"
                                    f"detrend_son.nc")
-else:
-    print('compute = False')
-    print('Opening CFSv2 saved files')
-    hindcast = xr.open_dataset(f"{out_dir}hindcast_{v}_cfsv2_meanclim_son.nc")
-    son_hindcast_detrend = \
-            xr.open_dataset(f"{out_dir}hindcast_{v}_cfsv2_meanclim_"
-                            f"detrend_son.nc")
 
-    real_time = xr.open_dataset(f"{out_dir}real_time_{v}_cfsv2_meanclim_son.nc")
-    son_realtime_detrend = \
-            xr.open_dataset(f"{out_dir}realtime_{v}_cfsv2_meanclim_"
-                            f"detrend_son.nc")
+
+print('Opening CFSv2 saved files')
+hindcast = xr.open_dataset(f"{out_dir}hindcast_{v}_cfsv2_meanclim_son.nc")
+hindcast_no_norm = (
+    xr.open_dataset(f"{out_dir}hindcast_no-norm_{v}_cfsv2_meanclim_son.nc"))
+son_hindcast_detrend = (
+    xr.open_dataset(f"{out_dir}hindcast_{v}_cfsv2_meanclim_detrend_son.nc"))
+
+real_time = xr.open_dataset(f"{out_dir}real_time_{v}_cfsv2_meanclim_son.nc")
+real_time_no_norm = (
+    xr.open_dataset(f"{out_dir}real_time_no-norm_{v}_cfsv2_meanclim_son.nc"))
+son_realtime_detrend = (
+    xr.open_dataset(f"{out_dir}realtime_{v}_cfsv2_meanclim_detrend_son.nc"))
 
 
 ###############################################################################
-# GPCC
 print('GPCC...')
 data_dir_pp_clim = ('/pikachu/datos/luciano.andrian/observado/ncfiles/'
                     'data_no_detrend/')
 data = xr.open_dataset(data_dir_pp_clim + 'pp_pgcc_v2020_1891-2023_1.nc')
-data = Weights(data)
+data = data.sel(lat=slice(20, -80), lon=slice(275, 331),
+                time=data.time.dt.year.isin(range(1982, 2020)))
+data = data.interp(lat=hindcast.lat.values, lon=hindcast.lon.values)
 data = data.rolling(time=3, center=True).mean()
 data = data.sel(time=data.time.dt.month.isin(10)) #son
 data = data.rename({'precip':'prec'})
-data = data.sel(time=data.time.dt.year.isin(range(1982, 2020)))
 pp_clim = data.mean('time')
-pp_clim = pp_clim.sel(lat=slice(20, -80), lon=slice(275, 331))
-pp_clim = pp_clim.interp(lat=hindcast.lat.values, lon=hindcast.lon.values)
 del data
 
 # sin tendencia
-data_dir_pp = '/pikachu/datos/luciano.andrian/observado/ncfiles/data_obs_d_w_c/'
+data_dir_pp = ('/pikachu/datos/luciano.andrian/observado/ncfiles/'
+               'data_obs_d_w_c/')
 data = xr.open_dataset(data_dir_pp + 'ppgpcc_w_c_d_1_SON.nc')
+data = data.sel(time=data.time.dt.year.isin(range(1981, 2021)),
+                lon=slice(275,331))
 data = data.rename({'var':'prec'})
-data = data.sel(time=data.time.dt.year.isin(range(1981, 2021)))
 data = data.interp(lat=hindcast.lat.values, lon=hindcast.lon.values)
-
 
 #------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------#
 print('Plot...')
 # total sin tendencia
-
-aux_hind = son_hindcast_detrend + hindcast2
-aux_hind = Weights(aux_hind)
-
-aux_real = son_realtime_detrend + real_time2
-aux_real = Weights(aux_real)
-
+aux_hind = son_hindcast_detrend + hindcast
+aux_real = son_realtime_detrend + real_time
 cfsv2 = xr.concat([aux_hind, aux_real], dim='time')
-cfsv2 = cfsv2/cfsv2.std(['r','time'])
+
+aux_hind_no_norm = son_hindcast_detrend + hindcast_no_norm
+aux_real_no_norm = son_realtime_detrend + real_time_no_norm
+cfsv2_no_norm = xr.concat([aux_hind_no_norm,
+                           aux_real_no_norm], dim='time')*30
 
 pp = data + pp_clim
-pp = pp/pp.std('time')
+#------------------------------------------------------------------------------#
+# VEEER normalización
+pp_norm = pp/pp.std('time')
+dif = cfsv2.mean(['time','r']) - pp_norm.mean('time')
+dif = Weights(dif)
 
-
-dif = cfsv2.mean(['time','r']) - pp.mean('time')
+dif_no_norm = cfsv2_no_norm.mean(['time','r']) - pp.mean('time')
+dif_no_norm = Weights(dif_no_norm)
 
 from matplotlib import colors
 cbar_pp = colors.ListedColormap(['#003C30', '#004C42', '#0C7169', '#79C8BC',
@@ -300,28 +311,42 @@ cbar_pp.set_under('#3F2404')
 cbar_pp.set_over('#00221A')
 cbar_pp.set_bad(color='white')
 scale_pp = [-2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2]
+scale_pp_no_norm = np.linspace(-60,60,13)
 
-Plot(dif, dif.prec, scale_pp, save, dpi,
-     'CFSv2 hindcast + real time - GPCC (detrended)',
-     'pp_dif_hind_real_d.jpg', out_dir, cbar_pp)
+# Plot(dif, dif.prec, scale_pp, save, dpi,
+#      'CFSv2 hindcast + real time - GPCC (Norm y detr)',
+#      'prec_dif_hind_real_d.jpg', out_dir, cbar_pp)
+
+
+# Plot(dif_no_norm, dif_no_norm.prec, scale_pp_no_norm, save, dpi,
+#      'CFSv2 hindcast + real time - GPCC (No-Norm y detr)',
+#      'prec_no-norm_dif_hind_real_d.jpg', out_dir, cbar_pp)
 
 
 # Testeo ----------------------------------------------------------------------#
 print('Testeo de diferencia de medias con t-student por leadtime')
-#from scipy import stats
-# # promediando todos los r (y leadtimes, sino hay condicion sobre el tiempo)
-# aux = stats.ttest_ind(
-#     cfsv2.mean('r').hgt,
-#     era.isel(lat=slice(None, None, -1)).hgt,
-#     equal_var=False)
-# plt.imshow(aux[0]);plt.colorbar();plt.show()
 
-# por leadtimes
+# pvalue = []
+# for m in [7, 8, 9, 10]:
+#     cfsv2_monthly_mean = cfsv2.sel(
+#         time=cfsv2.time.dt.month.isin(m)).mean('r').prec
+#     pp_prec = pp_norm.prec#.isel(lat=slice(None, None, -1)).prec
+#     # test
+#     pvalue.append(
+#         ttest_ind(cfsv2_monthly_mean, pp_prec, equal_var=False)[1])
+#
+# # promedio de pvalue por leadtime
+# pvalue = sum(pvalue) / len(pvalue)
+#
+# Plot(dif, dif.where(pvalue<0.05).prec, scale_pp, save, dpi,
+#      'CFSv2 hindcast + real time - GPCC (Norm y detr)',
+#      'prec_dif_hind_real_d_tested.jpg', out_dir, cbar_pp)
+
 
 pvalue = []
 for m in [7, 8, 9, 10]:
-    cfsv2_monthly_mean = cfsv2.sel(
-        time=cfsv2.time.dt.month.isin(m)).mean('r').prec
+    cfsv2_monthly_mean = cfsv2_no_norm.sel(
+        time=cfsv2_no_norm.time.dt.month.isin(m)).mean('r').prec
     pp_prec = pp.prec#.isel(lat=slice(None, None, -1)).prec
     # test
     pvalue.append(
@@ -330,9 +355,11 @@ for m in [7, 8, 9, 10]:
 # promedio de pvalue por leadtime
 pvalue = sum(pvalue) / len(pvalue)
 
-Plot(dif, dif.where(pvalue<0.05).prec, scale_pp, save, dpi,
-     'CFSv2 hindcast + real time - GPCC (detrended)',
-     'pp_dif_hind_real_d_tested.jpg', out_dir, cbar_pp)
+Plot(dif_no_norm, dif_no_norm.where(pvalue<0.05).prec, scale_pp_no_norm,
+     save, dpi,
+     'CFSv2 hindcast + real time - GPCC (No-Norm y detr)',
+     'prec_no-norm_dif_hind_real_d_tested.jpg', out_dir, cbar_pp)
+
 #------------------------------------------------------------------------------#
 print('done')
 #------------------------------------------------------------------------------#
