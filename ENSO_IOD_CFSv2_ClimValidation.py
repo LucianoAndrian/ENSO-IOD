@@ -105,7 +105,7 @@ if compute:
 
     # media climatologica hindcast sin filtrar tendencia
     hindcast2 = hindcast.mean(['r', 'time', 'L']).sel(P=200)
-    hindcast2.to_netcdf(out_dir + 'hindcast_cfsv2_meanclim_son.nc')
+    #hindcast2.to_netcdf(out_dir + 'hindcast_cfsv2_meanclim_son.nc')
     del data
 
     # Detrend -----------------------------------------------------------------#

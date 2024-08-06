@@ -224,21 +224,20 @@ files = [x for x in files if "_2022" not in x and '_2021' not in x]
 # en xr.open_mfdataset
 files0 = files[0:144]
 files1 = files[145:len(files)]
-
-for i in range(0, 252):
-    files0 = files[0:i]
-    try:
-        data0 = xr.open_mfdataset(files0, decode_times=False).sel(
-            L=[0.5, 1.5, 2.5, 3.5], M=slice(1, 24), X=slice(275, 330),
-            Y=slice(-70, 20))
-    except:
-        print('Este!' + str(i))
+#
+# for i in range(0, 252):
+#     files0 = files[0:i]
+#     try:
+#         data0 = xr.open_mfdataset(files0, decode_times=False).sel(
+#             L=[0.5, 1.5, 2.5, 3.5], M=slice(1, 24), X=slice(275, 330),
+#             Y=slice(-70, 20))
+#     except:
+#         print('Este!' + str(i))
 
 data0 = xr.open_mfdataset(files0, decode_times=False).sel(
-    L=[0.5, 1.5, 2.5, 3.5], M=slice(1, 24), X=slice(275, 330),
-    Y=slice(-70, 20))
+    L=[0.5, 1.5, 2.5, 3.5], M=slice(1, 24), X=slice(275, 331), Y=slice(-70, 20))
 data1 = xr.open_mfdataset(files1, decode_times=False).sel(
-    L=[0.5, 1.5, 2.5, 3.5], M=slice(1,24), X=slice(275, 330), Y=slice(-70, 20))
+    L=[0.5, 1.5, 2.5, 3.5], M=slice(1,24), X=slice(275, 331), Y=slice(-70, 20))
 
 data0 = data0.rename({'X': 'lon', 'Y': 'lat', 'M': 'r', 'S': 'time'})
 data0['L'] = [0,1,2,3]
