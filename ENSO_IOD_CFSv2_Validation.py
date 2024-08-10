@@ -2,7 +2,7 @@
 Validación CFSv2
 """
 ################################################################################
-save = True
+save = False
 ################################################################################
 import xarray as xr
 import numpy as np
@@ -131,8 +131,8 @@ min_max_months = [[6,8],[9,11]]
 cases =  ['DMI_pos', 'DMI_neg', 'N34_pos', 'N34_neg']
 cases_cfs = ['dmi_pos', 'dmi_neg', 'n34_pos', 'n34_neg']
 
-# cases = ['DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
-# cases_cfs = ['dmi_puros_pos', 'dmi_puros_neg','n34_puros_pos', 'n34_puros_neg']
+cases = ['DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
+cases_cfs = ['dmi_puros_pos', 'dmi_puros_neg','n34_puros_pos', 'n34_puros_neg']
 
 v_name_fig=['pp_gpcc', 'pp_prec']
 #------------------------------------------------------------------------------#
@@ -318,8 +318,6 @@ enso_cfs_test = ttest_ind(en_cfs_clean['var'].values,
                           ln_cfs_clean['var'].values,
                           equal_var=False)[1]
 
-enso_cfs_test = np.flip(enso_cfs_test, axis=0)
-
 enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
 
 # IOD_CFSv2 -------------------------------------------------------------------#
@@ -336,8 +334,6 @@ iodn_cfs_clean = iodn_cfs.dropna('time')
 iod_cfs_test = ttest_ind(iodp_cfs_clean['var'].values,
                          iodn_cfs_clean['var'].values,
                          equal_var=False)[1]
-
-iod_cfs_test = np.flip(iod_cfs_test, axis=0)
 
 iod_dif_cfs = iodp_cfs.mean('time') - iodn_cfs.mean('time')
 
@@ -485,8 +481,6 @@ enso_cfs_test = ttest_ind(en_cfs_clean['var'].values,
                           ln_cfs_clean['var'].values,
                           equal_var=False)[1]
 
-enso_cfs_test = np.flip(enso_cfs_test, axis=0)
-
 enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
 
 # IOD_CFSv2 -------------------------------------------------------------------#
@@ -503,8 +497,6 @@ iodn_cfs_clean = iodn_cfs.dropna('time')
 iod_cfs_test = ttest_ind(iodp_cfs_clean['var'].values,
                          iodn_cfs_clean['var'].values,
                          equal_var=False)[1]
-
-iod_cfs_test = np.flip(iod_cfs_test, axis=0)
 
 iod_dif_cfs = iodp_cfs.mean('time') - iodn_cfs.mean('time')
 
