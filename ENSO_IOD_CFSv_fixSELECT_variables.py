@@ -98,96 +98,96 @@ seasons = ['SON']
 #     for process in processes:
 #         process.start()
 #
-# # TSigma #######################################################################
-# if len(seasons)>1:
-#     def SelectEventsTSigma(c):
-#         for s in seasons:
-#             try:
-#                 aux_cases = \
-#                     xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
-#                     .rename({'__xarray_dataarray_variable__': 'index'})
-#             except:
-#                 aux_cases = \
-#                     xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
-#                     .rename({'TMP': 'index'})
-#
-#             data_tsigma_s =\
-#                 xr.open_dataset(data_dir + 'tsigma_' + s.lower() + '.nc')
-#             case_events = SelectVariables(aux_cases, data_tsigma_s)
-#
-#             case_events.to_netcdf(out_dir + 'tsigma_' + c + '_' + s + '.nc')
-#
-#     pool = ThreadPool(4)  # uno por season
-#     pool.map_async(SelectEventsTSigma, [c for c in cases])
-#
-# else:
-#     print('one season')
-#     def SelectEventsTSigma(c):
-#         s = seasons[0]
-#         try:
-#             aux_cases =\
-#                 xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
-#                     .rename({'__xarray_dataarray_variable__': 'index'})
-#         except:
-#             aux_cases = \
-#                 xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
-#                     .rename({'TMP': 'index'})
-#
-#         data_tsigma_s = \
-#             xr.open_dataset(data_dir + 'tsigma_' + s.lower() + '.nc')
-#
-#         case_events = SelectVariables(aux_cases, data_tsigma_s)
-#         case_events.to_netcdf(out_dir + 'tsigma_' + c + '_' + s + '.nc')
-#
-#     processes = [Process(target=SelectEventsTSigma, args=(c,)) for c in cases]
-#     for process in processes:
-#         process.start()
-# ################################################################################
-# # Tref #########################################################################
-# if len(seasons)>1:
-#     def SelectEventsTref(c):
-#         for s in seasons:
-#             try:
-#                 aux_cases = \
-#                     xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
-#                     .rename({'__xarray_dataarray_variable__': 'index'})
-#             except:
-#                 aux_cases = \
-#                     xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
-#                     .rename({'tref': 'index'})
-#
-#             data_tsigma_s =\
-#                 xr.open_dataset(data_dir + 'tref_' + s.lower() + '.nc')
-#             case_events = SelectVariables(aux_cases, data_tsigma_s)
-#
-#             case_events.to_netcdf(out_dir + 'tref_' + c + '_' + s + '.nc')
-#
-#     pool = ThreadPool(4)  # uno por season
-#     pool.map_async(SelectEventsTSigma, [c for c in cases])
-#
-# else:
-#     print('one season')
-#     def SelectEventsTref(c):
-#         s = seasons[0]
-#         try:
-#             aux_cases =\
-#                 xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
-#                     .rename({'__xarray_dataarray_variable__': 'index'})
-#         except:
-#             aux_cases = \
-#                 xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
-#                     .rename({'tref': 'index'})
-#
-#         data_tsigma_s = \
-#             xr.open_dataset(data_dir + 'tref_' + s.lower() + '.nc')
-#
-#         case_events = SelectVariables(aux_cases, data_tsigma_s)
-#         case_events.to_netcdf(out_dir + 'tref_' + c + '_' + s + '.nc')
-#
-#     processes = [Process(target=SelectEventsTref, args=(c,)) for c in cases]
-#     for process in processes:
-#         process.start()
-# ################################################################################
+# TSigma #######################################################################
+if len(seasons)>1:
+    def SelectEventsTSigma(c):
+        for s in seasons:
+            try:
+                aux_cases = \
+                    xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                    .rename({'__xarray_dataarray_variable__': 'index'})
+            except:
+                aux_cases = \
+                    xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                    .rename({'TMP': 'index'})
+
+            data_tsigma_s =\
+                xr.open_dataset(data_dir + 'tsigma_' + s.lower() + '.nc')
+            case_events = SelectVariables(aux_cases, data_tsigma_s)
+
+            case_events.to_netcdf(out_dir + 'tsigma_' + c + '_' + s + '.nc')
+
+    pool = ThreadPool(4)  # uno por season
+    pool.map_async(SelectEventsTSigma, [c for c in cases])
+
+else:
+    print('one season')
+    def SelectEventsTSigma(c):
+        s = seasons[0]
+        try:
+            aux_cases =\
+                xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
+                    .rename({'__xarray_dataarray_variable__': 'index'})
+        except:
+            aux_cases = \
+                xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
+                    .rename({'TMP': 'index'})
+
+        data_tsigma_s = \
+            xr.open_dataset(data_dir + 'T0995sigma_' + s.lower() + '_no_detrend.nc')
+
+        case_events = SelectVariables(aux_cases, data_tsigma_s)
+        case_events.to_netcdf(out_dir + 'tsigma_' + c + '_' + s + '_no_detrend.nc')
+
+    processes = [Process(target=SelectEventsTSigma, args=(c,)) for c in cases]
+    for process in processes:
+        process.start()
+################################################################################
+# Tref #########################################################################
+if len(seasons)>1:
+    def SelectEventsTref(c):
+        for s in seasons:
+            try:
+                aux_cases = \
+                    xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                    .rename({'__xarray_dataarray_variable__': 'index'})
+            except:
+                aux_cases = \
+                    xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+                    .rename({'tref': 'index'})
+
+            data_tsigma_s =\
+                xr.open_dataset(data_dir + 'tref_' + s.lower() + '.nc')
+            case_events = SelectVariables(aux_cases, data_tsigma_s)
+
+            case_events.to_netcdf(out_dir + 'tref_' + c + '_' + s + '.nc')
+
+    pool = ThreadPool(4)  # uno por season
+    pool.map_async(SelectEventsTref, [c for c in cases])
+
+else:
+    print('one season')
+    def SelectEventsTref(c):
+        s = seasons[0]
+        try:
+            aux_cases =\
+                xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
+                    .rename({'__xarray_dataarray_variable__': 'index'})
+        except:
+            aux_cases = \
+                xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc')\
+                    .rename({'tref': 'index'})
+
+        data_tsigma_s = \
+            xr.open_dataset(data_dir + 'tref_' + s.lower() + '_no_detrend.nc')
+
+        case_events = SelectVariables(aux_cases, data_tsigma_s)
+        case_events.to_netcdf(out_dir + 'tref_' + c + '_' + s + '_no_detrend.nc')
+
+    processes = [Process(target=SelectEventsTref, args=(c,)) for c in cases]
+    for process in processes:
+        process.start()
+################################################################################
 # PP ###########################################################################
 if len(seasons)>1:
     def SelectEventsPrec(c):
@@ -224,10 +224,10 @@ else:
                     .rename({'prec': 'index'})
 
         data_prec_s = \
-            xr.open_dataset(data_dir + 'prec_' + s.lower() + '.nc')
+            xr.open_dataset(data_dir + 'prec_' + s.lower() + '_no_detrend.nc')
 
         case_events = SelectVariables(aux_cases, data_prec_s)
-        case_events.to_netcdf(out_dir + 'prec_' + c + '_' + s + '.nc')
+        case_events.to_netcdf(out_dir + 'prec_' + c + '_' + s + '_no_detrend.nc')
 
     processes = [Process(target=SelectEventsPrec, args=(c,)) for c in cases]
     for process in processes:

@@ -131,8 +131,8 @@ min_max_months = [[6,8],[9,11]]
 cases =  ['DMI_pos', 'DMI_neg', 'N34_pos', 'N34_neg']
 cases_cfs = ['dmi_pos', 'dmi_neg', 'n34_pos', 'n34_neg']
 
-cases = ['DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
-cases_cfs = ['dmi_puros_pos', 'dmi_puros_neg','n34_puros_pos', 'n34_puros_neg']
+#cases = ['DMI_un_pos', 'DMI_un_neg', 'N34_un_pos', 'N34_un_neg']
+#cases_cfs = ['dmi_puros_pos', 'dmi_puros_neg','n34_puros_pos', 'n34_puros_neg']
 
 v_name_fig=['pp_gpcc', 'pp_prec']
 #------------------------------------------------------------------------------#
@@ -181,7 +181,7 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
     data = xr.open_dataset(data_dir_era5 + v + '.nc')
 
     for s, s_count in zip(['SON'], [1]):
-        # # neutro CFSv2 --------------------------------------------------------
+        # # neutro CFSv2 -------------------------------------------------------
         # neutro = xr.open_dataset(
         #     cases_dir + 'hgt_neutros_' + s + '.nc').rename({'hgt': 'var'})
         # neutro = neutro.__mul__(9.80665)
@@ -294,7 +294,7 @@ for v, v_count in zip(['HGT200_SON_mer_d_w'], [0]): # agregar viento
 ################################################################################
 ################################################################################
 # PP --------------------------------------------------------------------------#
-end_nc_file = '.nc'
+end_nc_file = '_no_detrend.nc'
 s = 'SON'
 v_name = ['Precipitation - GPCC']
 scale = np.linspace(-30, 30, 13)
@@ -302,14 +302,15 @@ scale = np.linspace(-30, 30, 13)
 data = xr.open_dataset(data_dir_t_pp + 'ppgpcc_w_c_d_1_SON.nc')
 
 # neutro CFSv2 --------------------------------------------------------------- #
-neutro = (xr.open_dataset(cases_dir + 'prec_neutros_' + s + '.nc')
+neutro = (xr.open_dataset(cases_dir + 'prec_neutros_' + s + end_nc_file)
           .rename({'prec': 'var'}).__mul__(30))
 
 # ENSO_CFSv2 ----------------------------------------------------------------- #
-en_cfs = (xr.open_dataset(cases_dir + 'prec_' + cases_cfs[2] + '_' + s + '.nc')
-          .rename({'prec': 'var'}).__mul__(30))
-ln_cfs = (xr.open_dataset(cases_dir + 'prec_' + cases_cfs[3] + '_' + s + '.nc')
-          .rename({'prec': 'var'}).__mul__(30))
+en_cfs = (xr.open_dataset(cases_dir + 'prec_' + cases_cfs[2] + '_' + s +
+                          end_nc_file).rename({'prec': 'var'}).__mul__(30))
+
+ln_cfs = (xr.open_dataset(cases_dir + 'prec_' + cases_cfs[3] + '_' + s +
+                          end_nc_file).rename({'prec': 'var'}).__mul__(30))
 
 ln_cfs_clean = ln_cfs.dropna('time')
 en_cfs_clean = en_cfs.dropna('time')
@@ -322,10 +323,10 @@ enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
 
 # IOD_CFSv2 -------------------------------------------------------------------#
 iodp_cfs = (xr.open_dataset(
-    cases_dir + 'prec_' + cases_cfs[0] + '_' + s + '.nc')
+    cases_dir + 'prec_' + cases_cfs[0] + '_' + s + end_nc_file)
             .rename({'prec': 'var'}).__mul__(30))
 iodn_cfs = (xr.open_dataset
-            (cases_dir + 'prec_' + cases_cfs[1] + '_' + s + '.nc')
+            (cases_dir + 'prec_' + cases_cfs[1] + '_' + s + end_nc_file)
             .rename({'prec': 'var'}).__mul__(30))
 
 iodp_cfs_clean = iodp_cfs.dropna('time')
@@ -454,10 +455,10 @@ if save:
                 '.jpg', dpi=dpi)
 else:
     plt.show()
-#
-# ##############################################################################
+
+################################################################################
 # T ---------------------------------------------------------------------------#
-end_nc_file = '.nc'
+end_nc_file = '_no_detrend.nc'
 s = 'SON'
 v_name = ['Temperature - Tcru']
 scale = np.linspace(-1.2, 1.2, 13)
@@ -465,13 +466,15 @@ scale = np.linspace(-1.2, 1.2, 13)
 data = xr.open_dataset(data_dir_t_pp + 'tcru_w_c_d_0.25_SON.nc')
 
 # neutro CFSv2 --------------------------------------------------------------- #
-neutro = (xr.open_dataset(cases_dir + 'tref_neutros_' + s + '.nc')
+neutro = (xr.open_dataset(cases_dir + 'tref_neutros_' + s + end_nc_file)
           .rename({'tref': 'var'})-273)
 
 # ENSO_CFSv2 ----------------------------------------------------------------- #
-en_cfs = (xr.open_dataset(cases_dir + 'tref_' + cases_cfs[2] + '_' + s + '.nc')
+en_cfs = (xr.open_dataset(
+    cases_dir + 'tref_' + cases_cfs[2] + '_' + s + end_nc_file)
           .rename({'tref': 'var'})-273)
-ln_cfs = (xr.open_dataset(cases_dir + 'tref_' + cases_cfs[3] + '_' + s + '.nc')
+ln_cfs = (xr.open_dataset(
+    cases_dir + 'tref_' + cases_cfs[3] + '_' + s + end_nc_file)
           .rename({'tref': 'var'})-273)
 
 ln_cfs_clean = ln_cfs.dropna('time')
@@ -485,10 +488,10 @@ enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
 
 # IOD_CFSv2 -------------------------------------------------------------------#
 iodp_cfs = (xr.open_dataset(
-    cases_dir + 'tref_' + cases_cfs[0] + '_' + s + '.nc')
+    cases_dir + 'tref_' + cases_cfs[0] + '_' + s + end_nc_file)
             .rename({'tref': 'var'})-273)
 iodn_cfs = (xr.open_dataset
-            (cases_dir + 'tref_' + cases_cfs[1] + '_' + s + '.nc')
+            (cases_dir + 'tref_' + cases_cfs[1] + '_' + s + end_nc_file)
             .rename({'tref': 'var'})-273)
 
 iodp_cfs_clean = iodp_cfs.dropna('time')
@@ -509,7 +512,7 @@ enso_obs_test = ttest_ind(
     en_obs['var'].values, ln_obs['var'].values, equal_var=False)[1]
 
 enso_dif_obs = en_obs.mean('time') - ln_obs.mean('time')
-#
+
 # IOD_obs ---------------------------------------------------------------------#
 x, y, iodp_obs = CaseComp(data, s, mmonth=[9, 11], c=cases[0],
                           two_variables=False)
@@ -612,3 +615,4 @@ if save:
                 '.jpg', dpi=dpi)
 else:
     plt.show()
+################################################################################
