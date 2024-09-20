@@ -47,7 +47,7 @@ for ms in main_month_season:
     dmi_season = xr.open_dataset(dates_dir + 'DMI_' + s + '_Leads_r_CFSv2.nc')
 
     #Criterio Niño3.4
-    data_n34 = n34_season.where(np.abs(n34_season) > 0.5*n34_season.mean('r').std())
+    data_n34 = n34_season.where(np.abs(n34_season) > 0.5)#*n34_season.mean('r').std())
 
     #Criterio DMI
     data_dmi = dmi_season.where(np.abs(dmi_season) > 0.5*dmi_season.mean('r').std())
@@ -177,25 +177,25 @@ for ms in main_month_season:
 
 
     print('Saving...')
-    dmi_puros_pos_f.to_netcdf(out_dir + 'dmi_puros_pos_f' + '_' + s + '.nc')
-    dmi_puros_neg_f.to_netcdf(out_dir + 'dmi_puros_neg_f' + '_' + s + '.nc')
+    dmi_puros_pos_f.to_netcdf(out_dir + 'dmi_puros_pos_f' + '_' + s + '_05.nc')
+    dmi_puros_neg_f.to_netcdf(out_dir + 'dmi_puros_neg_f' + '_' + s + '_05.nc')
 
-    n34_puros_pos_f.to_netcdf(out_dir + 'n34_puros_pos_f' + '_' + s + '.nc')
-    n34_puros_neg_f.to_netcdf(out_dir + 'n34_puros_neg_f' + '_' + s + '.nc')
+    n34_puros_pos_f.to_netcdf(out_dir + 'n34_puros_pos_f' + '_' + s + '_05.nc')
+    n34_puros_neg_f.to_netcdf(out_dir + 'n34_puros_neg_f' + '_' + s + '_05.nc')
 
-    sim_neg_f.to_netcdf(out_dir + 'sim_neg_f' + '_' + s + '.nc')
-    sim_pos_f.to_netcdf(out_dir + 'sim_pos_f' + '_' + s + '.nc')
+    sim_neg_f.to_netcdf(out_dir + 'sim_neg_f' + '_' + s + '_05.nc')
+    sim_pos_f.to_netcdf(out_dir + 'sim_pos_f' + '_' + s + '_05.nc')
 
-    neutros_f.to_netcdf(out_dir + 'neutros_f' + '_' + s + '.nc')
+    neutros_f.to_netcdf(out_dir + 'neutros_f' + '_' + s + '_05.nc')
     ##
-    dmi_pos_f.to_netcdf(out_dir + 'dmi_pos_f' + '_' + s + '.nc')
-    dmi_neg_f.to_netcdf(out_dir + 'dmi_neg_f' + '_' + s + '.nc')
-    n34_pos_f.to_netcdf(out_dir + 'n34_pos_f' + '_' + s + '.nc')
-    n34_neg_f.to_netcdf(out_dir + 'n34_neg_f' + '_' + s + '.nc')
+    dmi_pos_f.to_netcdf(out_dir + 'dmi_pos_f' + '_' + s + '_05.nc')
+    dmi_neg_f.to_netcdf(out_dir + 'dmi_neg_f' + '_' + s + '_05.nc')
+    n34_pos_f.to_netcdf(out_dir + 'n34_pos_f' + '_' + s + '_05.nc')
+    n34_neg_f.to_netcdf(out_dir + 'n34_neg_f' + '_' + s + '_05.nc')
 
     if len(dmi_neg_n34_pos_f)!=0:
-        dmi_neg_n34_pos_f.to_netcdf(out_dir + 'dmi_neg_n34_pos_f' + '_' + s + '.nc')
+        dmi_neg_n34_pos_f.to_netcdf(out_dir + 'dmi_neg_n34_pos_f' + '_' + s + '_05.nc')
 
     if len(dmi_pos_n34_neg_f)!=0:
-        dmi_pos_n34_neg_f.to_netcdf(out_dir + 'dmi_pos_n34_neg_f' + '_' + s + '.nc')
+        dmi_pos_n34_neg_f.to_netcdf(out_dir + 'dmi_pos_n34_neg_f' + '_' + s + '_05.nc')
 ########################################################################################################################

@@ -5,7 +5,7 @@ de este codigo es para reordenar la salida de BinsByCases para poder graficar
 con la misma metodologia que el resto de las figuras.
 """
 ################################################################################
-save = False
+save = True
 out_dir = '/home/luciano.andrian/doc/salidas/ENSO_IOD/paper1/figuras_final/'
 # import #######################################################################
 import os
@@ -205,9 +205,9 @@ for c in cases_magnitude:
 cases_ordenados = xr.concat(cases_ordenados, dim='plots')
 # ---------------------------------------------------------------------------- #
 
-PlotFinal_Figs12_13(cases_ordenados, scale_hgt_comp, cbar, aux_num, 'figure12',
+PlotFinal_Figs12_13(cases_ordenados, scale_hgt_comp, cbar, aux_num, 'f12',
                     'hs', save, dpi, out_dir,
-                    data_ctn=cases_ordenados, color_ctn='k',
+                    data_ctn=cases_ordenados, color_ctn='#505050',
                     row_titles=row_titles, col_titles=col_titles,
                     clim_plot=clim, clim_cbar='Reds',
                     clim_levels=np.linspace(11000,12500,7), high=0.55)
@@ -261,9 +261,9 @@ cases_ordenados = xr.concat(cases_ordenados, dim='plots')
 # ---------------------------------------------------------------------------- #
 
 PlotFinal_Figs12_13(cases_ordenados, scale_hgt_snr, cbar_snr, aux_num,
-                    'figure13',
+                    'f13',
                     'hs', save, dpi, out_dir,
-                    data_ctn=cases_ordenados, color_ctn='k',
+                    data_ctn=cases_ordenados, color_ctn='#505050',
                     row_titles=row_titles, col_titles=col_titles,
                     clim_plot=clim, clim_cbar='Reds',
                     clim_levels=np.linspace(11000,12500,7), high=0.55)

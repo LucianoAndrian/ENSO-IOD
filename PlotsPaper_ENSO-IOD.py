@@ -173,10 +173,10 @@ def ComputeWaf(reg_output, data_clim, hpalevel):
 def SelectParIndex(dmi_case, n34_case, sd_dmi_s, sd_n34_s, s, by_r=True,
                    open_n34=True, open_dmi=False):
     aux = xr.open_dataset(
-        cases_dir + 'dmi_values_' + dmi_case + '_' + s + '.nc')\
+        cases_dir + 'dmi_values_' + dmi_case + '_' + s + '_05.nc')\
         .__mul__(1 / sd_dmi_s)
     aux2 = xr.open_dataset(
-        cases_dir + 'N34_values_' + n34_case + '_' + s + '.nc')\
+        cases_dir + 'N34_values_' + n34_case + '_' + s + '_05.nc')\
         .__mul__(1 / sd_n34_s)
 
     if by_r:
@@ -309,8 +309,8 @@ def CaseComp_Validation(data, s, mmonth, c, two_variables=False, data2=None):
 scale_vp = [-3e6, -2.5e6, -2e6, -1.5e6, -1e6, -0.5e6, 0, 0.5e6, 1e6, 1.5e6,
             2e6, 2.5e6, 3e6]
 scale_sst = [-1, -.5, -.1, 0, .1, .5, 1]
-scale_div = [-4.33e-07, 4.33e-07]
-scale_hgt = [-150, -100, -75, -50, -25, -15, 0, 15, 25, 50, 75, 100, 150]
+scale_div = [-4.33e-07,  4.33e-07]
+scale_hgt = [-300, -200, -100, -50, -25, -15, 0, 15, 25, 50, 100, 200, 300]
 scale_pp = np.linspace(-15, 15, 13)
 scale_t = [-.6,-.4,-.2,-.1,-.05,0,0.05,0.1,0.2,0.4,0.6]
 
@@ -318,9 +318,10 @@ scale_t = [-.6,-.4,-.2,-.1,-.05,0,0.05,0.1,0.2,0.4,0.6]
 scale_vp_comp = np.linspace(-4.5e6, 4.5e6, 13)
 scale_div_comp = [-1.6e-06, 1.6e-06]
 scale_sst_comp = [-1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5]
-scale_hgt_comp = [-375, -275, -175, -75, -25, 0, 25, 75, 175, 275, 375]
+scale_hgt_comp = [-500, -300, -200, -100, -50, 0, 50, 100, 200, 300, 500]
 scale_t_comp = [-1.5, -1, -.5, -.25, -.1, 0, .1, .25, .5, 1, 1.5]
 scale_pp_comp = [-40, -30, -20, -10, -5, 0, 5, 10, 20, 30, 40]
+scale_hgt_comp_cfsv2 = [-375, -275, -175, -75, -25, 0, 25, 75, 175, 275, 375]
 
 # CFSv2
 scale_hgt_snr = [-1, -.8, -.6, -.5, -.1, 0, 0.1, 0.5, 0.6, 0.8, 1]
@@ -335,6 +336,13 @@ cbar_sst = colors.ListedColormap(['#B9391B', '#CD4838', '#E25E55', '#F28C89',
                                   '#5E9AD7', '#3C7DC3', '#2064AF'][::-1])
 cbar_sst.set_over('#9B1C00')
 cbar_sst.set_under('#014A9B')
+cbar_sst.set_bad(color='white')
+
+cbar_sst = colors.ListedColormap(['#B98200', '#CD9E46', '#E2B361', '#E2BD5A',
+                                  '#FFF1C6', 'white', '#B1FFD0', '#7CEB9F',
+                                  '#52D770', '#32C355', '#1EAF3D'][::-1])
+cbar_sst.set_over('#9B6500')
+cbar_sst.set_under('#009B2E')
 cbar_sst.set_bad(color='white')
 
 
@@ -385,9 +393,9 @@ tick_label_size = 15
 scatter_size_fix = 3
 
 ################################################################################
-subtitulos_regre = [r"$Ni\tilde{n}o\ 3.4$",  r"$DMI$",
-                    r"$Ni\tilde{n}o\ 3.4|_{DMI}$",
-                    r"$DMI|_{Ni\tilde{n}o\ 3.4}$"]
+subtitulos_regre = [r"$ONI$",  r"$DMI$",
+                    r"$ONI|_{DMI}$",
+                    r"$DMI|_{ONI}$"]
 
 # En orden de ploteo
 cases = ['N34_un_pos', 'N34_un_neg', 'DMI_un_pos', 'DMI_un_neg',
@@ -430,11 +438,11 @@ scatter_size_fix = 3
 # ---------------------------------------------------------------------------- #
 fig, ax = plt.subplots(dpi=dpi, figsize=(7.08661, 7.08661))
 # todos
-ax.scatter(x=dmi_todos, y=n34_todos, marker='o', label='Niño3.4 vs DMI',
+ax.scatter(x=dmi_todos, y=n34_todos, marker='o', label='ONI vs DMI',
            s=30*scatter_size_fix, edgecolor='k', color='dimgray', alpha=1)
 # dmi puros
 ax.scatter(x=dmi_un_pos.values, y=dmi_un_pos_n34_values.values, marker='o',
-           s=30*scatter_size_fix, edgecolor='k', facecolor='firebrick',
+           s=30*scatter_size_fix, edgecolor='k', facecolor='#8B1E1E',
            alpha=1, label='IOD+')
 ax.scatter(x=dmi_un_neg.values, y=dmi_un_neg_n34_values.values, marker='o',
            s=30*scatter_size_fix, facecolor='#7CCD73', edgecolor='k',
@@ -465,10 +473,10 @@ ax.legend(loc=(.01, .57), fontsize=label_legend_size)
 ax.tick_params(axis='both', which='major', labelsize=tick_label_size, pad=1)
 ax.set_ylim((-5, 5))
 ax.set_xlim((-5, 5))
-ax.axhspan(-.5, .5, alpha=0.2, color='black', zorder=0)
-ax.axvspan(-.5, .5, alpha=0.2, color='black', zorder=0)
+ax.axhspan(-.5/ .828, .5/ .828, alpha=0.2, color='black', zorder=0)
+ax.axvspan(-.5 , .5, alpha=0.2, color='black', zorder=0)
 ax.set_xlabel('DMI', size=in_label_size)
-ax.set_ylabel('Niño 3.4', size=in_label_size)
+ax.set_ylabel('ONI', size=in_label_size)
 ax.text(-4.9, 4.6, 'EN/IOD-', dict(size=in_label_size))
 ax.text(-.2, 4.6, 'EN', dict(size=in_label_size))
 ax.text(+3.7, 4.6, 'EN/IOD+', dict(size=in_label_size))
@@ -480,7 +488,7 @@ ax.text(-4.9, -.1, 'IOD-', dict(size=in_label_size))
 plt.tight_layout()
 
 if save:
-    plt.savefig(out_dir + 'figure1.pdf', dpi=dpi, bbox_inches='tight')
+    plt.savefig(out_dir + 'f01.pdf', dpi=dpi, bbox_inches='tight')
     plt.close('all')
 else:
     plt.show()
@@ -574,11 +582,11 @@ aux_vp = SetDataToPlotFinal(vp_n34 * MakerMaskSig(vp_corr_n34),
 aux_div = SetDataToPlotFinal(div_n34, div_dmi, div_n34_wodmi, div_dmi_won34)
 
 PlotFinal(data=aux_sst, levels=scale_sst, cmap=cbar_sst,
-          titles=subtitulos_regre, namefig='figure2', map='hs',
+          titles=subtitulos_regre, namefig='f02', map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
           data_ctn=aux_vp, levels_ctn=scale_vp, color_ctn='k',
           data_ctn2=aux_div, levels_ctn2=scale_div,
-          color_ctn2=['#D300FF', '#00FF5D'], high=1.3)
+          color_ctn2=['#FF0002', '#0003FF'], high=1.3)
 ################################################################################
 # HGT y WAF
 ################################################################################
@@ -667,11 +675,11 @@ for v, v_count, hpalevel in zip(variables, [0, 1], [200, 750]):
 
     # ------------------------------------------------------------------------ #
     PlotFinal(data=aux_hgt, levels=scale_hgt, cmap=cbar,
-              titles=subtitulos_regre, namefig=f"figure{v_count+3}", map='hs',
+              titles=subtitulos_regre, namefig=f"f{v_count+3}", map='hs',
               save=save, dpi=dpi, out_dir=out_dir,
-              data_ctn=aux_hgt_wo_corr, levels_ctn=None, color_ctn='k',
+              data_ctn=aux_hgt_wo_corr, levels_ctn=None, color_ctn='#505050',
               data_waf=data_sf, wafx=wafx, wafy=wafy,
-              waf_scale=None, waf_label=10e-6, waf_step=4, high=1.3)
+              waf_scale=None, waf_label=10e-6, waf_step=6, high=1.3)
 
 ################################################################################
 # Composites
@@ -698,7 +706,7 @@ data3 = xr.open_dataset("/pikachu/datos/luciano.andrian/verif_2019_2023/"
 data3 = data3.sel(time=data3.time.dt.year.isin(range(1940,2021)))
 data3 = data3.rename({'sst':'var'})
 data3 = Detrend(data3, 'time')
-
+aux_num_cases = []
 aux_div = []
 aux_vp = []
 aux_sst = []
@@ -719,6 +727,7 @@ for c_count, c  in enumerate(cases):
     aux_div.append(comp1)
     aux_vp.append(comp2)
     aux_sst.append(comp3)
+    aux_num_cases.append(num_case)
 
 aux_div = xr.concat(aux_div, dim='plots')
 
@@ -727,16 +736,17 @@ aux_vp = xr.concat(aux_vp, dim='plots')
 aux_sst = xr.concat(aux_sst, dim='plots')
 
 PlotFinal(data=aux_sst, levels=scale_sst_comp, cmap=cbar_sst,
-          titles=title_case, namefig='figure5', map='hs',
+          titles=title_case, namefig='f05', map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
           data_ctn=aux_vp, levels_ctn=scale_vp_comp, color_ctn='k',
           data_ctn2=aux_div, levels_ctn2=scale_div_comp,
-          color_ctn2=['#D300FF', '#00FF5D'], high=1.3)
+          color_ctn2=['#FF0002', '#0003FF'], high=1.3,
+          num_cases=True, num_cases_data=aux_num_cases)
 
 print('#######################################################################')
 print('Figure 6-7')
 print('#######################################################################')
-
+aux_num_cases = []
 for v, hpalevel, f_count in zip(['HGT200_SON_mer_d_w', 'HGT750_SON_mer_d_w'],
                                 [200,750], [6,7]):
 
@@ -782,6 +792,7 @@ for v, hpalevel, f_count in zip(['HGT200_SON_mer_d_w', 'HGT750_SON_mer_d_w'],
         aux_hgt_no_sig.append(comp1)
         aux_wafx.append(px[0,:,:])
         aux_wafy.append(py[0,:,:])
+        aux_num_cases.append(num_case)
 
     aux_hgt = xr.concat(aux_hgt, dim='plots')
     aux_hgt_no_sig = xr.concat(aux_hgt_no_sig, dim='plots')
@@ -792,11 +803,12 @@ for v, hpalevel, f_count in zip(['HGT200_SON_mer_d_w', 'HGT750_SON_mer_d_w'],
                                   aux_wafy[3], aux_wafy[4], aux_wafy[5])
 
     PlotFinal(data=aux_hgt, levels=scale_hgt_comp, cmap=cbar,
-              titles=title_case, namefig=f"figure{f_count}", map='hs',
+              titles=title_case, namefig=f"f0{f_count}", map='hs',
               save=save, dpi=dpi, out_dir=out_dir,
-              data_ctn=aux_hgt_no_sig, levels_ctn=None, color_ctn='k',
+              data_ctn=aux_hgt_no_sig, levels_ctn=None, color_ctn='#505050',
               data_waf=data_sf, wafx=aux_wafx, wafy=aux_wafy,
-              waf_scale=None, waf_label=10e-5, waf_step=4, high=1.3)
+              waf_scale=None, waf_label=10e-5, waf_step=6, high=1.3,
+              num_cases=True, num_cases_data=aux_num_cases)
 ################################################################################
 print('#######################################################################')
 print('Figure8')
@@ -859,7 +871,7 @@ ax.scatter(y=n34_neutro, x=dmi_neutro, marker='o', label='Niño3.4 vs DMI',
 
 # dmi puros
 ax.scatter(x=dmi_puros_pos, y=n34_in_dmi_puros_pos, marker='o',
-           s=30*scatter_size_fix, edgecolor='k', color='firebrick',
+           s=30*scatter_size_fix, edgecolor='k', color='#8B1E1E',
            alpha=1, label='IOD+')
 ax.scatter(x=dmi_puros_neg, y=n34_in_dmi_puros_neg, marker='o',
            s=30*scatter_size_fix, edgecolor='k', color='#7CCD73',
@@ -892,10 +904,11 @@ ax.legend(loc=(.01, .57), fontsize=label_legend_size)
 ax.tick_params(axis='both', which='major', labelsize=tick_label_size, pad=1)
 ax.set_ylim((-5, 5))
 ax.set_xlim((-5, 5))
-ax.axhspan(-.5, .5, alpha=0.2, color='black', zorder=0)
+ax.axhspan(-.5/sd_n34_s.sst.values, .5/sd_n34_s.sst.values,
+           alpha=0.2, color='black', zorder=0)
 ax.axvspan(-.5, .5, alpha=0.2, color='black', zorder=0)
 ax.set_xlabel('DMI', size=in_label_size)
-ax.set_ylabel('Niño 3.4', size=in_label_size)
+ax.set_ylabel('ONI', size=in_label_size)
 ax.text(-4.9, 4.6, 'EN/IOD-', dict(size=in_label_size))
 ax.text(-.2, 4.6, 'EN', dict(size=in_label_size))
 ax.text(+3.7, 4.6, 'EN/IOD+', dict(size=in_label_size))
@@ -907,7 +920,7 @@ ax.text(-4.9, -.1, 'IOD-', dict(size=in_label_size))
 plt.tight_layout()
 
 if save:
-    plt.savefig(out_dir + 'figure8.pdf', dpi=dpi, bbox_inches='tight')
+    plt.savefig(out_dir + 'f08.pdf', dpi=dpi, bbox_inches='tight')
     plt.close('all')
 else:
     plt.show()
@@ -916,36 +929,41 @@ else:
 print('#######################################################################')
 print('Figure 9')
 print('#######################################################################')
-neutro = xr.open_dataset(cases_dir + 'neutros_SON.nc').rename({'sst': 'var'})
+neutro = xr.open_dataset(cases_dir + 'neutros_SON_05.nc').rename({'sst': 'var'})
 
 aux_sst = []
+aux_num_cases = []
 for c in cases_cfsv2:
-    case = xr.open_dataset(cases_dir + c + '_SON.nc').rename({'sst': 'var'})
-    #num_case = len(case.time)
+    case = xr.open_dataset(cases_dir + c + '_SON_05.nc').rename({'sst': 'var'})
+    num_case = len(case.time)
     comp = case.mean('time') - neutro.mean('time')
     aux_sst.append(comp)
+    aux_num_cases.append(num_case)
 
 aux_sst = xr.concat(aux_sst, dim='plots')
 
 PlotFinal(data=aux_sst, levels=scale_sst_comp, cmap=cbar_sst,
-          titles=title_case, namefig=f"figure9", map='tr',
-          save=save, dpi=dpi, out_dir=out_dir, high=0.9, step=3)
+          titles=title_case, namefig=f"f09", map='tr',
+          save=save, dpi=dpi, out_dir=out_dir, high=0.9, step=3,
+          num_cases=True, num_cases_data=aux_num_cases)
 ################################################################################
 print('#######################################################################')
 print('Figure 10-11')
 print('#######################################################################')
-neutro = xr.open_dataset(cases_dir + 'hgt_neutros_SON.nc')\
+neutro = xr.open_dataset(cases_dir + 'hgt_neutros_SON_05.nc')\
     .rename({'hgt': 'var'})
 neutro = Weights(neutro.__mul__(9.80665))
 
 aux_hgt = []
 aux_hgt_snr = []
+aux_num_cases = []
 for c in cases_cfsv2:
-    case = xr.open_dataset(cases_dir + 'hgt_' + c + '_SON.nc').\
+    case = xr.open_dataset(cases_dir + 'hgt_' + c + '_SON_05.nc').\
         rename({'hgt': 'var'})
     case = Weights(case.__mul__(9.80665))
-    #num_case = len(case.time)
+    num_case = len(case.time)
     comp = case.mean('time') - neutro.mean('time')
+    aux_num_cases.append(num_case)
 
     spread = case - comp
     spread = spread.std('time')
@@ -957,15 +975,18 @@ for c in cases_cfsv2:
 aux_hgt = xr.concat(aux_hgt, dim='plots')
 aux_hgt_snr = xr.concat(aux_hgt_snr, dim='plots')
 
-PlotFinal(data=aux_hgt, levels=scale_hgt_comp, cmap=cbar,
-          titles=title_case, namefig=f"figure10", map='hs',
+PlotFinal(data=aux_hgt, levels=scale_hgt_comp_cfsv2, cmap=cbar,
+          titles=title_case, namefig=f"f10", map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
-          data_ctn=aux_hgt, color_ctn='k', high=1.3)
+          data_ctn=aux_hgt, color_ctn='#505050', high=1.3,
+          num_cases=True, num_cases_data=aux_num_cases)
 
 PlotFinal(data=aux_hgt_snr, levels=scale_hgt_snr, cmap=cbar_snr,
-          titles=title_case, namefig=f"figure11", map='hs',
+          titles=title_case, namefig=f"f11", map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
-          data_ctn=aux_hgt_snr, color_ctn='k', high=1.3)
+          data_ctn=aux_hgt_snr, color_ctn='#505050', high=1.3,
+          num_cases=True, num_cases_data=aux_num_cases)
+
 ################################################################################
 print('#######################################################################')
 print('Figure 14')
@@ -1106,18 +1127,18 @@ aux_sig_f = SetDataToPlotFinal(
     aux_sig['tcru_w_c_d_0.25'].sel(plots=[9, 10, 11]),
     aux_sig['ppgpcc_w_c_d_1'].sel(plots=[9, 10, 11]))
 
-subtitulos_regre = [None, r"$Ni\tilde{n}o\ 3.4$",  None,
-                    None, r"$Ni\tilde{n}o\ 3.4$",  None,
-                    None, r"$Ni\tilde{n}o\ 3.4|_{DMI}$", None,
-                    None, r"$Ni\tilde{n}o\ 3.4|_{DMI}$", None,
-                    None, r"$DMI|_{Ni\tilde{n}o\ 3.4}$", None,
-                    None, r"$DMI|_{Ni\tilde{n}o\ 3.4}$", None,
+subtitulos_regre = [None, r"$ONI$",  None,
+                    None, r"$ONI$",  None,
+                    None, r"$ONI|_{DMI}$", None,
+                    None, r"$ONI|_{DMI}$", None,
+                    None, r"$DMI|_{ONI}$", None,
+                    None, r"$DMI|_{ONI}$", None,
                     None, r"$DMI$", None,
                     None, r"$DMI$", None]
 
 PlotFinal14(data=aux_data_f, levels=scale_t, cmap=cbar,
             titles=subtitulos_regre,
-            namefig=f"figure14", save=save, dpi=dpi,
+            namefig=f"f14", save=save, dpi=dpi,
             out_dir=out_dir, sig_points=aux_sig_f,
             lons=lons_cont*len(aux_data_f.plots), levels2=scale_pp,
             cmap2=cbar_pp, high=3.9)
@@ -1125,7 +1146,7 @@ PlotFinal14(data=aux_data_f, levels=scale_t, cmap=cbar,
 print('#######################################################################')
 print('Figure 15-16')
 print('#######################################################################')
-variables_tpp = ['ppgpcc_w_c_d_1', 'tcru_w_c_d_0.25']
+variables_tpp = ['tcru_w_c_d_0.25', 'ppgpcc_w_c_d_1']
 plt.rcParams['hatch.linewidth'] = 1
 # hacer funcion con esto
 lons_cont = [[0,60], [100,160], [270,330]]
@@ -1134,11 +1155,11 @@ title_case = [None, 'Pure El Niño', None,
               None, 'Pure La Niña', None,
               None, 'Pure positive IOD', None,
               None, 'Pure negative IOD', None,
-              None, 'El Niño - positive IOD', None,
-              None, 'La Niña - negative IOD', None, ]
+              None, 'El Niño - pos. IOD', None,
+              None, 'La Niña - neg. IOD', None, ]
 
-aux_scales = [scale_pp_comp, scale_t_comp]
-aux_cbar = [cbar_pp, cbar]
+aux_scales = [scale_t_comp, scale_pp_comp]
+aux_cbar = [cbar, cbar_pp]
 
 for v_count, v in enumerate(variables_tpp):
     aux_var = []
@@ -1177,12 +1198,12 @@ for v_count, v in enumerate(variables_tpp):
 
     PlotFinal15_16(data=aux_var_no_sig, levels=aux_scales[v_count],
                    cmap=aux_cbar[v_count], titles=title_case,
-                   namefig=f"figure{v_count+15}", save=save, dpi=dpi,
+                   namefig=f"f{v_count+15}", save=save, dpi=dpi,
                    out_dir=out_dir, sig_points=aux_sig,
                    lons=lons_cont*len(aux_var_no_sig.plots), high=3)
 
 print('#######################################################################')
-print('Figure sup. 1-2')
+print('Figure sup. 1-2-3-4, 17-18-19-20-21')
 print('#######################################################################')
 c = 'DMI_un_neg'
 variables = ['HGT200', 'HGT750']
@@ -1200,10 +1221,56 @@ data_hgt = data_hgt.rename({'time':'plots'})
 data_hgt['plots'] = range(0, len(years))
 
 PlotFinal(data=data_hgt, levels=scale_hgt_ind, cmap=cbar,
-          titles=title_years, namefig=f"s-figure1", map='hs',
+          titles=title_years, namefig=f"f17", map='hs',
           save=save, dpi=dpi, out_dir=out_dir,
           data_ctn=data_hgt, color_ctn='k', high=1.25, step=4)
 
+# Ks ------------------------------------------------------------------------- #
+c = 'DMI_un_neg'
+u = xr.open_dataset(data_dir + 'u_UV200_w_detrend.nc')
+eta_grad_y = xr.open_dataset(data_dir + 'etay_UV200.nc')
+eta_grad_y = eta_grad_y.rename(
+    {'meridional_gradient_of_absolute_vorticity': 'var'})
+
+u = u.interp(lon=eta_grad_y.lon.values, lat=eta_grad_y.lat.values)
+ntime, nlats, nlons = u['var'].shape
+data_y_eta = eta_grad_y.sel(time=eta_grad_y.time.dt.year.isin(aux[c]))
+data_y_u = u.sel(time=u.time.dt.year.isin(aux[c]))
+
+Rt2 = np.transpose(np.tile(6.378e6 * np.cos(u.lat.values * np.pi / 180),
+                           [359, 1]), [1, 0])
+ks = np.sqrt(data_y_eta['var'][0, :, :] / data_y_u['var']) * Rt2
+ks = xr.where(ks < 0, np.nan, ks)
+
+ks = ks.to_dataset()
+ks = ks.rename({'time':'plots'})
+ks['plots'] = range(0, len(years))
+
+ks2 = xr.where(np.isnan(ks), 0.5 , np.nan)
+PlotFinal(data=ks2, levels=[0,1,2], cmap=cbar, titles=title_years,
+          namefig=f"f19", map='hs', save=save, dpi=dpi,
+          out_dir=out_dir, high=1.25, step=1, cbar_pos='V')
+
+# IOD un pos ----------------------------------------------------------------- #
+c = 'DMI_un_pos'
+variables = ['HGT200', 'HGT750']
+
+aux = xr.open_dataset(nc_date_dir + '1920_2020_SON.nc')
+data_hgt = xr.open_dataset(data_dir + 'HGT200_SON_mer_d_w.nc')
+
+neutro = data_hgt.sel(time=data_hgt.time.dt.year.isin(aux.Neutral)).mean('time')
+data_case = data_hgt.sel(time=data_hgt.time.dt.year.isin(aux[c]))
+data_hgt = data_case - neutro
+
+years = data_hgt.time.dt.year.values
+title_years = [str(year) for year in years]
+data_hgt = data_hgt.rename({'time':'plots'})
+data_hgt['plots'] = range(0, len(years))
+
+PlotFinal(data=data_hgt, levels=scale_hgt_ind, cmap=cbar,
+          titles=title_years, namefig=f"f18", map='hs',
+          save=save, dpi=dpi, out_dir=out_dir,
+          data_ctn=data_hgt, color_ctn='k', high=1.25, step=4)
 # Ks ------------------------------------------------------------------------- #
 u = xr.open_dataset(data_dir + 'u_UV200_w_detrend.nc')
 eta_grad_y = xr.open_dataset(data_dir + 'etay_UV200.nc')
@@ -1226,11 +1293,11 @@ ks['plots'] = range(0, len(years))
 
 ks2 = xr.where(np.isnan(ks), 0.5 , np.nan)
 PlotFinal(data=ks2, levels=[0,1,2], cmap=cbar, titles=title_years,
-          namefig=f"s-figure2", map='hs', save=save, dpi=dpi,
+          namefig=f"f20", map='hs', save=save, dpi=dpi,
           out_dir=out_dir, high=1.25, step=1, cbar_pos='V')
 
 print('#######################################################################')
-print('Figure sup. 3')
+print('Figure sup. 5')
 print('#######################################################################')
 # ClimValidation ------------------------------------------------------------- #
 dir_hc = '/pikachu/datos/luciano.andrian/hindcast/'
@@ -1307,10 +1374,10 @@ s = 'SON'
 
 # ENSO_CFSv2 ----------------------------------------------------------------- #
 en_cfs = Weights(xr.open_dataset(
-    cases_dir + 'hgt_' + cases_cfs[2] + '_' + s + '.nc') \
+    cases_dir + 'hgt_' + cases_cfs[2] + '_' + s + '_05.nc') \
                  .rename({'hgt': 'var'}).__mul__(9.8))
 ln_cfs = Weights(xr.open_dataset(
-    cases_dir + 'hgt_' + cases_cfs[3] + '_' + s + '.nc') \
+    cases_dir + 'hgt_' + cases_cfs[3] + '_' + s + '_05.nc') \
                  .rename({'hgt': 'var'}).__mul__(9.8))
 
 enso_cfs_test = ttest_ind(
@@ -1320,10 +1387,10 @@ enso_dif_cfs = en_cfs.mean('time') - ln_cfs.mean('time')
 
 # IOD_CFSv2 ------------------------------------------------------------------ #
 iodp_cfs = Weights(xr.open_dataset(
-    cases_dir + 'hgt_' + cases_cfs[0] + '_' + s + '.nc') \
+    cases_dir + 'hgt_' + cases_cfs[0] + '_' + s + '_05.nc') \
                    .rename({'hgt': 'var'}).__mul__(9.8))
 iodn_cfs = Weights(xr.open_dataset(
-    cases_dir + 'hgt_' + cases_cfs[1] + '_' + s + '.nc') \
+    cases_dir + 'hgt_' + cases_cfs[1] + '_' + s + '_05.nc') \
                    .rename({'hgt': 'var'}).__mul__(9.8))
 
 iod_cfs_test = ttest_ind(
@@ -1370,7 +1437,7 @@ aux_events_dif_test = SetDataToPlotFinal(enso_obs_test, iod_obs_test,
 scale_aux = [-375, -275, -175, -75, -15, 0, 15, 75, 175, 275, 375]
 PlotFinalFigS3(dif_f, dif.rename({'hgt':'var'}), scale_hgt, cbar,
                'Seasonal mean climatological differences',
-               's-figure3', save, dpi, out_dir,
+               'f21', save, dpi, out_dir,
                data2=aux_events_dif.where(aux_events_dif_test<0.05),
                levels2=scale_aux, cmap2=cbar, data2_ctn=aux_events_dif,
                titles2=['Composites differences ERA5 El Niño - La Niña',

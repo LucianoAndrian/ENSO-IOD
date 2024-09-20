@@ -1910,10 +1910,12 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
 
     data_dates_n34_or = xr.open_dataset(dates_dir + 'N34_' + s +
                                         '_Leads_r_CFSv2.nc')
-    data_dates_n34_or /= data_dates_n34_or.mean('r').std()
 
-    # 1.1 Climatología y case
-    end_nc_file = '.nc' #if v != 'tref' else '_nodetrend.nc'
+    aux_n34_std =  data_dates_n34_or.mean('r').std()
+    data_dates_n34_or /= aux_n34_std
+
+    print('1.1 Climatología y case')
+    end_nc_file = '_05.nc' #if v != 'tref' else '_nodetrend.nc'
 
     if neutro_clim:
         clim = Weights(
@@ -1953,8 +1955,7 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     case = case.sel(lat=slice(lat_case[0], lat_case[-1]),
                     lon=slice(lon[0], lon[-1]))
 
-
-    # Anomalía
+    print('Anomalía')
     for l in [0, 1, 2, 3]:
         try:
             clim_aux = clim.sel(
@@ -1969,7 +1970,7 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
             anom2 = case.sel(time=case.time.dt.month.isin(mm - l)) - clim_aux
             anom = xr.concat([anom, anom2], dim='time')
 
-    # 1.2
+    print( '1.2')
     anom = anom.sortby(anom.time.dt.month)
 
     # 2. Vinculo fechas case -> índices DMI y N34 para poder clasificarlos
@@ -1981,10 +1982,10 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
 
     cases_date_dir = '/pikachu/datos/luciano.andrian/cases_dates/'
     try:
-        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '_05.nc') \
             .rename({'__xarray_dataarray_variable__': 'index'})
     except:
-        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '.nc') \
+        aux_cases = xr.open_dataset(cases_date_dir + c + '_f_' + s + '_05.nc') \
             .rename({'sst': 'index'})
 
     case_sel_dmi = SelectVariables(aux_cases, data_dates_dmi_or)
@@ -1992,7 +1993,7 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     case_sel_dmi_n34 = SelectVariables(aux_cases, data_dates_n34_or)
     case_sel_dmi_n34 = case_sel_dmi_n34.sortby(case_sel_dmi_n34.time.dt.month)
 
-    # 2.1 uniendo var, dmi y n34
+    print('2.1 uniendo var, dmi y n34')
     data_merged = xr.Dataset(
         data_vars=dict(
             var=(['time', 'lat', 'lon'], anom['var'].values),
@@ -2006,7 +2007,7 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
 
     bins_aux_dmi = bins_by_cases_dmi[c_count]
     bins_aux_n34 = bins_by_cases_n34[c_count]
-    # 3. Seleccion en cada bin
+    print("3. Seleccion en cada bin")
     anom_bin_main = list()
     num_bin_main = list()
     # loops en las bins para el dmi segun case
@@ -2022,8 +2023,8 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
         for ba_n34 in range(0, len(bins_aux_n34)):
             bin_f = bins_aux.where(
                 SelectBins(bins_aux.n34,
-                           bin_limits[bins_aux_n34[ba_n34]][0],
-                           bin_limits[bins_aux_n34[ba_n34]][1]))
+                           bin_limits[bins_aux_n34[ba_n34]][0]/aux_n34_std.sst.values,
+                           bin_limits[bins_aux_n34[ba_n34]][1]/aux_n34_std.sst.values))
 
             if snr:
                 spread = bin_f - bin_f.mean(['time'])
@@ -2715,7 +2716,8 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
               data_ctn2=None, levels_ctn2=None, color_ctn2=None,
               data_waf=None, wafx=None, wafy=None, waf_scale=None,
               waf_step=None, waf_label=None, sig_points=None, hatches=None,
-              num_cols=None, high=2, width = 7.08661, step=2, cbar_pos = 'H'):
+              num_cols=None, high=2, width = 7.08661, step=2, cbar_pos = 'H',
+              num_cases=False, num_cases_data=None):
 
     import matplotlib.gridspec as gridspec
     # cantidad de filas necesarias
@@ -2754,8 +2756,14 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
     import string
 
     for i, (ax, plot) in enumerate(zip(axes.flatten(), plots)):
-        ax.text(-0.005, 1.025, f"({string.ascii_lowercase[i]})",
-                transform=ax.transAxes, size=6)
+
+        if num_cases:
+            ax.text(-0.005, 1.025, f"({string.ascii_lowercase[i]}), "
+                                   f"$N={num_cases_data[plot]}$",
+                    transform=ax.transAxes, size=6)
+        else:
+            ax.text(-0.005, 1.025, f"({string.ascii_lowercase[i]})",
+                    transform=ax.transAxes, size=6)
 
         if data_ctn is not None:
             if levels_ctn is None:
@@ -2836,7 +2844,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
                       wafx_mask[::waf_step, ::waf_step],
                       wafy_mask[::waf_step, ::waf_step],
                       transform=crs_latlon, pivot='tail',
-                          width=1.5e-3, headwidth=3, alpha=1, headlength=2.5,
+                          width=1.7e-3, headwidth=4, alpha=1, headlength=2.5,
                           color='k',
                           scale=waf_scale,
                           angles='xy', scale_units='xy')
@@ -2869,7 +2877,7 @@ def PlotFinal(data, levels, cmap, titles, namefig, map, save, dpi, out_dir,
         #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
         ax.coastlines(color='k', linestyle='-', alpha=1, linewidth=0.2,
                       resolution='110m')
-        gl = ax.gridlines(draw_labels=False, linewidth=0.3, linestyle='-',
+        gl = ax.gridlines(draw_labels=False, linewidth=0.1, linestyle='-',
                           zorder=20)
         gl.ylocator = plt.MultipleLocator(20)
         ax.set_xticks(np.arange(0, 360, 60), crs=crs_latlon)
@@ -2922,7 +2930,7 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                         color_ctn=None, row_titles=None, col_titles=None,
                         clim_plot=None, clim_levels=None,clim_cbar=None,
                         high=2, width = 7.08661, cbar_pos='H', plot_step=3,
-                        contourf_clim=False):
+                        contourf_clim=False, pdf=True):
     num_cols = 5
     num_rows = 5
 
@@ -2998,6 +3006,12 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
 
         if plot == 12:
             if contourf_clim:
+
+                ax.text(-0.005, 1.025, f"({string.ascii_lowercase[i2]}) "
+                                       f"$N={titles[plot]}$",
+                        transform=ax.transAxes, size=4)
+                i2 += 1
+
                 cp = ax.contourf(clim_plot.lon.values[::plot_step],
                                  clim_plot.lat.values[::plot_step],
                                  clim_plot['var'][::plot_step, ::plot_step],
@@ -3014,6 +3028,11 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
 
 
             else:
+
+                ax.text(-0.005, 1.025, f"({string.ascii_lowercase[i2]})",
+                        transform=ax.transAxes, size=4)
+                i2 += 1
+
                 cp = ax.contour(clim_plot.lon.values[::plot_step],
                                 clim_plot.lat.values[::plot_step],
                                 clim_plot['var'][::plot_step, ::plot_step],
@@ -3090,7 +3109,7 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
                 #ax.add_feature(cartopy.feature.COASTLINE, linewidth=0.2)
                 ax.coastlines(color='k', linestyle='-', alpha=1,
                               linewidth=0.2, resolution='110m')
-                gl = ax.gridlines(draw_labels=False, linewidth=0.3,
+                gl = ax.gridlines(draw_labels=False, linewidth=0.1,
                                   linestyle='-',
                                   zorder=20)
                 gl.ylocator = plt.MultipleLocator(20)
@@ -3125,7 +3144,10 @@ def PlotFinal_Figs12_13(data, levels, cmap, titles, namefig, map, save, dpi,
 
 
     if save:
-        plt.savefig(f"{out_dir}{namefig}.pdf", dpi=dpi, bbox_inches='tight')
+        if pdf:
+            plt.savefig(f"{out_dir}{namefig}.pdf", dpi=dpi, bbox_inches='tight')
+        else:
+            plt.savefig(f"{out_dir}{namefig}.jpg", dpi=dpi, bbox_inches='tight')
         plt.close()
     else:
         plt.show()
@@ -3168,8 +3190,9 @@ def PlotFinal14(data, levels, cmap, titles, namefig, save, dpi, out_dir,
     import string
     i2 = 0
     for i in plots:
-        if i == 0 or i == 3 or i == 6 or i == 9 \
-                or i == 12 or i == 15 or i == 18 or i == 21:
+        # if i == 0 or i == 3 or i == 6 or i == 9 \
+        #         or i == 12 or i == 15 or i == 18 or i == 21:
+        if i >= 0:
             if i in [0, 3]:
 
                 axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]}) "
@@ -3319,10 +3342,13 @@ def PlotFinal15_16(data, levels, cmap, titles, namefig, save, dpi, out_dir,
     import string
     i2 = 0
     for i in plots:
-        if i in [0, 3, 6, 9, 12, 15, 18, 21]:
-            axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]})",
+        axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]})",
                     transform=axs[i].transAxes, size=6)
-            i2 += 1
+        i2 += 1
+        # if i in [0, 3, 6, 9, 12, 15, 18, 21]:
+        #     axs[i].text(-0.005, 1.025, f"({string.ascii_lowercase[i2]})",
+        #             transform=axs[i].transAxes, size=6)
+        #     i2 += 1
 
         aux = data.sel(plots=i)
         try:
