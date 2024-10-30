@@ -1915,7 +1915,10 @@ def BinsByCases(v, v_name, fix_factor, s, mm, c, c_count,
     data_dates_n34_or /= aux_n34_std
 
     print('1.1 Climatología y case')
-    end_nc_file = '_05.nc' #if v != 'tref' else '_nodetrend.nc'
+    if v != 'hgt':
+        end_nc_file = '_no_detrend_05.nc'
+    else:
+        end_nc_file = '_05.nc'
 
     if neutro_clim:
         clim = Weights(
